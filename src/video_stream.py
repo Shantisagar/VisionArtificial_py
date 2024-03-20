@@ -25,7 +25,9 @@ class VideoStreamApp:
                 print(f"Tamaño de la imagen: Ancho = {width}, Alto = {height}")
                 self.show_frame(testing=True)
             else:
-                print("Error al cargar la imagen.")
+                self.cap = cv2.VideoCapture(self.default_video_url)
+                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 2)  # Ajusta el tamaño del buffer si es necesario.
+                self.show_frame()
         else:
             self.cap = cv2.VideoCapture(self.default_video_url)
             self.show_frame()
@@ -36,10 +38,12 @@ class VideoStreamApp:
             self.process_and_display_frame(frame, testing=True)
         else:
             ret, frame = self.cap.read()
-            if ret:
-                self.process_and_display_frame(frame)
-            else:
+            if not ret:  # Intento de reconexión si falla la lectura.
+                print("Reconectando...")
                 self.cap.release()
+                self.cap = cv2.VideoCapture(self.default_video_url)
+                return
+            self.process_and_display_frame(frame)
 
     def process_and_display_frame(self, frame, testing=False):
         # Obtiene el tamaño del monitor (usando el primer monitor como referencia)
