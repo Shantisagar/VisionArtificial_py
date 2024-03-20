@@ -37,6 +37,17 @@ VisionArtificial/
     __pycache__/
 ```
 
+## Capturas de Pantalla
+
+Aquí está [ completar] //ver aca
+
+![App Android](screenshots/ip_webcam_app_screenshot.jpg) //ver acá
+
+Y aquí hay una vista previa de la aplicación en ejecución:
+
+![Ejecución de la Aplicación](screenshots/EjecucionAppVisionArtificial_ConResultados.png)
+
+
 ## Cómo Empezar
 
 ### Pre-requisitos
