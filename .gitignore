@@ -1,10 +1,5 @@
-__pycache__/image_processing.cpython-39.pyc
+src/logs/__pycache__/
+__pycache__/
+src/__pycache__/
 DOCS/00-Prompt-for-ProjectAnalysis.md
-src/logs/__pycache__/config_logger.cpython-39.pyc
-src/logs/__pycache__/__init__.cpython-39.pyc
 VisionArtificial.bat
-VisionArtificial.bat
-VisionArtificial.bat
-src/logs/__pycache__/__init__.cpython-312.pyc
-src/logs/__pycache__/config_logger.cpython-312.pyc
-src/__pycache__/image_processing.cpython-39.pyc

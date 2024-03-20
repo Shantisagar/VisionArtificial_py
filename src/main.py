@@ -2,6 +2,11 @@
 import tkinter as tk
 from video_stream import VideoStreamApp
 import sys
+from screeninfo import get_monitors
+
+for monitor in get_monitors():
+    print(f"Monitor {monitor.name}: {monitor.width}x{monitor.height}")
+
 
 def manejar_menu():
     opcion = input("Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP (No disponible aún)\nOpción: ")
