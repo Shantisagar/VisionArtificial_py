@@ -11,75 +11,73 @@ Desarrollar una herramienta capaz de detectar si el papel está centrado o si se
 - **Python**: Lenguaje de programación utilizado para el desarrollo del proyecto.
 - **OpenCV (cv2)**: Biblioteca de visión por computadora utilizada para el procesamiento de imágenes y videos.
 - **NumPy**: Utilizado para el manejo eficiente de arrays y matrices, fundamental en el procesamiento de imágenes.
+- **Pillow (PIL)**: Biblioteca para la apertura, manipulación y guardado de muchas diferentes formatos de archivo de imágenes.
 
 ## Estructura del Proyecto
 
 El proyecto se organiza de la siguiente manera:
 
-```
+```bash
 VisionArtificial/
-├── app.py                     # Aplicación principal con GUI para visualización de procesamiento en tiempo real.
-├── image_processing.py        # Script de procesamiento de imágenes, incluye lógica para detección de desvíos.
-├── readme.md                  # Este archivo.
-└── DOCS/                      # Documentación adicional y guías de uso.
+    installer.py
+    readme.md
+    config/
+    DOCS/
+        00-Prompt-for-ProjectAnalysis.md
+        license.md
+        screenshots/
+    src/
+        image_processing.py
+        main.py
+        logs/
+            config_logger.py
+            __init__.py
+            __pycache__/
+    tests/
+    __pycache__/
 ```
 
 ## Cómo Empezar
 
 ### Pre-requisitos
 
-Asegúrate de tener Python 3.6 o superior instalado en tu sistema. Además, necesitarás instalar las siguientes bibliotecas:
+- Asegúrate de tener Python 3.9 instalado en tu sistema.
+- Pipenv para la gestión de entornos virtuales y dependencias.
 
-- OpenCV
-- NumPy
-- Pillow (para la interfaz de usuario)
+### Configuración del Entorno
 
-Puedes instalar estas dependencias ejecutando:
-
-```bash
-pip install opencv-python numpy Pillow
-```
-
-### Instrucciones de Uso
-
-1. **Clonar el Repositorio**: Primero, clona este repositorio a tu máquina local usando:
-
+1. **Instalación de Pipenv**: Si aún no lo has hecho, instala Pipenv ejecutando:
+   ```bash
+   pip install pipenv
    ```
+
+2. **Clonar el Repositorio**: Clona este repositorio a tu máquina local usando:
+   ```bash
    git clone https://github.com/AgustinMadygraf/VisionArtificial.git
    ```
 
-2. **Ejecutar la Aplicación**: Navega al directorio del proyecto y ejecuta:
-
+3. **Instalar Dependencias**: Navega al directorio del proyecto y ejecuta:
+   ```bash
+   pipenv install
    ```
-   python app.py
-   ```
+   Esto creará un entorno virtual para el proyecto e instalará las dependencias necesarias como OpenCV, NumPy y Pillow.
 
-   Sigue las instrucciones en pantalla para iniciar el análisis de desvíos en tiempo real.
+### Ejecutar la Aplicación
 
+Una vez configurado el entorno, puedes iniciar la aplicación con:
+```bash
+pipenv run python src/main.py
+```
+
+O activar el entorno virtual y ejecutar la aplicación dentro de él:
+```bash
+pipenv shell
+python src/main.py
+```
 
 ## Integración con IP Webcam
 
-Este proyecto utiliza la aplicación [IP Webcam](https://play.google.com/store/apps/details?id=com.pas.webcam) para convertir un dispositivo móvil Android en una cámara en red, lo que permite capturar imágenes en tiempo real para su procesamiento. IP Webcam es una solución versátil que funciona en cualquier plataforma con VLC player o navegador web, incluso sin conexión a Internet a través de una red WiFi.
-
-### Características de IP Webcam utilizadas:
-
-- **Transmisión de Video**: Utilizamos la capacidad de IP Webcam para transmitir video que luego se analiza en tiempo real para la detección de desvíos.
-- **Accesibilidad**: Emite en una red WiFi permitiendo el acceso remoto y en tiempo real a la transmisión de la cámara.
-- **Formatos de Video**: Graba y transmite video en formatos compatibles con nuestro sistema de procesamiento de imágenes.
-- **Flexibilidad**: Compatible con una amplia gama de software de terceros y reproductores de audio.
-
-Asegúrate de seguir las instrucciones de configuración de la aplicación para adecuarla a las necesidades específicas del proyecto. La comunicación bidireccional de audio y la integración con sistemas de videovigilancia amplían las posibilidades de uso dentro del contexto industrial.
-
-### Configuración de IP Webcam para el Proyecto:
-
-1. Instala IP Webcam en tu dispositivo móvil desde la [Play Store](https://play.google.com/store/apps/details?id=com.pas.webcam).
-2. Configura la aplicación según las instrucciones para iniciar la transmisión de video.
-3. Conecta tu dispositivo móvil a la misma red WiFi que tu sistema de visión artificial.
-4. Ingresa la URL de transmisión proporcionada por IP Webcam en el script de nuestro proyecto para comenzar a recibir datos de video.
-
-La integración con IP Webcam permite al proyecto de visión artificial ser más accesible y fácil de configurar, aprovechando la tecnología disponible para mejorar los procesos de producción.
-
-
+Este proyecto puede utilizar [IP Webcam](https://play.google.com/store/apps/details?id=com.pas.webcam) para la captura de imágenes en tiempo real. Asegúrate de seguir las instrucciones de configuración de la aplicación IP Webcam para adecuarla a las necesidades específicas del proyecto.
 
 ## Contribuciones
 
