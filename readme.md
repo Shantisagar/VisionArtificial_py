@@ -45,7 +45,7 @@ La siguiente captura de pantalla muestra la interfaz de la aplicación IP Webcam
 
 Y aquí hay una vista previa de la aplicación de visión artificial en ejecución, demostrando la detección de desvíos en un entorno de producción simulado:
 
-![Ejecución de la Aplicación](https://github.com/AgustinMadygraf/VisionArtificial/blob/main/DOCS/screenshots/Ejecuci%C3%B3nAppVisionArtificial_ConResultados.png)
+![Ejecución de la Aplicación](https://github.com/AgustinMadygraf/VisionArtificial/blob/main/DOCS/screenshots/EjecucionAppVisionArtificial_ConResultados.png)
 
 ## Cómo Empezar
 
