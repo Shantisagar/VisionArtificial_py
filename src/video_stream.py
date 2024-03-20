@@ -1,4 +1,3 @@
-# video_stream.py
 import cv2
 import tkinter as tk
 from PIL import Image, ImageTk
@@ -43,6 +42,26 @@ class VideoStreamApp:
                 self.cap.release()
 
     def process_and_display_frame(self, frame, testing=False):
+        # Obtiene el tamaño del monitor (usando el primer monitor como referencia)
+        monitor_width = self.root.winfo_screenwidth()
+        monitor_height = self.root.winfo_screenheight()
+
+        # Obtiene el tamaño de la imagen
+        image_height, image_width = frame.shape[:2]
+
+        # Calcula el factor de escala para ajustar la imagen al tamaño del monitor
+        scale_width = monitor_width / image_width
+        scale_height = monitor_height / image_height
+        scale = min(scale_width, scale_height)
+
+        # Asegura que la imagen no sea más grande que el monitor
+        new_width = int(image_width * scale)
+        new_height = int(image_height * scale)
+
+        # Ajusta el tamaño de la imagen
+        frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
+
+        # Continúa con el procesamiento y muestra la imagen ajustada...
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         processed_frame = image_processing.process_image(frame)
 
