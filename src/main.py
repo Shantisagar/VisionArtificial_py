@@ -12,7 +12,7 @@ def manejar_menu():
     opcion = input("Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP (No disponible aún)\nOpción: ") or "0"
     if opcion == "0":
         print("Modo de calibración de reconocimiento de imagen activado.")
-        return "C:/AppServ/www/VisionArtificial/tests/calibracion_deteccion_papel_original.jpg"
+        return "C:/AppServ/www/VisionArtificial/tests/calibracion_deteccion_papel.jpg"
     elif opcion == "1":
         print("Modo de transmisión RTSP activado.")
         return "rtsp://192.168.0.11:8080/h264.sdp"

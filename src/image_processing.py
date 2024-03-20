@@ -19,7 +19,7 @@ def encontrar_borde(frame):
     return frame
 
 def dibujar_reglas(frame, pixels_per_mm=4):
-    """Dibuja reglas métricas en la parte superior e inferior de la imagen."""
+    """Dibuja reglas métricas en la parte superior e inferior de la imagen, y una línea verde horizontal en el medio."""
     image_width = frame.shape[1]
     image_height = frame.shape[0]
 
@@ -34,6 +34,11 @@ def dibujar_reglas(frame, pixels_per_mm=4):
         cv2.putText(frame, f"{mm} ", (x, image_height - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
         cv2.line(frame, (x, 10), (x, 30), (0, 0, 255), 1)
         cv2.putText(frame, f"{mm} ", (x, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+
+    # Calcula la posición media en el eje y y dibuja una línea verde horizontal
+    mitad_altura = image_height // 2
+    cv2.line(frame, (0, mitad_altura), (image_width, mitad_altura), (0, 255, 0), 2)
+
 
     return frame
 
