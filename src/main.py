@@ -49,7 +49,7 @@ class VideoStreamApp:
 
 
 if __name__ == "__main__":
-    default_video_url = "rtsp://192.168.0.14:8080/h264.sdp"
+    default_video_url = "rtsp://192.168.0.11:8080/h264.sdp"
     root = tk.Tk()
     app = VideoStreamApp(root, default_video_url)
     app.run()
