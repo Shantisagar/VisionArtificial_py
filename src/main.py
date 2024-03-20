@@ -1,7 +1,9 @@
 #VisionArtificial/main_app.py
 import cv2
 import tkinter as tk
+import sys
 from PIL import Image, ImageTk
+
 import image_processing
 
 
@@ -47,9 +49,25 @@ class VideoStreamApp:
     def run(self):
         self.root.mainloop()
 
+def manejar_menu():
+    opcion = input("Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP (No disponible aún)\nOpción: ")
+    if opcion == "0":
+        print("Seleccionaste 'Testing'.")
+        # Aquí iría la lógica para el modo de calibración de reconocimiento de imagen.
+    elif opcion == "1":
+        print("Seleccionaste 'RTSP'.")
+        # Esta es la funcionalidad actual, por lo que no necesitas cambiar nada aquí.
+    elif opcion == "2":
+        print("HTTP no está disponible aún.")
+    else:
+        print("Opción no válida.")
+        sys.exit(1)
+
 
 if __name__ == "__main__":
+    manejar_menu()
     default_video_url = "rtsp://192.168.0.11:8080/h264.sdp"
     root = tk.Tk()
     app = VideoStreamApp(root, default_video_url)
     app.run()
+

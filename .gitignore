@@ -7,3 +7,4 @@ VisionArtificial.bat
 VisionArtificial.bat
 src/logs/__pycache__/__init__.cpython-312.pyc
 src/logs/__pycache__/config_logger.cpython-312.pyc
+src/__pycache__/image_processing.cpython-39.pyc
