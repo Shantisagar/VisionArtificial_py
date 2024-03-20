@@ -20,7 +20,13 @@ class VideoStreamApp:
     def start_video_stream(self):
         if self.default_video_url.endswith('.jpg'):
             self.cap = cv2.imread(self.default_video_url)
-            self.show_frame(testing=True)
+            if self.cap is not None:
+                # Imprime el tamaño de la imagen
+                height, width = self.cap.shape[:2]
+                print(f"Tamaño de la imagen: Ancho = {width}, Alto = {height}")
+                self.show_frame(testing=True)
+            else:
+                print("Error al cargar la imagen.")
         else:
             self.cap = cv2.VideoCapture(self.default_video_url)
             self.show_frame()
