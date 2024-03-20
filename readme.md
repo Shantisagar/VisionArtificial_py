@@ -39,14 +39,13 @@ VisionArtificial/
 
 ## Capturas de Pantalla
 
-Aquí está [ completar] //ver aca
+La siguiente captura de pantalla muestra la interfaz de la aplicación IP Webcam en funcionamiento, ilustrando cómo se puede utilizar un dispositivo móvil Android como cámara para capturar imágenes en tiempo real.
 
-![App Android](screenshots/ip_webcam_app_screenshot.jpg) //ver acá
+![App Android](https://github.com/AgustinMadygraf/VisionArtificial/blob/main/DOCS/screenshots/ip_webcam_app_screenshot.jpg)
 
-Y aquí hay una vista previa de la aplicación en ejecución:
+Y aquí hay una vista previa de la aplicación de visión artificial en ejecución, demostrando la detección de desvíos en un entorno de producción simulado:
 
-![Ejecución de la Aplicación](screenshots/EjecucionAppVisionArtificial_ConResultados.png)
-
+![Ejecución de la Aplicación](https://github.com/AgustinMadygraf/VisionArtificial/blob/main/DOCS/screenshots/Ejecuci%C3%B3nAppVisionArtificial_ConResultados.png)
 
 ## Cómo Empezar
 
