@@ -4,14 +4,36 @@ from video_stream import VideoStreamApp
 import sys
 from screeninfo import get_monitors
 import json
+import os
 
 for monitor in get_monitors():
     print(f"Monitor {monitor.name}: {monitor.width}x{monitor.height}")
+    
 #crear funcion que tome los valores de config.json y los almacene en variables
 def leer_configuracion():
-    with open('src/config.json') as archivo:
+    ruta_configuracion = 'src/config.json'
+    configuracion_predeterminada = {
+        "grados_rotacion_default": -2,
+        "altura_default": 25,
+        "altura2_default": 120,
+        "perspectiva_default": 80,
+        "rtsp_url_default": "rtsp://192.168.0.11:8080/h264.sdp",
+        "ubicacion_default": "C:/AppServ/www/VisionArtificial/tests/calibracion_deteccion_papel.jpg"
+    }
+
+    # Verificar si el archivo de configuración existe
+    if not os.path.exists(ruta_configuracion):
+        # Si no existe, crear el archivo con la configuración predeterminada
+        with open(ruta_configuracion, 'w') as archivo:
+            json.dump(configuracion_predeterminada, archivo, indent=4)
+        print("Archivo de configuración creado con valores predeterminados.")
+
+    # Ahora, leer la configuración desde el archivo
+    with open(ruta_configuracion, 'r') as archivo:
         datos = json.load(archivo)
+    
     return datos
+
 
 def manejar_menu(config):
     opcion = input("Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP (No disponible aún)\nOpción: ") or "0"
