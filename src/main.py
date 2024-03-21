@@ -3,13 +3,17 @@ import tkinter as tk
 from video_stream import VideoStreamApp
 import sys
 from screeninfo import get_monitors
+import json
 
 for monitor in get_monitors():
     print(f"Monitor {monitor.name}: {monitor.width}x{monitor.height}")
-altura_default = 25
-grados_rotacion_default = -2
-altura2_default = 120
-perspectiva_default = 80
+#crear funcion que tome los valores de config.json y los almacene en variables
+def leer_configuracion():
+    with open('config.json') as archivo:
+        datos = json.load(archivo)
+        return datos['grados_rotacion'], datos['altura']
+    
+    
 
 
 

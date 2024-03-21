@@ -1,0 +1,8 @@
+{
+    "altura_default": 25,
+    "grados_rotacion_default": -2,
+    "altura2_default": 120,
+    "perspectiva_default": 80,
+    "rtsp_url_default": "rtsp://192.168.0.11:8080/h264.sdp",
+    "ubicacion_default": "C:/AppServ/www/VisionArtificial/tests/calibracion_deteccion_papel.jpg"
+}
