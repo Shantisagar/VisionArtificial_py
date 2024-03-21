@@ -4,12 +4,12 @@ from PIL import Image, ImageTk
 import image_processing
 
 class VideoStreamApp:
-    def __init__(self, root, default_video_url, grados_rotacion,):  # Asegúrate de que este parámetro esté aquí
+    def __init__(self, root, default_video_url, grados_rotacion, altura):
         self.root = root
-        self.root.title("Visualización de la imagen procesada")
         self.default_video_url = default_video_url
         self.cap = None
-        self.grados_rotacion = grados_rotacion  # Asegúrate de asignarlo aquí
+        self.grados_rotacion = grados_rotacion
+        self.altura = altura  # Agregar esta línea
         self.setup_ui()
 
     def setup_ui(self):
@@ -47,10 +47,9 @@ class VideoStreamApp:
             self.process_and_display_frame(frame)
 
     def process_and_display_frame(self, frame, testing=False):
-        # Obtiene el tamaño del monitor (usando el primer monitor como referencia)
         monitor_width = self.root.winfo_screenwidth()
         monitor_height = self.root.winfo_screenheight()
-        processed_frame = image_processing.process_image(frame, self.grados_rotacion)
+        processed_frame = image_processing.process_image(frame, self.grados_rotacion, self.altura)  # Usar self.altura
 
         # Obtiene el tamaño de la imagen
         image_height, image_width = frame.shape[:2]
@@ -61,6 +60,7 @@ class VideoStreamApp:
         scale = min(scale_width, scale_height)
 
         # Asegura que la imagen no sea más grande que el monitor
+        altura = self.altura  # Define the variable "altura" using the value from self.altura
         new_width = int(image_width * scale)
         new_height = int(image_height * scale)
 
@@ -69,7 +69,7 @@ class VideoStreamApp:
 
         # Continúa con el procesamiento y muestra la imagen ajustada...
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        processed_frame = image_processing.process_image(frame,self.grados_rotacion)
+        processed_frame = image_processing.process_image(frame, self.grados_rotacion, altura)  # Use the defined "altura" variable
 
         img = Image.fromarray(processed_frame)
         imgtk = ImageTk.PhotoImage(image=img)
