@@ -4,3 +4,4 @@ src/__pycache__/
 DOCS/00-Prompt-for-ProjectAnalysis.md
 VisionArtificial.bat
 src/config.json
+src/logs/sistema.log
