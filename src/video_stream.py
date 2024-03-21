@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 import image_processing
 
 class VideoStreamApp:
-    def __init__(self, root, default_video_url, grados_rotacion=0):  # Asegúrate de que este parámetro esté aquí
+    def __init__(self, root, default_video_url, grados_rotacion,):  # Asegúrate de que este parámetro esté aquí
         self.root = root
         self.root.title("Visualización de la imagen procesada")
         self.default_video_url = default_video_url

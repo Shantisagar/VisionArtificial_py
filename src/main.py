@@ -26,6 +26,8 @@ def manejar_menu():
 if __name__ == "__main__":
     grados_rotacion = input("Ingrese los grados de rotación (en sentido antihorario, 0 por defecto): ")
     grados_rotacion = float(grados_rotacion) if grados_rotacion.strip() else 0
+    altura = input("Ingrese la altura para corregir el eje vertical): ")
+    altura = float(altura) if altura.strip() else 0
 
     default_video_url = manejar_menu()
     root = tk.Tk()
