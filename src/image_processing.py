@@ -63,10 +63,10 @@ def dibujar_reglas(frame, altura, pixels_per_mm=4, altura2=120):
     return frame
 
 
-def process_image(frame, grados, altura):
+def process_image(frame, grados, altura,perspectiva_default):
     if grados != 0:
         frame = rotar_imagen(frame, grados)
-    perspectiva_default = 80
+    
     # Definir pts1 y pts2 para la corrección de perspectiva
     pts1 = np.float32([[0, 0], [640, 0], [0, 480], [640, 480]])
     pts2 = np.float32([[0, 0], [640, perspectiva_default], [0, 480], [640, 480]])

@@ -40,6 +40,6 @@ if __name__ == "__main__":
     altura2                 = float(input(f'Ingrese la altura para corregir el eje vertical, "          {config["altura2_default"]}         " por defecto): ') or config["altura2_default"])
     default_video_url = manejar_menu(config)
     root = tk.Tk()
-    app = VideoStreamApp(root, default_video_url, grados_rotacion, altura)
+    app = VideoStreamApp(root, default_video_url, grados_rotacion, altura,perspectiva_default)
     app.run()
 

@@ -4,12 +4,13 @@ from PIL import Image, ImageTk
 import image_processing
 
 class VideoStreamApp:
-    def __init__(self, root, default_video_url, grados_rotacion, altura):
+    def __init__(self, root, default_video_url, grados_rotacion, altura,perspectiva_default):
         self.root = root
         self.default_video_url = default_video_url
         self.cap = None
         self.grados_rotacion = grados_rotacion
         self.altura = altura  
+        self.perspectiva_default = perspectiva_default
         self.setup_ui()
 
     def setup_ui(self):
@@ -49,7 +50,7 @@ class VideoStreamApp:
     def process_and_display_frame(self, frame, testing=False):
         monitor_width = self.root.winfo_screenwidth()
         monitor_height = self.root.winfo_screenheight()
-        processed_frame = image_processing.process_image(frame, self.grados_rotacion, self.altura)  # Usar self.altura
+        processed_frame = image_processing.process_image(frame, self.grados_rotacion, self.altura, self.perspectiva_default)  # Usar self.altura
 
         # Obtiene el tamaño de la imagen
         image_height, image_width = frame.shape[:2]
@@ -69,7 +70,7 @@ class VideoStreamApp:
 
         # Continúa con el procesamiento y muestra la imagen ajustada...
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        processed_frame = image_processing.process_image(frame, self.grados_rotacion, altura)  # Use the defined "altura" variable
+        processed_frame = image_processing.process_image(frame, self.grados_rotacion, altura, self.perspectiva_default)  # Use the defined "altura" and "perspectiva_default" variables
 
         img = Image.fromarray(processed_frame)
         imgtk = ImageTk.PhotoImage(image=img)
