@@ -1,9 +1,14 @@
+#VisionArtificial\src\image_processing.py
 import cv2
 import numpy as np
 from rotacion import rotar_imagen
 from correccion_perspectiva import corregir_perspectiva
 from deteccion_bordes import encontrar_borde
+import logging
+from logs.config_logger import configurar_logging
 
+# Configuración del logger
+logger = configurar_logging()
 
 def aplicar_marcajes(frame, altura):
     """Encuentra bordes y dibuja marcas en la imagen."""
