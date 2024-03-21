@@ -47,22 +47,23 @@ def dibujar_reglas(frame, altura, pixels_per_mm=4, altura2=120):
 
     return frame
 
+def process_image(frame, grados, altura, perspectiva_default):
+    """
+    Procesa la imagen aplicando rotación, corrección de perspectiva y detección de bordes.
+    """
+    try:
+        if grados != 0:
+            frame = rotar_imagen(frame, grados)
 
-def process_image(frame, grados, altura,perspectiva_default):
-    if grados != 0:
-        frame = rotar_imagen(frame, grados)
-    
-    # Definir pts1 y pts2 para la corrección de perspectiva
-    pts1 = np.float32([[0, 0], [640, 0], [0, 480], [640, 480]])
-    pts2 = np.float32([[0, 0], [640, perspectiva_default], [0, 480], [640, 480]])
+        pts1 = np.float32([[0, 0], [640, 0], [0, 480], [640, 480]])
+        pts2 = np.float32([[0, 0], [640, perspectiva_default], [0, 480], [640, 480]])
+        
+        frame = corregir_perspectiva(frame, pts1, pts2)
+        frame = encontrar_borde(frame)
+        frame = dibujar_reglas(frame, altura)
 
-    # Estos puntos deben ser ajustados según tu necesidad específica
-    
-    frame = corregir_perspectiva(frame, pts1, pts2)
-    
-    frame = encontrar_borde(frame)
-    frame = dibujar_reglas(frame, altura)
-    
-    return frame
-
+        return frame
+    except Exception as e:
+        logger.error(f"Error al procesar la imagen: {e}")
+        raise
 
