@@ -37,30 +37,31 @@ def encontrar_borde(frame):
     frame[:, max_x, :] = (255, 255, 0)  # Marca amarilla en la posición del borde
     return frame
 
-def dibujar_reglas(frame, altura,pixels_per_mm=4,altura2=170):
-    """Dibuja reglas métricas en la parte superior e inferior de la imagen, y una línea verde horizontal en el medio."""
+def dibujar_reglas(frame, altura, pixels_per_mm=4, altura2=170):
     image_width = frame.shape[1]
     image_height = frame.shape[0]
 
     # Dibuja reglas en la parte superior e inferior de la imagen
-    cv2.line(frame, (0, image_height - 30), (image_width, image_height - 30), (255, 0, 0), 2)
-    cv2.line(frame, (0, 30), (image_width, 30), (255, 0, 0), 2)
+    cv2.line(frame, (0, int(image_height - 30)), (int(image_width), int(image_height - 30)), (255, 0, 0), 2)
+    cv2.line(frame, (0, 30), (int(image_width), 30), (255, 0, 0), 2)
 
     # Agrega marcas de milímetros a las reglas
     for mm in range(-10, 121, 10):
-        x = (mm + 10) * pixels_per_mm
-        cv2.line(frame, (x, image_height - 40), (x, image_height - 20), (0, 0, 255), 1)
-        cv2.putText(frame, f"{mm} ", (x, image_height - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+        x = int((mm + 10) * pixels_per_mm)
+        cv2.line(frame, (x, int(image_height - 40)), (x, int(image_height - 20)), (0, 0, 255), 1)
+        cv2.putText(frame, f"{mm} ", (x, int(image_height - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
         cv2.line(frame, (x, 10), (x, 30), (0, 0, 255), 1)
         cv2.putText(frame, f"{mm} ", (x, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
 
     # Calcula la posición media en el eje y y dibuja una línea verde horizontal
     mitad_altura = image_height // 2
-    mitad_altura = mitad_altura + altura
-    cv2.line(frame, (0, mitad_altura), (image_width, mitad_altura), (0, 255, 0), 2)
-    mitad_altura = mitad_altura + altura2
-    cv2.line(frame, (0, mitad_altura), (image_width, mitad_altura), (0, 255, 0), 2)
+    mitad_altura += altura  # Asegúrate de que "altura" sea un entero o se convierta a entero
+    cv2.line(frame, (0, int(mitad_altura)), (int(image_width), int(mitad_altura)), (0, 255, 0), 2)
+    mitad_altura += altura2  # Asegúrate de que "altura2" sea un entero
+    cv2.line(frame, (0, int(mitad_altura)), (int(image_width), int(mitad_altura)), (0, 255, 0), 2)
+
     return frame
+
 
 def process_image(frame, grados, altura):
     if grados != 0:
