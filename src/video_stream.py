@@ -1,7 +1,12 @@
+#VisionArtificial\src\video_stream.py
 import cv2
 import tkinter as tk
+import logging
 from PIL import Image, ImageTk
 import image_processing
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class VideoStreamApp:
     def __init__(self, root, default_video_url, grados_rotacion, altura,perspectiva_default):
@@ -40,7 +45,7 @@ class VideoStreamApp:
             self.process_and_display_frame(frame, testing=True)
         else:
             ret, frame = self.cap.read()
-            if not ret:  # Intento de reconexión si falla la lectura.
+            if not ret:
                 print("Reconectando...")
                 self.cap.release()
                 self.cap = cv2.VideoCapture(self.default_video_url)
@@ -59,8 +64,7 @@ class VideoStreamApp:
             resized_frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
             return cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
         except Exception as e:
-            print("Error al escalar la imagen al tamaño del monitor: %s", e)
-            #logger.error("Error al escalar la imagen al tamaño del monitor: %s", e)
+            logger.error("Error al escalar la imagen al tamaño del monitor: %s", e)
             return None
 
     def process_and_display_frame(self, frame, testing=False):
@@ -77,11 +81,9 @@ class VideoStreamApp:
                 if not testing:
                     self.panel.after(10, self.show_frame)
             else:
-                print("No se pudo escalar la imagen.")
-                #logger.error("No se pudo escalar la imagen.")
+                logger.error("No se pudo escalar la imagen.")
         except Exception as e:
-            print("Error al procesar y mostrar el frame: %s", e)
-            #logger.error("Error al procesar y mostrar el frame: %s", e)
+            logger.error("Error al procesar y mostrar el frame: %s", e)
 
 
     def run(self):

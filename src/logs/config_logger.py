@@ -4,7 +4,7 @@ import logging.config
 import os
 import json
 
-def configurar_logging(default_path='config/logging.json', default_level=logging.INFO, env_key='LOG_CFG'):
+def configurar_logging(default_path='src/logs/logging.json', default_level=logging.INFO, env_key='LOG_CFG'):
     """Configura el logging basado en un archivo JSON."""
     path = default_path
     value = os.getenv(env_key, None)
