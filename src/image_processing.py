@@ -1,5 +1,13 @@
 import cv2
 import numpy as np
+import sys
+
+def rotar_imagen(frame, grados):
+    """Rota la imagen un número específico de grados en sentido antihorario."""
+    altura, ancho = frame.shape[:2]
+    punto_central = (ancho // 2, altura // 2)
+    matriz_rotacion = cv2.getRotationMatrix2D(punto_central, grados, 1.0)
+    return cv2.warpAffine(frame, matriz_rotacion, (ancho, altura))
 
 def calcular_promedio_gris(image):
     """Calcula el promedio de gris de la imagen."""
@@ -42,8 +50,10 @@ def dibujar_reglas(frame, pixels_per_mm=4):
 
     return frame
 
-def process_image(frame):
-    """Procesa la imagen aplicando las marcas de borde y reglas métricas."""
+def process_image(frame, grados):
+    """Procesa la imagen aplicando rotación, las marcas de borde y reglas métricas."""
+    if grados != 0:
+        frame = rotar_imagen(frame, grados)
     frame = encontrar_borde(frame)
     frame = dibujar_reglas(frame)
     return frame

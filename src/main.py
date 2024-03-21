@@ -24,7 +24,10 @@ def manejar_menu():
         sys.exit(1)
 
 if __name__ == "__main__":
+    grados_rotacion = input("Ingrese los grados de rotación (en sentido antihorario, 0 por defecto): ")
+    grados_rotacion = float(grados_rotacion) if grados_rotacion.strip() else 0
+
     default_video_url = manejar_menu()
     root = tk.Tk()
-    app = VideoStreamApp(root, default_video_url)
+    app = VideoStreamApp(root, default_video_url, grados_rotacion)  # Asegúrate de que esta línea coincide
     app.run()
