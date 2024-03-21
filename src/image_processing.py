@@ -26,7 +26,7 @@ def encontrar_borde(frame):
     frame[:, max_x, :] = (255, 255, 0)  # Marca amarilla en la posición del borde
     return frame
 
-def dibujar_reglas(frame, pixels_per_mm=4,altura=20):
+def dibujar_reglas(frame, pixels_per_mm=4,altura1=25,altura2=170):
     """Dibuja reglas métricas en la parte superior e inferior de la imagen, y una línea verde horizontal en el medio."""
     image_width = frame.shape[1]
     image_height = frame.shape[0]
@@ -45,7 +45,9 @@ def dibujar_reglas(frame, pixels_per_mm=4,altura=20):
 
     # Calcula la posición media en el eje y y dibuja una línea verde horizontal
     mitad_altura = image_height // 2
-    mitad_altura = mitad_altura + altura
+    mitad_altura = mitad_altura + altura1
+    cv2.line(frame, (0, mitad_altura), (image_width, mitad_altura), (0, 255, 0), 2)
+    mitad_altura = mitad_altura + altura2
     cv2.line(frame, (0, mitad_altura), (image_width, mitad_altura), (0, 255, 0), 2)
 
 
