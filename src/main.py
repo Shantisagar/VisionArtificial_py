@@ -31,6 +31,6 @@ if __name__ == "__main__":
 
     default_video_url = manejar_menu()
     root = tk.Tk()
-    app = VideoStreamApp(root, default_video_url, grados_rotacion, altura)  # Paso correcto de altura
+    app = VideoStreamApp(root, default_video_url, grados_rotacion, altura)
     app.run()
 

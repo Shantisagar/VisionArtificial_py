@@ -9,7 +9,7 @@ class VideoStreamApp:
         self.default_video_url = default_video_url
         self.cap = None
         self.grados_rotacion = grados_rotacion
-        self.altura = altura  # Agregar esta línea
+        self.altura = altura  
         self.setup_ui()
 
     def setup_ui(self):

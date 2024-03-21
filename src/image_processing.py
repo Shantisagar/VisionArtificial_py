@@ -67,8 +67,16 @@ def process_image(frame, grados, altura):
     if grados != 0:
         frame = rotar_imagen(frame, grados)
     
+    # Definir pts1 y pts2 para la corrección de perspectiva
+    # pts1 = np.float32([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
+    # pts2 = np.float32([[x1', y1'], [x2', y2'], [x3', y3'], [x4', y4']])
+    # Estos puntos deben ser ajustados según tu necesidad específica
+    
+    # frame = corregir_perspectiva(frame, pts1, pts2)
+    
     frame = encontrar_borde(frame)
-    frame = dibujar_reglas(frame, altura)  # Asegúrate de que dibujar_reglas acepte y utilice altura
+    frame = dibujar_reglas(frame, altura)
     
     return frame
+
 
