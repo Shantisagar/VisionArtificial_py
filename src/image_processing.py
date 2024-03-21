@@ -1,18 +1,8 @@
 import cv2
 import numpy as np
+from rotacion import rotar_imagen
+from correccion_perspectiva import corregir_perspectiva
 
-def rotar_imagen(frame, grados):
-    """Rota la imagen un número específico de grados en sentido antihorario."""
-    altura, ancho = frame.shape[:2]
-    punto_central = (ancho // 2, altura // 2)
-    matriz_rotacion = cv2.getRotationMatrix2D(punto_central, grados, 1.0)
-    return cv2.warpAffine(frame, matriz_rotacion, (ancho, altura))
-
-def corregir_perspectiva(frame, pts1, pts2):
-    """Corrige la perspectiva de una región de la imagen."""
-    matriz_transformacion = cv2.getPerspectiveTransform(pts1, pts2)
-    altura, ancho = frame.shape[:2]
-    return cv2.warpPerspective(frame, matriz_transformacion, (ancho, altura))
 
 def aplicar_marcajes(frame, altura):
     """Encuentra bordes y dibuja marcas en la imagen."""
