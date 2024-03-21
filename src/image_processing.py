@@ -23,6 +23,21 @@ def aplicar_marcajes(frame, altura):
         raise
 
 def dibujar_reglas(frame, altura, pixels_per_mm=4, altura2=120):
+    """
+    Dibuja reglas horizontales y marcas de milímetros en una imagen para la evaluación visual de dimensiones.
+
+    Dibuja dos líneas horizontales a lo largo de la imagen para representar mediciones verticales específicas,
+    y agrega marcas de milímetros en la parte superior e inferior de la imagen para ayudar en la medición de distancias.
+
+    Parámetros:
+    - frame (np.ndarray): Imagen en la que se dibujarán las reglas.
+    - altura (int): Desplazamiento vertical desde la mitad de la imagen para la primera línea horizontal.
+    - pixels_per_mm (int, opcional): Número de píxeles que representan un milímetro en la imagen, por defecto es 4.
+    - altura2 (int, opcional): Desplazamiento adicional desde la primera línea horizontal para la segunda línea, por defecto es 120.
+
+    Retorna:
+    - np.ndarray: La imagen con las reglas y marcas de milímetros dibujadas.
+    """
     image_width = frame.shape[1]
     image_height = frame.shape[0]
 
