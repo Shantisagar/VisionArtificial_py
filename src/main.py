@@ -6,6 +6,11 @@ from screeninfo import get_monitors
 
 for monitor in get_monitors():
     print(f"Monitor {monitor.name}: {monitor.width}x{monitor.height}")
+altura_default = 25
+grados_rotacion_default = -2
+altura2_default = 120
+perspectiva_default = 80
+
 
 
 def manejar_menu():

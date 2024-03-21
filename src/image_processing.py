@@ -37,7 +37,7 @@ def encontrar_borde(frame):
     frame[:, max_x, :] = (255, 255, 0)  # Marca amarilla en la posición del borde
     return frame
 
-def dibujar_reglas(frame, altura, pixels_per_mm=4, altura2=170):
+def dibujar_reglas(frame, altura, pixels_per_mm=4, altura2=120):
     image_width = frame.shape[1]
     image_height = frame.shape[0]
 
@@ -66,13 +66,14 @@ def dibujar_reglas(frame, altura, pixels_per_mm=4, altura2=170):
 def process_image(frame, grados, altura):
     if grados != 0:
         frame = rotar_imagen(frame, grados)
-    
+    perspectiva_default = 80
     # Definir pts1 y pts2 para la corrección de perspectiva
-    # pts1 = np.float32([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
-    # pts2 = np.float32([[x1', y1'], [x2', y2'], [x3', y3'], [x4', y4']])
+    pts1 = np.float32([[0, 0], [640, 0], [0, 480], [640, 480]])
+    pts2 = np.float32([[0, 0], [640, perspectiva_default], [0, 480], [640, 480]])
+
     # Estos puntos deben ser ajustados según tu necesidad específica
     
-    # frame = corregir_perspectiva(frame, pts1, pts2)
+    frame = corregir_perspectiva(frame, pts1, pts2)
     
     frame = encontrar_borde(frame)
     frame = dibujar_reglas(frame, altura)
