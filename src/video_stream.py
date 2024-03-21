@@ -1,59 +1,79 @@
 #VisionArtificial\src\video_stream.py
 import cv2
 import tkinter as tk
-import logging
 from PIL import Image, ImageTk
 import image_processing
+import logging
+from logs.config_logger import configurar_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Configuración del logger
+logger = configurar_logging()
 
 class VideoStreamApp:
-    def __init__(self, root, default_video_url, grados_rotacion, altura,perspectiva_default):
+    def __init__(self, root, default_video_url, grados_rotacion, altura, perspectiva_default):
+        """
+        Inicializa la aplicación de transmisión de video.
+        """
         self.root = root
         self.default_video_url = default_video_url
         self.cap = None
         self.grados_rotacion = grados_rotacion
-        self.altura = altura  
+        self.altura = altura
         self.perspectiva_default = perspectiva_default
         self.setup_ui()
 
     def setup_ui(self):
+        """
+        Configura la interfaz de usuario.
+        """
         self.panel = tk.Label(self.root)
         self.panel.pack(padx=10, pady=10)
         self.start_video_stream()
 
     def start_video_stream(self):
-        if self.default_video_url.endswith('.jpg'):
-            self.cap = cv2.imread(self.default_video_url)
-            if self.cap is not None:
-                # Imprime el tamaño de la imagen
-                height, width = self.cap.shape[:2]
-                print(f"Tamaño de la imagen: Ancho = {width}, Alto = {height}")
-                self.show_frame(testing=True)
+        """
+        Inicia la transmisión de video.
+        """
+        try:
+            if self.default_video_url.endswith('.jpg'):
+                self.cap = cv2.imread(self.default_video_url)
+                if self.cap is not None:
+                    height, width = self.cap.shape[:2]
+                    logger.info(f"Tamaño de la imagen: Ancho = {width}, Alto = {height}")
+                    self.show_frame(testing=True)
+                else:
+                    logger.error("No se pudo cargar la imagen.")
             else:
                 self.cap = cv2.VideoCapture(self.default_video_url)
-                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 2)  # Ajusta el tamaño del buffer si es necesario.
+                if not self.cap.isOpened():
+                    logger.error("No se pudo abrir el flujo de video.")
                 self.show_frame()
-        else:
-            self.cap = cv2.VideoCapture(self.default_video_url)
-            self.show_frame()
+        except Exception as e:
+            logger.error(f"Error al iniciar la transmisión de video: {e}")
 
     def show_frame(self, testing=False):
-        if testing:
-            frame = self.cap
-            self.process_and_display_frame(frame, testing=True)
-        else:
-            ret, frame = self.cap.read()
-            if not ret:
-                print("Reconectando...")
-                self.cap.release()
-                self.cap = cv2.VideoCapture(self.default_video_url)
-                return
-            self.process_and_display_frame(frame)
+        """
+        Muestra un frame del video o de la imagen.
+        """
+        try:
+            if testing:
+                frame = self.cap
+                self.process_and_display_frame(frame, testing=True)
+            else:
+                ret, frame = self.cap.read()
+                if not ret:
+                    logger.warning("Reconectando...")
+                    self.cap.release()
+                    self.cap = cv2.VideoCapture(self.default_video_url)
+                    return
+                self.process_and_display_frame(frame)
+        except Exception as e:
+            logger.error(f"Error al mostrar el frame: {e}")
 
     def scale_frame_to_monitor(self, frame, monitor_width, monitor_height):
-        """Ajusta el tamaño de la imagen para que se adapte al monitor."""
+        """
+        Ajusta el tamaño de la imagen para que se adapte al monitor.
+        """
         try:
             image_height, image_width = frame.shape[:2]
             scale_width = monitor_width / image_width
@@ -68,6 +88,9 @@ class VideoStreamApp:
             return None
 
     def process_and_display_frame(self, frame, testing=False):
+        """
+        Procesa y muestra el frame actual.
+        """
         try:
             monitor_width = self.root.winfo_screenwidth()
             monitor_height = self.root.winfo_screenheight()
@@ -83,8 +106,10 @@ class VideoStreamApp:
             else:
                 logger.error("No se pudo escalar la imagen.")
         except Exception as e:
-            logger.error("Error al procesar y mostrar el frame: %s", e)
-
+            logger.error(f"Error al procesar y mostrar el frame: {e}")
 
     def run(self):
+        """
+        Ejecuta la aplicación.
+        """
         self.root.mainloop()
