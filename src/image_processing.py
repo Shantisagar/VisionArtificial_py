@@ -10,18 +10,6 @@ from logs.config_logger import configurar_logging
 # Configuración del logger
 logger = configurar_logging()
 
-def aplicar_marcajes(frame, altura):
-    """
-    Aplica marcajes en la imagen para identificar bordes y otras características relevantes.
-    """
-    try:
-        frame = encontrar_borde(frame)
-        frame = dibujar_reglas(frame, altura)
-        return frame
-    except Exception as e:
-        logger.error(f"Error al aplicar marcajes en la imagen: {e}")
-        raise
-
 def dibujar_reglas(frame, altura, pixels_per_mm=4, altura2=120):
     """
     Dibuja reglas horizontales y marcas de milímetros en una imagen para la evaluación visual de dimensiones.
