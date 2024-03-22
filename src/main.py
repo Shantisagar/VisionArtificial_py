@@ -4,7 +4,7 @@ from video_stream import VideoStreamApp
 import sys
 from screeninfo import get_monitors
 from logs.config_logger import configurar_logging
-from config_manager import leer_configuracion
+from config_manager import leer_configuracion, actualizar_configuracion
 
 # Configuración del logger
 logger = configurar_logging()
@@ -33,11 +33,29 @@ def manejar_menu(config):
 
 if __name__ == "__main__":
     try:
-        config = leer_configuracion()
-        grados_rotacion = float(input(f'Ingrese los grados de rotación (en sentido antihorario, "   {config["grados_rotacion_default"]} " por defecto): ') or config["grados_rotacion_default"])
-        altura = float(input(f'Ingrese la altura para corregir el eje vertical, "          {config["altura_default"]}          " por defecto): ') or config["altura_default"])
-        perspectiva_default = float(input(f'Ingrese la altura para corregir la perspectiva, "           {config["perspectiva_default"]}     " por defecto): ') or config["perspectiva_default"])
-        altura2 = float(input(f'Ingrese la altura para corregir el eje vertical, "          {config["altura2_default"]}         " por defecto): ') or config["altura2_default"])
+        # Ruta al archivo de configuración
+        config_path = 'src/config.json'
+
+        # Leer la configuración actual
+        config = leer_configuracion(config_path)
+
+        # Recopilar inputs del usuario
+        grados_rotacion = float(input(f'Ingrese los grados de rotación (en sentido antihorario, "{config["grados_rotacion_default"]}" por defecto): ') or config["grados_rotacion_default"])
+        altura = float(input(f'Ingrese la altura para corregir el eje vertical, "{config["altura_default"]}" por defecto): ') or config["altura_default"])
+        perspectiva_default = float(input(f'Ingrese la altura para corregir la perspectiva, "{config["perspectiva_default"]}" por defecto): ') or config["perspectiva_default"])
+        altura2 = float(input(f'Ingrese la segunda altura para corregir el eje vertical, "{config["altura2_default"]}" por defecto): ') or config["altura2_default"])
+
+        # Crear un diccionario con los nuevos valores de configuración
+        nueva_config = {
+            "grados_rotacion_default": grados_rotacion,
+            "altura_default": altura,
+            "perspectiva_default": perspectiva_default,
+            "altura2_default": altura2,
+        }
+
+        # Actualizar el archivo config.json con los nuevos valores
+        actualizar_configuracion(config_path, nueva_config)
+
         default_video_url = manejar_menu(config)
 
         root = tk.Tk()
