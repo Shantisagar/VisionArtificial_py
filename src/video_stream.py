@@ -10,7 +10,7 @@ from logs.config_logger import configurar_logging
 logger = configurar_logging()
 
 class VideoStreamApp:
-    def __init__(self, root, default_video_url, grados_rotacion, altura, perspectiva_default):
+    def __init__(self, root, default_video_url, grados_rotacion, altura, perspectiva_default, altura2):
         """
         Inicializa la aplicación de transmisión de video.
         """
@@ -19,6 +19,7 @@ class VideoStreamApp:
         self.cap = None
         self.grados_rotacion = grados_rotacion
         self.altura = altura
+        self.altura2 = altura2
         self.perspectiva_default = perspectiva_default
         self.setup_ui()
 
@@ -96,7 +97,7 @@ class VideoStreamApp:
             monitor_height = self.root.winfo_screenheight()
             frame_scaled = self.scale_frame_to_monitor(frame, monitor_width, monitor_height)
             if frame_scaled is not None:
-                processed_frame = image_processing.process_image(frame_scaled, self.grados_rotacion, self.altura, self.perspectiva_default)
+                processed_frame = image_processing.process_image(frame_scaled, self.grados_rotacion, self.altura, self.perspectiva_default, self.altura2)
                 img = Image.fromarray(processed_frame)
                 imgtk = ImageTk.PhotoImage(image=img)
                 self.panel.imgtk = imgtk

@@ -10,7 +10,7 @@ from logs.config_logger import configurar_logging
 # Configuración del logger
 logger = configurar_logging()
 
-def dibujar_reglas(frame, altura, pixels_per_mm=4, altura2=120):
+def dibujar_reglas(frame, altura, altura2, pixels_per_mm=4,):
     """
     Dibuja reglas horizontales y marcas de milímetros en una imagen para la evaluación visual de dimensiones.
 
@@ -50,7 +50,7 @@ def dibujar_reglas(frame, altura, pixels_per_mm=4, altura2=120):
 
     return frame
 
-def process_image(frame, grados, altura, perspectiva_default):
+def process_image(frame, grados, altura, perspectiva_default, altura2):
     """
     Procesa la imagen aplicando rotación, corrección de perspectiva y detección de bordes.
     """
@@ -63,7 +63,7 @@ def process_image(frame, grados, altura, perspectiva_default):
         
         frame = corregir_perspectiva(frame, pts1, pts2)
         frame = encontrar_borde(frame)
-        frame = dibujar_reglas(frame, altura)
+        frame = dibujar_reglas(frame, altura, altura2)
 
         return frame
     except Exception as e:
