@@ -112,7 +112,7 @@ class VideoStreamApp:
             monitor_height = self.root.winfo_screenheight()
             frame_scaled = self.scale_frame_to_monitor(frame, monitor_width, monitor_height)
             if frame_scaled is not None:
-                processed_frame = image_processing.process_image(frame_scaled, self.grados_rotacion, self.altura, self.perspectiva_default, self.horizontal)
+                processed_frame = image_processing.process_image(frame_scaled, self.grados_rotacion, self.altura, self.horizontal)
                 img = Image.fromarray(processed_frame)
                 imgtk = ImageTk.PhotoImage(image=img)
                 self.panel.imgtk = imgtk

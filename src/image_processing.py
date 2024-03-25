@@ -2,7 +2,6 @@
 import cv2
 import numpy as np
 from rotacion import rotar_imagen
-from correccion_perspectiva import corregir_perspectiva
 from deteccion_bordes import encontrar_borde
 from logs.config_logger import configurar_logging
 
@@ -38,18 +37,14 @@ def dibujar_reglas(frame, pixels_por_mm=10):
 
     return frame
 
-def process_image(frame, grados, altura, perspectiva_default, horizontal):
+def process_image(frame, grados, altura, horizontal):
     """
     Procesa la imagen aplicando rotación, corrección de perspectiva y detección de bordes.
     """
     try:
+        print(f"Horizontal: {horizontal}")
         if grados != 0:
             frame = rotar_imagen(frame, grados)
-
-        pts1 = np.float32([[0, 0], [640, 0], [0, 480], [640, 480]])
-        pts2 = np.float32([[0, 0], [640, perspectiva_default], [0, 480], [640, 480]])
-        
-        frame = corregir_perspectiva(frame, pts1, pts2)
         frame = encontrar_borde(frame)
         frame = dibujar_reglas(frame)
 
