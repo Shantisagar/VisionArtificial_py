@@ -65,8 +65,8 @@ class VideoStreamApp:
         else:
             logger.error(f"Fallo al cargar la imagen desde HTTP: Estado {response.status_code}")
 
-        # Vuelve a invocar reload_http_image después de 1000ms (1 segundo)
-        self.panel.after(1000, self.reload_http_image)
+        # Vuelve a invocar reload_http_image después de 3000ms (3 segundo)
+        self.panel.after(3000, self.reload_http_image)
 
     def show_frame(self, testing=False):
         """
@@ -88,13 +88,12 @@ class VideoStreamApp:
 
     def scale_frame_to_monitor(self, frame, monitor_width, monitor_height):
         """
-        Ajusta el tamaño de la imagen para que se adapte al monitor.
+        Ajusta el tamaño de la imagen para que se adapte verticalmente al monitor, manteniendo la proporción de aspecto.
         """
         try:
             image_height, image_width = frame.shape[:2]
-            scale_width = monitor_width / image_width
-            scale_height = monitor_height / image_height
-            scale = min(scale_width, scale_height)
+            # Calcular el factor de escala basado únicamente en la altura para evitar márgenes horizontales
+            scale = monitor_height / image_height
             new_width = int(image_width * scale)
             new_height = int(image_height * scale)
             resized_frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
@@ -102,6 +101,7 @@ class VideoStreamApp:
         except Exception as e:
             logger.error("Error al escalar la imagen al tamaño del monitor: %s", e)
             return None
+
 
     def process_and_display_frame(self, frame, testing=False):
         """
