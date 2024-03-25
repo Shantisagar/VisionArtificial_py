@@ -6,10 +6,10 @@ logger = logging.getLogger(__name__)
 
 def encontrar_borde(frame):
     """
-    Identifica y marca el borde más significativo en la imagen con una línea amarilla.
+    Identifica y marca el borde más significativo en el 60% central de la imagen con una línea amarilla.
     
-    Calcula el promedio de gris para cada columna y luego identifica la posición del borde
-    basándose en el cambio máximo en el valor promedio de gris a lo largo de las columnas.
+    Calcula el promedio de gris para cada columna en el 60% central y luego identifica la posición del borde
+    basándose en el cambio máximo en el valor promedio de gris a lo largo de estas columnas.
 
     Parámetros:
     - frame (np.ndarray): Imagen en la cual se buscará y marcará el borde.
@@ -21,9 +21,21 @@ def encontrar_borde(frame):
     - Exception: Si ocurre un error durante el proceso.
     """
     try:
-        grey_avg = calcular_promedio_gris(frame)
-        mean = np.mean(grey_avg, axis=0).reshape(frame.shape[1])
-        max_x = calcular_derivadas(mean).argmax()
+        # Calcular los límites para excluir el 20% de los márgenes de cada lado
+        cols = frame.shape[1]
+        start_col = int(cols * 0.2)
+        end_col = int(cols * 0.8)
+
+        # Aplicar el cálculo del promedio de gris solo al 60% central
+        grey_avg = calcular_promedio_gris(frame[:, start_col:end_col])
+        mean = np.mean(grey_avg, axis=0).reshape(end_col - start_col)
+        
+        # Calcular las derivadas y encontrar la posición máxima del cambio en el segmento central
+        max_x_central = calcular_derivadas(mean).argmax()
+        
+        # Ajustar la posición del borde al marco completo de la imagen
+        max_x = max_x_central + start_col
+        
         frame[:, max_x, :] = (255, 255, 0)  # Marca amarilla en la posición del borde
         return frame
     except Exception as e:
