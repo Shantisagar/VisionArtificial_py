@@ -22,7 +22,7 @@ def manejar_menu(config):
             logger.info("Modo de transmisión RTSP activado.")
             return config["rtsp_url_default"]
         elif opcion == "2":
-            logger.info("HTTP no está disponible aún.")
+            logger.info("HTTP no está disponible aún.") #http://192.168.100.53:8080/photo.jpg
             return None
         else:
             logger.error("Opción no válida.")
