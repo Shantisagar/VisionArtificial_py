@@ -14,22 +14,23 @@ def manejar_menu(config):
     Maneja el menú de opciones de usuario y devuelve la URL del video o ruta de la imagen seleccionada.
     """
     try:
-        opcion = input("Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP (No disponible aún)\nOpción: ") or "0"
+        opcion = input("Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP\nOpción: ") or "0"
         if opcion == "0":
             logger.info("Modo de calibración de reconocimiento de imagen activado.")
             return config["ubicacion_default"]
         elif opcion == "1":
             logger.info("Modo de transmisión RTSP activado.")
-            return config["rtsp_url_default"]
+            return "rtsp://" + config["url_default"] + ":8080/h264.sdp"
         elif opcion == "2":
-            logger.info("HTTP no está disponible aún.") #http://192.168.100.53:8080/photo.jpg
-            return None
+            logger.info("Modo HTTP activado.") 
+            return "http://" + config["url_default"] + ":8080/photo.jpg"
         else:
             logger.error("Opción no válida.")
             sys.exit(1)
     except Exception as e:
         logger.error(f"Error al manejar el menú de opciones: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     try:

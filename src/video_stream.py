@@ -3,7 +3,10 @@ import cv2
 import tkinter as tk
 from PIL import Image, ImageTk
 import image_processing
-import logging
+import requests
+import numpy as np
+from io import BytesIO
+
 from logs.config_logger import configurar_logging
 
 # Configuración del logger
@@ -33,17 +36,11 @@ class VideoStreamApp:
 
     def start_video_stream(self):
         """
-        Inicia la transmisión de video.
+        Inicia la transmisión de video o la carga de la imagen desde la URL HTTP.
         """
         try:
-            if self.default_video_url.endswith('.jpg'):
-                self.cap = cv2.imread(self.default_video_url)
-                if self.cap is not None:
-                    height, width = self.cap.shape[:2]
-                    logger.info(f"Tamaño de la imagen: Ancho = {width}, Alto = {height}")
-                    self.show_frame(testing=True)
-                else:
-                    logger.error("No se pudo cargar la imagen.")
+            if self.default_video_url.startswith('http'):
+                self.reload_http_image()
             else:
                 self.cap = cv2.VideoCapture(self.default_video_url)
                 if not self.cap.isOpened():
@@ -52,15 +49,32 @@ class VideoStreamApp:
         except Exception as e:
             logger.error(f"Error al iniciar la transmisión de video: {e}")
 
+    def reload_http_image(self):
+        """
+        Carga y muestra una imagen desde una URL HTTP cada segundo.
+        """
+        response = requests.get(self.default_video_url)
+        if response.status_code == 200:
+            image_bytes = np.asarray(bytearray(response.content), dtype=np.uint8)
+            frame = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+
+            if frame is not None:
+                self.process_and_display_frame(frame, testing=True)
+            else:
+                logger.error("No se pudo cargar la imagen.")
+        else:
+            logger.error(f"Fallo al cargar la imagen desde HTTP: Estado {response.status_code}")
+
+        # Vuelve a invocar reload_http_image después de 1000ms (1 segundo)
+        self.panel.after(1000, self.reload_http_image)
+
     def show_frame(self, testing=False):
         """
         Muestra un frame del video o de la imagen.
+        Si es un video, lee el siguiente frame y lo muestra.
         """
         try:
-            if testing:
-                frame = self.cap
-                self.process_and_display_frame(frame, testing=True)
-            else:
+            if not self.default_video_url.startswith('http'):
                 ret, frame = self.cap.read()
                 if not ret:
                     logger.warning("Reconectando...")
@@ -70,6 +84,7 @@ class VideoStreamApp:
                 self.process_and_display_frame(frame)
         except Exception as e:
             logger.error(f"Error al mostrar el frame: {e}")
+
 
     def scale_frame_to_monitor(self, frame, monitor_width, monitor_height):
         """
