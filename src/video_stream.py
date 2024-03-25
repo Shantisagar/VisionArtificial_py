@@ -48,7 +48,7 @@ class VideoStreamApp:
         except Exception as e:
             logger.error(f"Error al iniciar la transmisión de video: {e}")
 
-    def reload_http_image(self,milisegundos=4000):
+    def reload_http_image(self,milisegundos=2500):
         """
         Carga y muestra una imagen desde una URL HTTP cada segundo.
         """
