@@ -10,7 +10,7 @@ from logs.config_logger import configurar_logging
 # Configuración del logger
 logger = configurar_logging()
 
-def dibujar_reglas(frame, altura, altura2, pixels_per_mm=4,):
+def dibujar_reglas(frame, altura, horizontal, pixels_per_mm=4,):
     """
     Dibuja reglas horizontales y marcas de milímetros en una imagen para la evaluación visual de dimensiones.
 
@@ -21,7 +21,7 @@ def dibujar_reglas(frame, altura, altura2, pixels_per_mm=4,):
     - frame (np.ndarray): Imagen en la que se dibujarán las reglas.
     - altura (int): Desplazamiento vertical desde la mitad de la imagen para la primera línea horizontal.
     - pixels_per_mm (int, opcional): Número de píxeles que representan un milímetro en la imagen, por defecto es 4.
-    - altura2 (int, opcional): Desplazamiento adicional desde la primera línea horizontal para la segunda línea, por defecto es 120.
+    - horizontal (int, opcional): Desplazamiento adicional desde la primera línea horizontal para la segunda línea, por defecto es 120.
 
     Retorna:
     - np.ndarray: La imagen con las reglas y marcas de milímetros dibujadas.
@@ -45,12 +45,12 @@ def dibujar_reglas(frame, altura, altura2, pixels_per_mm=4,):
     mitad_altura = image_height // 2
     mitad_altura += altura  # Asegúrate de que "altura" sea un entero o se convierta a entero
     cv2.line(frame, (0, int(mitad_altura)), (int(image_width), int(mitad_altura)), (0, 255, 0), 2)
-    mitad_altura += altura2  # Asegúrate de que "altura2" sea un entero
+    mitad_altura += horizontal  # Asegúrate de que "horizontal" sea un entero
     cv2.line(frame, (0, int(mitad_altura)), (int(image_width), int(mitad_altura)), (0, 255, 0), 2)
 
     return frame
 
-def process_image(frame, grados, altura, perspectiva_default, altura2):
+def process_image(frame, grados, altura, perspectiva_default, horizontal):
     """
     Procesa la imagen aplicando rotación, corrección de perspectiva y detección de bordes.
     """
@@ -63,7 +63,7 @@ def process_image(frame, grados, altura, perspectiva_default, altura2):
         
         frame = corregir_perspectiva(frame, pts1, pts2)
         frame = encontrar_borde(frame)
-        frame = dibujar_reglas(frame, altura, altura2)
+        frame = dibujar_reglas(frame, altura, horizontal)
 
         return frame
     except Exception as e:
