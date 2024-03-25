@@ -14,7 +14,7 @@ def manejar_menu(config):
     Maneja el menú de opciones de usuario y devuelve la URL del video o ruta de la imagen seleccionada.
     """
     try:
-        opcion = input("Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP\nOpción: ") or "0"
+        opcion = input("Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP\nOpción: ") or "2"
         if opcion == "0":
             logger.info("Modo de calibración de reconocimiento de imagen activado.")
             return config["ubicacion_default"]
