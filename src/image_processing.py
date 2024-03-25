@@ -38,6 +38,7 @@ def dibujar_reglas(frame, pixels_por_mm=20):
             cv2.putText(frame, str(mm // 10), (centro_x + mm * pixels_por_mm - 5, centro_y + 25), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
         else:  # Marcas más cortas para milímetros
             cv2.line(frame, (centro_x + mm * pixels_por_mm, centro_y - 5), (centro_x + mm * pixels_por_mm, centro_y + 5), (255, 255, 255), 1)
+            cv2.putText(frame, str(mm), (centro_x + mm * pixels_por_mm - 5, centro_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
 
     return frame
 
