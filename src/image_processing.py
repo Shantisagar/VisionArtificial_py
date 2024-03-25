@@ -41,7 +41,7 @@ def dibujar_reglas(frame, pixels_por_mm=10):
 
     return frame
 
-def process_image(frame, grados, altura, horizontal):
+def process_image(frame, grados, altura, horizontal, pixels_por_mm):
     """
     Procesa la imagen aplicando rotación, desplazamiento horizontal, corrección de perspectiva y detección de bordes.
     """

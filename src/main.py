@@ -60,7 +60,7 @@ if __name__ == "__main__":
         default_video_url = manejar_menu(config)
 
         root = tk.Tk()
-        app = VideoStreamApp(root, default_video_url, grados_rotacion, altura, horizontal)
+        app = VideoStreamApp(root, default_video_url, grados_rotacion, altura, horizontal, pixels_por_mm)
         app.run()
     except Exception as e:
         logger.error(f"Error al iniciar la aplicación: {e}")
