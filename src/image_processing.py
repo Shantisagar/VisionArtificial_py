@@ -8,7 +8,7 @@ from logs.config_logger import configurar_logging
 # Configuración del logger
 logger = configurar_logging()
 
-def dibujar_reglas(frame, pixels_por_mm=10):
+def dibujar_reglas(frame, pixels_por_mm=20):
     """
     Dibuja una línea horizontal y una línea vertical centradas en la imagen, con una regla sobre la línea
     horizontal que marca milímetros y centímetros. La línea vertical es roja, de 1 pixel de grosor y punteada.
