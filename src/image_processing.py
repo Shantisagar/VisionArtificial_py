@@ -10,31 +10,32 @@ from logs.config_logger import configurar_logging
 # Configuración del logger
 logger = configurar_logging()
 
-def dibujar_reglas(frame, altura, horizontal, pixels_per_mm=4,):
-    """
-    Dibuja reglas horizontales y marcas de milímetros en una imagen para la evaluación visual de dimensiones.
+import cv2
 
-    Dibuja dos líneas horizontales a lo largo de la imagen para representar mediciones verticales específicas,
-    y agrega marcas de milímetros en la parte superior e inferior de la imagen para ayudar en la medición de distancias.
+def dibujar_reglas(frame):
+    """
+    Dibuja una línea horizontal y una línea vertical centradas en la imagen.
 
     Parámetros:
-    - frame (np.ndarray): Imagen en la que se dibujarán las reglas.
-    - altura (int): Desplazamiento vertical desde la mitad de la imagen para la primera línea horizontal.
-    - pixels_per_mm (int, opcional): Número de píxeles que representan un milímetro en la imagen, por defecto es 4.
-    - horizontal (int, opcional): Desplazamiento adicional desde la primera línea horizontal para la segunda línea, por defecto es 120.
+    - frame (np.ndarray): Imagen en la que se dibujarán las líneas.
 
     Retorna:
-    - np.ndarray: La imagen con las reglas y marcas de milímetros dibujadas.
+    - np.ndarray: La imagen con una línea horizontal y una vertical dibujadas.
     """
-    image_width = frame.shape[1]
-    image_height = frame.shape[0]
+    # Obtener dimensiones de la imagen
+    altura, ancho = frame.shape[:2]
 
-    # Calcula la posición media en el eje y y dibuja una línea verde horizontal
-    mitad_altura = image_height // 2
-    mitad_altura += altura  # Asegúrate de que "altura" sea un entero o se convierta a entero
-    cv2.line(frame, (0, int(mitad_altura)), (int(image_width), int(mitad_altura)), (0, 255, 0), 2)
+    # Calcular el centro de la imagen
+    centro_x, centro_y = ancho // 2, altura // 2
+
+    # Dibujar una línea horizontal centrada
+    cv2.line(frame, (0, centro_y), (ancho, centro_y), (0, 255, 0), 2)
+
+    # Dibujar una línea vertical centrada
+    cv2.line(frame, (centro_x, 0), (centro_x, altura), (255, 0, 0), 2)
 
     return frame
+
 
 def process_image(frame, grados, altura, perspectiva_default, horizontal):
     """
@@ -49,7 +50,7 @@ def process_image(frame, grados, altura, perspectiva_default, horizontal):
         
         frame = corregir_perspectiva(frame, pts1, pts2)
         frame = encontrar_borde(frame)
-        frame = dibujar_reglas(frame, altura, horizontal)
+        frame = dibujar_reglas(frame)
 
         return frame
     except Exception as e:
