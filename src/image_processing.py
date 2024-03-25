@@ -11,7 +11,7 @@ logger = configurar_logging()
 def dibujar_reglas(frame, pixels_por_mm=10):
     """
     Dibuja una línea horizontal y una línea vertical centradas en la imagen, con una regla sobre la línea
-    horizontal que marca milímetros y centímetros.
+    horizontal que marca milímetros y centímetros. La línea vertical es roja, de 1 pixel de grosor y punteada.
 
     Parámetros:
     - frame (np.ndarray): Imagen en la que se dibujarán las líneas y marcas de la regla.
@@ -23,9 +23,13 @@ def dibujar_reglas(frame, pixels_por_mm=10):
     altura, ancho = frame.shape[:2]
     centro_x, centro_y = ancho // 2, altura // 2
 
-    # Dibujar líneas centradas
-    cv2.line(frame, (0, centro_y), (ancho, centro_y), (0, 255, 0), 2)  # Línea horizontal verde
-    cv2.line(frame, (centro_x, 0), (centro_x, altura), (255, 0, 0), 2)  # Línea vertical roja
+    # Dibujar línea horizontal verde
+    cv2.line(frame, (0, centro_y), (ancho, centro_y), (0, 255, 0), 2)
+
+    # Dibujar línea vertical roja y punteada
+    for y in range(0, altura, 4):  # Cambia 4 por otro valor para ajustar el espaciado de los puntos
+        if y % 8 < 4:  # Cambia 4 para ajustar la longitud de los segmentos
+            cv2.line(frame, (centro_x, y), (centro_x, min(y+2, altura)), (255, 0, 0), 1)  # Cambia 2 para ajustar la longitud de los segmentos
 
     # Dibujar marcas de milímetros y números de centímetros
     for mm in range(-centro_x // pixels_por_mm, centro_x // pixels_por_mm):
