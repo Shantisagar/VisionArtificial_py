@@ -41,7 +41,7 @@ if __name__ == "__main__":
         config = leer_configuracion(config_path)
 
         # Recopilar inputs del usuario
-        grados_rotacion = float(input(f'Ingrese los grados de rotación (en sentido antihorario, "{config["grados_rotacion_default"]}" por defecto): ') or config["grados_rotacion_default"])
+        grados_rotacion = -1 * float(input(f'Ingrese los grados de rotación (en sentido horario, "{config["grados_rotacion_default"]}" por defecto): ') or config["grados_rotacion_default"])
         altura = float(input(f'Ingrese la altura para corregir el eje vertical, "{config["altura_default"]}" por defecto): ') or config["altura_default"])
         perspectiva_default = float(input(f'Ingrese la altura para corregir la perspectiva, "{config["perspectiva_default"]}" por defecto): ') or config["perspectiva_default"])
         horizontal = float(input(f'Ingrese la segunda altura para corregir el eje vertical, "{config["horizontal_default"]}" por defecto): ') or config["horizontal_default"])
