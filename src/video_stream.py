@@ -66,7 +66,7 @@ class VideoStreamApp:
             logger.error(f"Fallo al cargar la imagen desde HTTP: Estado {response.status_code}")
 
         # Vuelve a invocar reload_http_image después de 3000ms (3 segundo)
-        self.panel.after(3000, self.reload_http_image)
+        self.panel.after(5000, self.reload_http_image)
 
     def show_frame(self, testing=False):
         """
