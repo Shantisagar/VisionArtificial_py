@@ -13,12 +13,12 @@ def leer_configuracion(config_path):
     """
     config_path = 'src/config.json'
     configuracion_predeterminada = {
-        "grados_rotacion_default": 0,
-        "altura_default": 0,
-        "horizontal_default": 0,
-        "perspectiva_default": 0,
-        "url_default": "192.168.0.11",
-        "ubicacion_default": "C:/AppServ/www/VisionArtificial/tests/calibracion_deteccion_papel.jpg"
+        "grados_rotacion_default": 0.0,
+        "horizontal_default": 0.0,
+        "altura_default": 0.0,
+        "url_default": "192.168.10.103",
+        "ubicacion_default": "C:/AppServ/www/VisionArtificial/tests/calibracion_deteccion_papel.jpg",
+        "pixels_por_mm_default": 35
     }
 
     try:

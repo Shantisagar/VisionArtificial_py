@@ -41,15 +41,17 @@ if __name__ == "__main__":
         config = leer_configuracion(config_path)
 
         # Recopilar inputs del usuario
-        grados_rotacion = float(input(f'Ingrese los grados de rotación (en sentido horario, "{config["grados_rotacion_default"]}" por defecto): ') or config["grados_rotacion_default"])
-        altura = float(input(f'Ingrese la altura para corregir el eje vertical, "{config["altura_default"]}" por defecto): ') or config["altura_default"])
-        horizontal = float(input(f'Ingrese para corregir el eje horizontal, "{config["horizontal_default"]}" por defecto): ') or config["horizontal_default"])
-
+        grados_rotacion = float(input(f'Ingrese los grados de rotación (en sentido horario, "   {config["grados_rotacion_default"]}" por defecto): '    ) or config["grados_rotacion_default"])
+        altura          = float(input(f'Ingrese la altura para corregir el eje vertical, "      {config["altura_default"]}" por defecto): '             ) or config["altura_default"])
+        horizontal      = float(input(f'Ingrese para corregir el eje horizontal, "              {config["horizontal_default"]}" por defecto): '         ) or config["horizontal_default"])
+        pixels_por_mm   = float(input(f'Ingrese para corregir los pixeles por mm, "             {config["pixels_por_mm_default"]}" por defecto): '      ) or config["pixels_por_mm_default"])
+                             
         # Crear un diccionario con los nuevos valores de configuración
         nueva_config = {
             "grados_rotacion_default": grados_rotacion,
             "altura_default": altura,
             "horizontal_default": horizontal,
+            "pixels_por_mm_default": pixels_por_mm
         }
 
         # Actualizar el archivo config.json con los nuevos valores
