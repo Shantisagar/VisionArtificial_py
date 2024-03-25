@@ -39,12 +39,18 @@ def dibujar_reglas(frame, pixels_por_mm=10):
 
 def process_image(frame, grados, altura, horizontal):
     """
-    Procesa la imagen aplicando rotación, corrección de perspectiva y detección de bordes.
+    Procesa la imagen aplicando rotación, desplazamiento horizontal, corrección de perspectiva y detección de bordes.
     """
     try:
-        print(f"Horizontal: {horizontal}")
+        # Rotación de la imagen si se especifica un ángulo diferente de cero
         if grados != 0:
             frame = rotar_imagen(frame, grados)
+        
+        # Desplazamiento horizontal
+        if horizontal != 0:
+            frame = desplazar_horizontal(frame, horizontal)
+        
+        # Detección de bordes y dibujo de reglas
         frame = encontrar_borde(frame)
         frame = dibujar_reglas(frame)
 
@@ -53,3 +59,17 @@ def process_image(frame, grados, altura, horizontal):
         logger.error(f"Error al procesar la imagen: {e}")
         raise
 
+def desplazar_horizontal(frame, horizontal):
+    """
+    Desplaza la imagen horizontalmente según el valor especificado.
+
+    Parámetros:
+    - frame (np.ndarray): La imagen a desplazar.
+    - horizontal (float): La cantidad de desplazamiento horizontal.
+    
+    Retorna:
+    - np.ndarray: La imagen desplazada.
+    """
+    altura, ancho = frame.shape[:2]
+    M = np.float32([[1, 0, horizontal], [0, 1, 0]])  # Matriz de transformación
+    return cv2.warpAffine(frame, M, (ancho, altura))

@@ -43,14 +43,12 @@ if __name__ == "__main__":
         # Recopilar inputs del usuario
         grados_rotacion = -1 * float(input(f'Ingrese los grados de rotación (en sentido horario, "{config["grados_rotacion_default"]}" por defecto): ') or config["grados_rotacion_default"])
         altura = float(input(f'Ingrese la altura para corregir el eje vertical, "{config["altura_default"]}" por defecto): ') or config["altura_default"])
-        perspectiva_default = float(input(f'Ingrese la altura para corregir la perspectiva, "{config["perspectiva_default"]}" por defecto): ') or config["perspectiva_default"])
-        horizontal = float(input(f'Ingrese la segunda altura para corregir el eje vertical, "{config["horizontal_default"]}" por defecto): ') or config["horizontal_default"])
+        horizontal = float(input(f'Ingrese para corregir el eje horizontal, "{config["horizontal_default"]}" por defecto): ') or config["horizontal_default"])
 
         # Crear un diccionario con los nuevos valores de configuración
         nueva_config = {
             "grados_rotacion_default": grados_rotacion,
             "altura_default": altura,
-            "perspectiva_default": perspectiva_default,
             "horizontal_default": horizontal,
         }
 
@@ -60,7 +58,7 @@ if __name__ == "__main__":
         default_video_url = manejar_menu(config)
 
         root = tk.Tk()
-        app = VideoStreamApp(root, default_video_url, grados_rotacion, altura, perspectiva_default, horizontal)
+        app = VideoStreamApp(root, default_video_url, grados_rotacion, altura, horizontal)
         app.run()
     except Exception as e:
         logger.error(f"Error al iniciar la aplicación: {e}")

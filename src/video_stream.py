@@ -13,7 +13,7 @@ from logs.config_logger import configurar_logging
 logger = configurar_logging()
 
 class VideoStreamApp:
-    def __init__(self, root, default_video_url, grados_rotacion, altura, perspectiva_default, horizontal):
+    def __init__(self, root, default_video_url, grados_rotacion, altura, horizontal):
         """
         Inicializa la aplicación de transmisión de video.
         """
@@ -23,7 +23,6 @@ class VideoStreamApp:
         self.grados_rotacion = grados_rotacion
         self.altura = altura
         self.horizontal = horizontal
-        self.perspectiva_default = perspectiva_default
         self.setup_ui()
 
     def setup_ui(self):
