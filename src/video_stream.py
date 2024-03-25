@@ -20,7 +20,7 @@ class VideoStreamApp:
         self.root = root
         self.default_video_url = default_video_url
         self.cap = None
-        self.grados_rotacion = grados_rotacion
+        self.grados_rotacion = -1 * grados_rotacion
         self.altura = altura
         self.horizontal = horizontal
         self.setup_ui()
