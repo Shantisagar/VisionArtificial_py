@@ -16,6 +16,7 @@ def encontrar_borde(frame):
     
     Retorna:
     - np.ndarray: Imagen con una línea amarilla marcando la posición del borde detectado.
+    - int: Posición horizontal (en píxeles) de la línea amarilla marcando el borde detectado.
     
     Lanza:
     - Exception: Si ocurre un error durante el proceso.
