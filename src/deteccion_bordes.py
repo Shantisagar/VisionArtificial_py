@@ -38,7 +38,8 @@ def encontrar_borde(frame):
         max_x = max_x_central + start_col
         
         frame[:, max_x, :] = (255, 255, 0)  # Marca amarilla en la posición del borde
-        return frame
+        print(f"max_x: {max_x}")
+        return frame  # Retorna la imagen y la posición horizontal del borde
     except Exception as e:
         logger.error(f"Error al encontrar el borde: {e}")
         raise
