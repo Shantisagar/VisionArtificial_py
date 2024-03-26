@@ -10,13 +10,13 @@
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "level": "DEBUG",
+            "level": "INFO", 
             "formatter": "standard",
             "stream": "ext://sys.stdout"
         },
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
-            "level": "DEBUG",
+            "level": "DEBUG", 
             "formatter": "standard",
             "filename": "src/logs/sistema.log",
             "maxBytes": 10485760,
