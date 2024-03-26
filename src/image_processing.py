@@ -61,10 +61,10 @@ def process_image(frame, grados, altura, horizontal, pixels_por_mm):
             frame = desplazar_horizontal(frame, horizontal)
         
         #frame, posicion_borde_x = encontrar_borde(frame)
-        frame = encontrar_borde(frame)
+        frame,max_x = encontrar_borde(frame)
   
         frame = dibujar_reglas(frame)
-        posicion_borde_x = 0 #test
+        posicion_borde_x = max_x
         # Calcular el desvío en milímetros
         desvio_mm = calcular_desvio_en_mm(posicion_borde_x, frame.shape[1], pixels_por_mm)
         
