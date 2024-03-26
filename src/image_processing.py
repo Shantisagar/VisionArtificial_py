@@ -72,7 +72,7 @@ def process_image(frame, grados, altura, horizontal, pixels_por_mm):
 
         # Obtener la fecha y hora actuales
         now = datetime.datetime.now()
-        fecha_hora = now.strftime("%Y-%m-%d %H:%M:%S")
+        fecha_hora = now.strftime("%d-%m-%Y %H:%M:%S")
 
         # Preparar el texto a mostrar en la imagen
         texto = f"{fecha_hora} - Desvio: {desvio_mm} mm"
