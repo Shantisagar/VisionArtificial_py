@@ -74,19 +74,31 @@ def process_image(frame, grados, altura, horizontal, pixels_por_mm):
         # Mostrar el desvío en la consola
         if desvio_mm > 2:
             logger.info(f"Desvío registrado: {desvio_mm} mm ENG")
-            texto = f"{fecha_hora} - Desvio: {desvio_mm} mm ENG"
+            texto1 = f" Desvio: {desvio_mm} mm ENG"
+
         elif desvio_mm < -2:
             logger.info(f"Desvío registrado: {desvio_mm} mm OP")
-            texto = f"{fecha_hora} - Desvio: {desvio_mm} mm OP"
+            texto1 = f"Desvio: {desvio_mm} mm OP"
         else:  # Esto cubre el caso donde el desvío está dentro de la tolerancia de +/- 2mm
             logger.info(f"Desvío registrado: {desvio_mm} mm - Centrado")
-            texto = f"{fecha_hora} - Desvio: {desvio_mm} mm - Centrado"
+            if desvio_mm > 0:
+                texto1 = f"Desvio: {desvio_mm} mm - Centrado ENG"
+            elif desvio_mm < 0:
+                texto1 = f"Desvio: {desvio_mm} mm - Centrado OP"
+            else:
+                texto1 = f"Desvio: {desvio_mm} mm - Centrado"
 
-
-
+        texto0 = fecha_hora
+        texto2 = "Ancho de bobina: 590mm"
+        texto3 = "Formato bolsa: 260x120x360"
+        texto4 = "solapa: 30mm"
 
         # Ubicación del texto en la imagen (arriba a la derecha)
-        posicion = (frame.shape[1] - 700, 100)  
+        posicion0 = (frame.shape[1] - 700, 100)  
+        posicion1 = (frame.shape[1] - 700, 150)  
+        posicion2 = (frame.shape[1] - 700, 200)  
+        posicion3 = (frame.shape[1] - 700, 250)  
+        posicion4 = (frame.shape[1] - 700, 300)  
         
         # Especificaciones de fuente
         fuente = cv2.FONT_HERSHEY_SIMPLEX
@@ -95,7 +107,11 @@ def process_image(frame, grados, altura, horizontal, pixels_por_mm):
         grosor = 2
 
         # Dibujar el texto en la imagen
-        cv2.putText(frame, texto, posicion, fuente, escala_fuente, color, grosor)
+        cv2.putText(frame, texto0, posicion0, fuente, escala_fuente, color, grosor)
+        cv2.putText(frame, texto1, posicion1, fuente, escala_fuente, color, grosor)
+        cv2.putText(frame, texto2, posicion2, fuente, escala_fuente, color, grosor)
+        cv2.putText(frame, texto3, posicion3, fuente, escala_fuente, color, grosor)
+        cv2.putText(frame, texto4, posicion4, fuente, escala_fuente, color, grosor)
 
         return frame
     except Exception as e:
