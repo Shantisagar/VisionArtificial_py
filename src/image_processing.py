@@ -73,6 +73,17 @@ def process_image(frame, grados, altura, horizontal, pixels_por_mm):
 
         # Preparar el texto a mostrar en la imagen
         texto = f"{fecha_hora} - Desvío: {desvio_mm} mm"
+        # Ubicación del texto en la imagen (arriba a la derecha)
+        posicion = (frame.shape[1] - 400, 30)  # Ajusta según el tamaño de tu imagen
+        
+        # Especificaciones de fuente
+        fuente = cv2.FONT_HERSHEY_SIMPLEX
+        escala_fuente = 0.7
+        color = (0, 255, 255)  # Amarillo en BGR
+        grosor = 2
+
+        # Dibujar el texto en la imagen
+        cv2.putText(frame, texto, posicion, fuente, escala_fuente, color, grosor)
 
         return frame
     except Exception as e:
