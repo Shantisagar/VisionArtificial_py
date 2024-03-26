@@ -65,16 +65,16 @@ def process_image(frame, grados, altura, horizontal, pixels_por_mm):
         desvio_mm = calcular_desvio_en_mm(frame)
         
         # Mostrar el desvío en la consola
-        logger.info(f"Desvío registrado: {desvio_mm} mm")
+        logger.info(f"Desvio registrado: {desvio_mm} mm")
 
         # Obtener la fecha y hora actuales
         now = datetime.datetime.now()
         fecha_hora = now.strftime("%Y-%m-%d %H:%M:%S")
 
         # Preparar el texto a mostrar en la imagen
-        texto = f"{fecha_hora} - Desvío: {desvio_mm} mm"
+        texto = f"{fecha_hora} - Desvio: {desvio_mm} mm"
         # Ubicación del texto en la imagen (arriba a la derecha)
-        posicion = (frame.shape[1] - 400, 30)  # Ajusta según el tamaño de tu imagen
+        posicion = (frame.shape[1] - 500, 100)  
         
         # Especificaciones de fuente
         fuente = cv2.FONT_HERSHEY_SIMPLEX
