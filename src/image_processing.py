@@ -42,10 +42,12 @@ def dibujar_reglas(frame, pixels_por_mm=20):
             cv2.putText(frame, str(mm), (centro_x + mm * pixels_por_mm - 5, centro_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
 
     return frame
-def calcular_desvio_en_mm(frame):
-    # Implementa tu lógica aquí
-    # Devuelve el desvío en milímetros como float
-    return 0.0  # Ejemplo, reemplazar con el cálculo real
+def calcular_desvio_en_mm(posicion_borde_x, ancho_imagen, pixels_por_mm):
+    #centro_imagen_x = ancho_imagen / 2
+    #desvio_pixeles = posicion_borde_x - centro_imagen_x
+    #desvio_mm = desvio_pixeles / pixels_por_mm
+    desvio_mm = 0.0
+    return desvio_mm
 
 def process_image(frame, grados, altura, horizontal, pixels_por_mm):
     """
@@ -58,11 +60,13 @@ def process_image(frame, grados, altura, horizontal, pixels_por_mm):
         if horizontal != 0:
             frame = desplazar_horizontal(frame, horizontal)
         
+        #frame, posicion_borde_x = encontrar_borde(frame)
         frame = encontrar_borde(frame)
+  
         frame = dibujar_reglas(frame)
-
+        posicion_borde_x = 0 #test
         # Calcular el desvío en milímetros
-        desvio_mm = calcular_desvio_en_mm(frame)
+        desvio_mm = calcular_desvio_en_mm(posicion_borde_x, frame.shape[1], pixels_por_mm)
         
         # Mostrar el desvío en la consola
         logger.info(f"Desvio registrado: {desvio_mm} mm")
