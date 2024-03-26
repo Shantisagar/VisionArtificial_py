@@ -51,9 +51,6 @@ def calcular_promedio_gris(image):
     
     Retorna:
     - np.ndarray: Imagen en escala de grises con el promedio calculado.
-    
-    Lanza:
-    - Exception: Si ocurre un error durante el cálculo.
     """
     try:
         return np.mean(image, axis=2).reshape((*image.shape[:2], 1))
@@ -70,9 +67,6 @@ def calcular_derivadas(array):
     
     Retorna:
     - np.ndarray: Array unidimensional con las derivadas calculadas.
-    
-    Lanza:
-    - Exception: Si ocurre un error durante el cálculo.
     """
     try:
         left, mid, right = array[:-2], array[1:-1], array[2:]
