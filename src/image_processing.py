@@ -43,9 +43,9 @@ def dibujar_reglas(frame, pixels_por_mm=20):
 
     return frame
 def calcular_desvio_en_mm(posicion_borde_x, ancho_imagen, pixels_por_mm):
-    #centro_imagen_x = ancho_imagen / 2
-    #desvio_pixeles = posicion_borde_x - centro_imagen_x
-    #desvio_mm = desvio_pixeles / pixels_por_mm
+    centro_imagen_x = ancho_imagen / 2
+    desvio_pixeles = posicion_borde_x - centro_imagen_x
+    desvio_mm = desvio_pixeles / pixels_por_mm
     desvio_mm = 0.0
     return desvio_mm
 
