@@ -72,18 +72,21 @@ def process_image(frame, grados, altura, horizontal, pixels_por_mm):
         fecha_hora = now.strftime("%d-%m-%Y %H:%M:%S")
         
         # Mostrar el desvío en la consola
-        if desvio_mm > 0:
+        if desvio_mm > 2:
             logger.info(f"Desvío registrado: {desvio_mm} mm ENG")
             texto = f"{fecha_hora} - Desvio: {desvio_mm} mm ENG"
-        else:  # Esto cubre tanto desvio_mm < 0 como desvio_mm == 0
+        elif desvio_mm < -2:
             logger.info(f"Desvío registrado: {desvio_mm} mm OP")
-            texto = f"{fecha_hora} - Desvio: {desvio_mm} mm ENG"
+            texto = f"{fecha_hora} - Desvio: {desvio_mm} mm OP"
+        else:  # Esto cubre el caso donde el desvío está dentro de la tolerancia de +/- 2mm
+            logger.info(f"Desvío registrado: {desvio_mm} mm - Centrado")
+            texto = f"{fecha_hora} - Desvio: {desvio_mm} mm - Centrado"
 
 
 
 
         # Ubicación del texto en la imagen (arriba a la derecha)
-        posicion = (frame.shape[1] - 600, 100)  
+        posicion = (frame.shape[1] - 700, 100)  
         
         # Especificaciones de fuente
         fuente = cv2.FONT_HERSHEY_SIMPLEX
