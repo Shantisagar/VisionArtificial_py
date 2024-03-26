@@ -1,6 +1,7 @@
 #VisionArtificial\src\image_processing.py
 import cv2
 import numpy as np
+import datetime
 from rotacion import rotar_imagen
 from deteccion_bordes import encontrar_borde
 from logs.config_logger import configurar_logging
@@ -41,23 +42,37 @@ def dibujar_reglas(frame, pixels_por_mm=20):
             cv2.putText(frame, str(mm), (centro_x + mm * pixels_por_mm - 5, centro_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
 
     return frame
+def calcular_desvio_en_mm(frame):
+    # Implementa tu lógica aquí
+    # Devuelve el desvío en milímetros como float
+    return 0.0  # Ejemplo, reemplazar con el cálculo real
 
 def process_image(frame, grados, altura, horizontal, pixels_por_mm):
     """
     Procesa la imagen aplicando rotación, desplazamiento horizontal, corrección de perspectiva y detección de bordes.
     """
     try:
-        # Rotación de la imagen si se especifica un ángulo diferente de cero
         if grados != 0:
             frame = rotar_imagen(frame, grados)
         
-        # Desplazamiento horizontal
         if horizontal != 0:
             frame = desplazar_horizontal(frame, horizontal)
         
-        # Detección de bordes y dibujo de reglas
         frame = encontrar_borde(frame)
         frame = dibujar_reglas(frame)
+
+        # Calcular el desvío en milímetros
+        desvio_mm = calcular_desvio_en_mm(frame)
+        
+        # Mostrar el desvío en la consola
+        logger.info(f"Desvío registrado: {desvio_mm} mm")
+
+        # Obtener la fecha y hora actuales
+        now = datetime.datetime.now()
+        fecha_hora = now.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Preparar el texto a mostrar en la imagen
+        texto = f"{fecha_hora} - Desvío: {desvio_mm} mm"
 
         return frame
     except Exception as e:
