@@ -5,6 +5,7 @@ import datetime
 from rotacion import rotar_imagen
 from deteccion_bordes import encontrar_borde
 from logs.config_logger import configurar_logging
+from registro_desvios import registrar_desvio 
 
 TOLERANCIA = 2  # Tolerancia en milímetros
 
@@ -48,6 +49,8 @@ def calcular_desvio_en_mm(posicion_borde_x, ancho_imagen, pixels_por_mm):
     centro_imagen_x = ancho_imagen / 2
     desvio_pixeles = posicion_borde_x - centro_imagen_x
     desvio_mm = desvio_pixeles / pixels_por_mm
+    desvio_mm = round(desvio_mm, 2)
+
     return desvio_mm
 
 def process_image(frame, grados, altura, horizontal, pixels_por_mm):
@@ -73,23 +76,8 @@ def process_image(frame, grados, altura, horizontal, pixels_por_mm):
         now = datetime.datetime.now()
         fecha_hora = now.strftime("%d-%m-%Y %H:%M:%S")
         
-        # Mostrar el desvío en la consola
-        if desvio_mm > TOLERANCIA:
-            logger.info(f"Desvío registrado: {desvio_mm} mm ENG")
-            texto1 = f" Desvio: {desvio_mm} mm ENG"
 
-        elif desvio_mm < -TOLERANCIA:
-            logger.info(f"Desvío registrado: {desvio_mm} mm OP")
-            texto1 = f"Desvio: {desvio_mm} mm OP"
-        else:  # Esto cubre el caso donde el desvío está dentro de la tolerancia de +/- 2mm
-            logger.info(f"Desvío registrado: {desvio_mm} mm - Centrado")
-            if desvio_mm > 0:
-                texto1 = f"Desvio: {desvio_mm} mm - Centrado ENG"
-            elif desvio_mm < 0:
-                texto1 = f"Desvio: {desvio_mm} mm - Centrado OP"
-            else:
-                texto1 = f"Desvio: {desvio_mm} mm - Centrado"
-
+        texto1 = registrar_desvio(desvio_mm,TOLERANCIA)
         texto0 = fecha_hora
         texto2 = "Ancho de bobina: 790mm"
         texto3 = "Formato bolsa: 260x120x360"

@@ -7,6 +7,9 @@ name = "pypi"
 opencv-python = "*"
 pillow = "*"
 numpy = "*"
+requests = "*"
+screeninfo = "*"
+mysql-connector-python = "*"
 
 [dev-packages]
 
