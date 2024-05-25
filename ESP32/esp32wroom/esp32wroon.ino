@@ -1,11 +1,11 @@
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ESPmDNS.h>
 
 // Configura el SSID y la contraseña de tu red WiFi
 const char* ssid = "Aula tecnica";
 const char* password = "Madygraf32";
-const char* backupSSID = "Backup SSID";
-const char* backupPassword = "BackupPassword";
+const char* hostName = "esp32"; // Nombre de host para mDNS
 
 const int maxAttempts = 5; // Número máximo de intentos de conexión
 const unsigned long wifiTimeout = 10000; // Timeout para la conexión WiFi (10 segundos)
@@ -151,6 +151,16 @@ void setup() {
     // Intentar conectar a WiFi
     bool connected = tryConnectToWiFi();
 
+    // Configurar mDNS
+    if (connected) {
+        if (MDNS.begin(hostName)) {
+            Serial.println("mDNS responder started");
+            MDNS.addService("http", "tcp", 80);
+        } else {
+            Serial.println("Error setting up mDNS responder!");
+        }
+    }
+
     // Continuar con la configuración incluso si la conexión falla
     setupOutputPins();
     setupServerRoutes();
@@ -165,4 +175,5 @@ void setup() {
 
 void loop() {
     server.handleClient();
+    MDNS.update();
 }
