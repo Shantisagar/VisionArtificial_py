@@ -1,9 +1,9 @@
 #VisionArtificial\src\rotacion.py
 import cv2
-import logging
+from src.logs.config_logger import configurar_logging
 
 # Asumiendo que ya tienes configurado un logger en tu aplicación
-logger = logging.getLogger(__name__)
+logger = configurar_logging()
 
 def rotar_imagen(frame, grados):
     """

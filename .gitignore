@@ -6,3 +6,4 @@ VisionArtificial.bat
 src/config.json
 src/logs/sistema.log
 .vscode/
+docs/todo.md

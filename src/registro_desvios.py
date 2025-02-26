@@ -1,5 +1,5 @@
 
-from logs.config_logger import configurar_logging
+from src.logs.config_logger import configurar_logging
 import mysql.connector
 from datetime import datetime
 from pytz import timezone

@@ -1,8 +1,8 @@
 import numpy as np
-import logging
+from src.logs.config_logger import configurar_logging
 
 # Configuración del logger, asumiendo que ya tienes uno configurado en tu aplicación
-logger = logging.getLogger(__name__)
+logger = configurar_logging()
 
 def encontrar_borde(frame):
     """

@@ -2,7 +2,7 @@
 import json
 import os
 import sys
-from logs.config_logger import configurar_logging
+from src.logs.config_logger import configurar_logging
 
 # Configuración del logger
 logger = configurar_logging()
@@ -16,8 +16,8 @@ def leer_configuracion(config_path):
         "grados_rotacion_default": 0.0,
         "horizontal_default": 0.0,
         "altura_default": 0.0,
-        "url_default": "192.168.10.103",
-        "ubicacion_default": "C:/AppServ/www/VisionArtificial/tests/calibracion_deteccion_papel.jpg",
+        "url_default": "192.168.0.119",
+        "ubicacion_default": "C:/AppServ/www/VisionArtificial_py/tests/calibracion_deteccion_papel.jpg",
         "pixels_por_mm_default": 35
     }
 

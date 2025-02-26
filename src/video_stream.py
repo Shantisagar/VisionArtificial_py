@@ -2,12 +2,11 @@
 import cv2
 import tkinter as tk
 from PIL import Image, ImageTk
-import image_processing
+from src import image_processing
 import requests
 import numpy as np
 from io import BytesIO
-
-from logs.config_logger import configurar_logging
+from src.logs.config_logger import configurar_logging
 
 # Configuración del logger
 logger = configurar_logging()

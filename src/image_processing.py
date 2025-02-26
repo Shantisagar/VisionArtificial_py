@@ -2,10 +2,10 @@
 import cv2
 import numpy as np
 import datetime
-from rotacion import rotar_imagen
-from deteccion_bordes import encontrar_borde
-from logs.config_logger import configurar_logging
-from registro_desvios import registrar_desvio 
+from src.rotacion import rotar_imagen
+from src.deteccion_bordes import encontrar_borde
+from src.logs.config_logger import configurar_logging
+from src.registro_desvios import registrar_desvio 
 
 TOLERANCIA = 2  # Tolerancia en milímetros
 
