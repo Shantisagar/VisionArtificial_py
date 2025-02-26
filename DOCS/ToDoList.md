@@ -1,33 +1,3 @@
-## 1. Desacoplar la Interfaz de Usuario (Tkinter) y la Lógica de Procesamiento
-
-**Título:** Separación de la UI de la lógica de procesamiento  
-**Dependencias:**  
-- Dependencia directa entre el módulo de video (UI) y la lógica de procesamiento en image_processing, rotacion, deteccion_bordes.
-
-#### 🔹 Subtareas
-
-- **Título de la subtarea:** Crear un controlador/interfaz para orquestar la lógica de procesamiento  
-  - **Archivos involucrados:**  
-    - video_stream.py
-    - image_processing.py
-  - **Acción a realizar:** Modificar  
-  - **Justificación detallada:**  
-    - Actualmente, el flujo de la aplicación mezcla la obtención y procesamiento de la imagen en el mismo contexto (Tkinter y procesamiento de imagen). Separar estas responsabilidades facilitará futuras migraciones (por ejemplo, a una API web) y reducirá el acoplamiento.
-  - **Archivos de referencia:**  
-    - Código existente en video_stream.py y image_processing.py.
-
-- **Título de la subtarea:** Refactorizar la inicialización de la interfaz para utilizar inyección de dependencias  
-  - **Archivos involucrados:**  
-    - main.py
-    - config_manager.py
-  - **Acción a realizar:** Modificar  
-  - **Justificación detallada:**  
-    - Permitir que la lógica de negocio y la UI sean gestionadas de manera independiente ayudará en la transición hacia arquitecturas basadas en API.  
-  - **Archivos de referencia:**  
-    - Configuración actual en config_manager.py y main.py.
-
----
-
 ## 2. Refactorización SOLID en la Lógica Central
 
 **Título:** Aplicación de principios SOLID en la lógica de procesamiento y registro  

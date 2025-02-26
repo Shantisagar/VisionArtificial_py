@@ -36,13 +36,14 @@ def dibujar_reglas(frame, pixels_por_mm=20):
             cv2.line(frame, (centro_x, y), (centro_x, min(y+2, altura)), (255, 0, 0), 1)  # Cambia 2 para ajustar la longitud de los segmentos
 
     # Dibujar marcas de milímetros y números de centímetros
-    for mm in range(-centro_x // pixels_por_mm, centro_x // pixels_por_mm):
+    int_pixels = int(pixels_por_mm)
+    for mm in range(int(-centro_x / int_pixels), int(centro_x / int_pixels)):
         if mm % 10 == 0:  # Marcas más largas para centímetros
-            cv2.line(frame, (centro_x + mm * pixels_por_mm, centro_y - 10), (centro_x + mm * pixels_por_mm, centro_y + 10), (255, 255, 255), 2)
-            cv2.putText(frame, str(mm // 10), (centro_x + mm * pixels_por_mm - 5, centro_y + 25), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+            cv2.line(frame, (centro_x + mm * int_pixels, centro_y - 10), (centro_x + mm * int_pixels, centro_y + 10), (255, 255, 255), 2)
+            cv2.putText(frame, str(mm // 10), (centro_x + mm * int_pixels - 5, centro_y + 25), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
         else:  # Marcas más cortas para milímetros
-            cv2.line(frame, (centro_x + mm * pixels_por_mm, centro_y - 5), (centro_x + mm * pixels_por_mm, centro_y + 5), (255, 255, 255), 1)
-            cv2.putText(frame, str(mm), (centro_x + mm * pixels_por_mm - 5, centro_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+            cv2.line(frame, (centro_x + mm * int_pixels, centro_y - 5), (centro_x + mm * int_pixels, centro_y + 5), (255, 255, 255), 1)
+            cv2.putText(frame, str(mm), (centro_x + mm * int_pixels - 5, centro_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
 
     return frame
 def calcular_desvio_en_mm(posicion_borde_x, ancho_imagen, pixels_por_mm):
@@ -53,60 +54,57 @@ def calcular_desvio_en_mm(posicion_borde_x, ancho_imagen, pixels_por_mm):
 
     return desvio_mm
 
-def process_image(frame, grados, altura, horizontal, pixels_por_mm):
-    """
-    Procesa la imagen aplicando rotación, desplazamiento horizontal, corrección de perspectiva y detección de bordes.
-    """
-    try:
-        if grados != 0:
-            frame = rotar_imagen(frame, grados)
-        
-        if horizontal != 0:
-            frame = desplazar_horizontal(frame, horizontal)
-        
-        #frame, posicion_borde_x = encontrar_borde(frame)
-        frame,max_x = encontrar_borde(frame)
-  
-        frame = dibujar_reglas(frame)
-        posicion_borde_x = max_x
-        # Calcular el desvío en milímetros
-        desvio_mm = calcular_desvio_en_mm(posicion_borde_x, frame.shape[1], pixels_por_mm)
-        
-        # Obtener la fecha y hora actuales
-        now = datetime.datetime.now()
-        fecha_hora = now.strftime("%d-%m-%Y %H:%M:%S")
-        
+class ProcessingController:
+    def __init__(self, default_pixels_por_mm=20):
+        self.default_pixels_por_mm = default_pixels_por_mm
+        # ...existing initialization if needed...
 
-        texto1 = registrar_desvio(desvio_mm,TOLERANCIA)
-        texto0 = fecha_hora
-        texto2 = "Ancho de bobina: 790mm"
-        texto3 = "Formato bolsa: 260x120x360"
-        texto4 = "solapa: 30mm"
-
-        # Ubicación del texto en la imagen (arriba a la derecha)
-        posicion0 = (frame.shape[1] - 700, 100)  
-        posicion1 = (frame.shape[1] - 700, 150)  
-        posicion2 = (frame.shape[1] - 700, 200)  
-        posicion3 = (frame.shape[1] - 700, 250)  
-        posicion4 = (frame.shape[1] - 700, 300)  
-        
-        # Especificaciones de fuente
-        fuente = cv2.FONT_HERSHEY_SIMPLEX
-        escala_fuente = 0.7
-        color = (0, 255, 255)  # Amarillo en BGR
-        grosor = 2
-
-        # Dibujar el texto en la imagen
-        cv2.putText(frame, texto0, posicion0, fuente, escala_fuente, color, grosor)
-        cv2.putText(frame, texto1, posicion1, fuente, escala_fuente, color, grosor)
-        cv2.putText(frame, texto2, posicion2, fuente, escala_fuente, color, grosor)
-        cv2.putText(frame, texto3, posicion3, fuente, escala_fuente, color, grosor)
-        cv2.putText(frame, texto4, posicion4, fuente, escala_fuente, color, grosor)
-
-        return frame
-    except Exception as e:
-        logger.error(f"Error al procesar la imagen: {e}")
-        raise
+    def process(self, frame, grados, altura, horizontal, pixels_por_mm):
+        try:
+            if grados != 0:
+                frame = rotar_imagen(frame, grados)
+            if horizontal != 0:
+                frame = desplazar_horizontal(frame, horizontal)
+            # Edge detection: obtener borde y la posición (max_x)
+            frame, max_x = encontrar_borde(frame)
+            # Dibujar reglas usando el valor de pixels_por_mm
+            frame = dibujar_reglas(frame, pixels_por_mm)
+            
+            # Calcular desviación
+            desvio_mm = calcular_desvio_en_mm(max_x, frame.shape[1], pixels_por_mm)
+            
+            # Obtener información de tiempo
+            now = datetime.datetime.now()
+            fecha_hora = now.strftime("%d-%m-%Y %H:%M:%S")
+            texto0 = fecha_hora
+            texto1 = registrar_desvio(desvio_mm, TOLERANCIA)
+            texto2 = "Ancho de bobina: 790mm"
+            texto3 = "Formato bolsa: 260x120x360"
+            texto4 = "solapa: 30mm"
+            
+            # Posicionamiento del texto (arriba a la derecha)
+            posicion0 = (frame.shape[1] - 700, 100)
+            posicion1 = (frame.shape[1] - 700, 150)
+            posicion2 = (frame.shape[1] - 700, 200)
+            posicion3 = (frame.shape[1] - 700, 250)
+            posicion4 = (frame.shape[1] - 700, 300)
+            
+            fuente = cv2.FONT_HERSHEY_SIMPLEX
+            escala_fuente = 0.7
+            color = (0, 255, 255)  # Amarillo
+            grosor = 2
+            
+            # Dibujar textos
+            cv2.putText(frame, texto0, posicion0, fuente, escala_fuente, color, grosor)
+            cv2.putText(frame, texto1, posicion1, fuente, escala_fuente, color, grosor)
+            cv2.putText(frame, texto2, posicion2, fuente, escala_fuente, color, grosor)
+            cv2.putText(frame, texto3, posicion3, fuente, escala_fuente, color, grosor)
+            cv2.putText(frame, texto4, posicion4, fuente, escala_fuente, color, grosor)
+            
+            return frame
+        except Exception as e:
+            logger.error(f"Error al procesar la imagen: {e}")
+            raise
 
 def desplazar_horizontal(frame, horizontal):
     """

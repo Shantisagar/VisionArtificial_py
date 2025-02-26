@@ -7,7 +7,7 @@ import sys
 import tkinter as tk
 from src.video_stream import VideoStreamApp
 from src.logs.config_logger import configurar_logging
-from src.config_manager import leer_configuracion, actualizar_configuracion
+from src.config_manager import ConfigManager  # modified import
 
 logger = configurar_logging()
 
@@ -40,7 +40,9 @@ def main():
     try:
         # Ruta al archivo de configuración
         config_path = 'src/config.json'
-        config = leer_configuracion(config_path)
+        # Instantiate ConfigManager to manage configuration dependencies
+        config_manager = ConfigManager(config_path)
+        config = config_manager.get_config()
 
         # Recopilar inputs del usuario
         grados_rotacion = float(input(
@@ -56,14 +58,14 @@ def main():
             f'Ingrese para corregir el eje horizontal en px, "{config["horizontal_default"]}" por defecto: ') 
             or config["horizontal_default"])
         
-        # Actualizar la configuración
+        # Actualizar la configuración (dependency injection)
         nueva_config = {
             "grados_rotacion_default": grados_rotacion,
             "altura_default": altura,
             "horizontal_default": horizontal,
             "pixels_por_mm_default": pixels_por_mm
         }
-        actualizar_configuracion(config_path, nueva_config)
+        config_manager.update_config(nueva_config)
         
         default_video_url = manejar_menu(config)
         
@@ -73,3 +75,6 @@ def main():
     except Exception as e:
         logger.error(f"Error al iniciar la aplicación: {e}")
         sys.exit(1)
+
+if __name__ == '__main__':
+    main()

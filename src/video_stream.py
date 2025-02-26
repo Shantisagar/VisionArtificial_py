@@ -3,6 +3,7 @@ import cv2
 import tkinter as tk
 from PIL import Image, ImageTk
 from src import image_processing
+from src.image_processing import ProcessingController  # added import
 import requests
 import numpy as np
 from io import BytesIO
@@ -23,6 +24,7 @@ class VideoStreamApp:
         self.altura = altura
         self.horizontal = horizontal
         self.pixels_por_mm = pixels_por_mm
+        self.controller = ProcessingController()  # instantiate controller
         self.setup_ui()
 
     def setup_ui(self):
@@ -111,7 +113,7 @@ class VideoStreamApp:
             monitor_height = self.root.winfo_screenheight()
             frame_scaled = self.scale_frame_to_monitor(frame, monitor_width, monitor_height)
             if frame_scaled is not None:
-                processed_frame = image_processing.process_image(frame_scaled, self.grados_rotacion, self.altura, self.horizontal,self.pixels_por_mm)
+                processed_frame = self.controller.process(frame_scaled, self.grados_rotacion, self.altura, self.horizontal, self.pixels_por_mm)  # use controller
                 img = Image.fromarray(processed_frame)
                 imgtk = ImageTk.PhotoImage(image=img)
                 self.panel.imgtk = imgtk
