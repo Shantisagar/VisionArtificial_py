@@ -17,7 +17,7 @@ def obtener_opcion_video(config):
     """
     try:
         opcion = input(
-            "Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP\nOpción: "
+            "Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP\n3 - Cámara web\nOpción: "
         ) or "2"
         if opcion == "0":
             logger.info("Modo de calibración de reconocimiento de imagen activado.")
@@ -28,6 +28,9 @@ def obtener_opcion_video(config):
         elif opcion == "2":
             logger.info("Modo HTTP activado.")
             return f"http://{config['url_default']}:8080/photo.jpg"
+        elif opcion == "3":
+            logger.info("Modo de cámara web activado.")
+            return 0  # Se utiliza el índice 0 para la cámara web por defecto
         else:
             logger.error("Opción no válida.")
             sys.exit(1)

@@ -51,7 +51,7 @@ class VideoStreamApp:
         Crea y lanza el hilo dedicado a la captura y procesamiento de video.
         Se distingue entre fuentes HTTP y locales.
         """
-        if self.default_video_url.startswith('http'):
+        if isinstance(self.default_video_url, str) and self.default_video_url.startswith('http'):
             threading.Thread(target=self.http_capture_loop, daemon=True).start()
         else:
             self.cap = cv2.VideoCapture(self.default_video_url)
