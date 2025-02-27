@@ -1,99 +1,71 @@
 """
-Path: app/core_logs/logger_configurator.py
-Clase LoggerConfigurator mejorada para garantizar una única instancia y configuración consistente.
+Configurador de logging que permite inyectar configuraciones personalizadas.
 """
 
-import logging.config
+import logging
+import sys
 from typing import Optional
-import json
-from utils.logging.json_config_strategy import JSONConfigStrategy
-from utils.logging.config_strategy import ConfigStrategy
+
+# Singleton logger para mantener una referencia global
+_default_logger = None
 
 class LoggerConfigurator:
-    """Clase singleton para configurar el logger usando una estrategia y filtros dinámicos."""
-    _instance = None
-    _initialized = False
+    """Configura loggers con diferentes niveles y formatos."""
 
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-    def __init__(self, config_strategy: Optional[ConfigStrategy] = None,
-                 default_level: int = logging.INFO):
+    def __init__(self, 
+                 level: int = logging.INFO, 
+                 format_string: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         """
-        Inicializa el configurador del logger (solo una vez).
+        Inicializa el configurador con opciones personalizables.
         
         Args:
-            config_strategy (Optional[ConfigStrategy]): Estrategia para cargar la config.
-            default_level (int): Nivel de log por defecto.
+            level: Nivel de log (INFO, DEBUG, etc.)
+            format_string: Formato de las entradas de log
         """
-        if not self._initialized:
-            self.config_strategy = config_strategy or JSONConfigStrategy()
-            self.default_level = default_level
-            self.filters = {}
-            self._logger = None
-            self._initialized = True
-
-    def register_filter(self, name: str, filter_class: type) -> None:
+        self.level = level
+        self.format_string = format_string
+        
+    def configure(self, name: str = "app_logger") -> logging.Logger:
         """
-        Registra un filtro dinámicamente.
+        Configura y devuelve un logger.
         
         Args:
-            name (str): Nombre del filtro.
-            filter_class (type): Clase que hereda de logging.Filter.
-        """
-        if name not in self.filters:
-            self.filters[name] = filter_class()
-
-    def configure(self) -> logging.Logger:
-        """
-        Configura y retorna el logger. 
-        Si ya se configuró anteriormente, retorna la misma instancia.
-        
+            name: Nombre del logger a configurar
+            
         Returns:
-            logging.Logger: Logger configurado.
+            El logger configurado
         """
-        if self._logger is not None:
-            return self._logger
+        global _default_logger
+        
+        # Crear o obtener el logger por nombre
+        logger = logging.getLogger(name)
+        
+        # Evitar duplicar handlers si ya está configurado
+        if not logger.handlers:
+            logger.setLevel(self.level)
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setLevel(self.level)
+            formatter = logging.Formatter(self.format_string)
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
+        
+        # Almacenar como logger predeterminado si es el primero
+        if _default_logger is None:
+            _default_logger = logger
+        
+        return logger
 
-        config = self.config_strategy.load_config()
-
-        if config:
-            if 'filters' not in config:
-                config['filters'] = {}
-
-
-            for name, filter_instance in self.filters.items():
-                config['filters'][name] = {
-                    '()': f"{filter_instance.__class__.__module__}."
-                        f"{filter_instance.__class__.__name__}"
-                }
-            print(f"Filters: {self.filters}\n")
-            print(f"Config: {config}\n")
-            try:
-                logging.debug(f"Logger configuration: {json.dumps(config, indent=4)}")
-                logging.config.dictConfig(config)
-                self._logger = logging.getLogger("app_logger")
-            except ValueError as e:  # Error típico al usar dictConfig
-                logging.error(f"Error en la configuración del logger (dictConfig): {e}")
-                # MODIFICACIÓN: invoca el fallback si se produce ValueError
-                self._use_default_config()
-            except (TypeError, AttributeError, ImportError, KeyError) as e:
-                logging.error(f"Error específico al aplicar la configuración: {e}")
-                self._use_default_config()
-            else:
-                self._use_default_config()
-
-        return self._logger
-
-    def _use_default_config(self) -> None:
-        """
-        Aplica la configuración por defecto cuando la configuración principal falla.
-        """
-        logging.basicConfig(
-            level=self.default_level,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
-        self._logger = logging.getLogger("app_logger")
-        logging.warning("Usando configuración por defecto del logger.")
+def get_logger() -> logging.Logger:
+    """
+    Función de utilidad para acceder al logger predeterminado.
+    
+    Returns:
+        El logger predeterminado configurado o uno nuevo si no existe
+    """
+    global _default_logger
+    
+    if _default_logger is None:
+        # Si no hay logger predeterminado, crear uno básico
+        _default_logger = LoggerConfigurator().configure()
+        
+    return _default_logger

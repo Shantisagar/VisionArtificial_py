@@ -1,57 +1,96 @@
 """
-Path: VisionArtificial\config_manager.py
-Este módulo se encarga de leer y actualizar la configuración de la aplicación desde un archivo JSON.
+Gestor de configuración con soporte para múltiples fuentes y acceso unificado.
 """
 
 import json
 import os
 import sys
-from utils.logging.logger_configurator import LoggerConfigurator
-
-# Configuración del logger
-logger = LoggerConfigurator().configure()
-
-DEFAULT_CONFIG = {
-    "grados_rotacion_default": 0.0,
-    "horizontal_default": 0.0,
-    "altura_default": 0.0,
-    "url_default": "192.168.0.119",
-    "ubicacion_default": "C:/AppServ/www/VisionArtificial_py/tests/calibracion_deteccion_papel.jpg",
-    "pixels_por_mm_default": 35
-}
+from typing import Dict, Any, Optional
+from utils.logging.logger_configurator import get_logger
 
 class ConfigManager:
-    def __init__(self, config_path, default_config=DEFAULT_CONFIG):
+    """
+    Gestor de configuración que permite trabajar con múltiples fuentes
+    y provee una interfaz unificada para acceder a la configuración.
+    """
+    
+    def __init__(self, config_path=None):
+        """
+        Inicializa el gestor de configuración con la ruta de configuración especificada.
+        
+        Args:
+            config_path: Ruta al archivo de configuración o None
+        """
+        self.logger = get_logger()
         self.config_path = config_path
-        self.default_config = default_config
-        self._ensure_config()
-
-    def _ensure_config(self):
-        if not os.path.exists(self.config_path):
-            try:
-                with open(self.config_path, 'w') as archivo:
-                    json.dump(self.default_config, archivo, indent=4)
-                logger.info("Archivo de configuración creado con valores predeterminados.")
-            except Exception as e:
-                logger.error(f"Error al crear el archivo de configuración: {e}")
-                sys.exit(1)
-
-    def get_config(self):
+        self._config = {}
+        if config_path:
+            self._load_config()
+    
+    @classmethod
+    def from_file(cls, file_path: str) -> 'ConfigManager':
+        """
+        Crea un ConfigManager con una fuente de archivo.
+        
+        Args:
+            file_path: Ruta al archivo de configuración
+            
+        Returns:
+            Una instancia de ConfigManager configurada
+        """
+        return cls(config_path=file_path)
+    
+    def _load_config(self) -> None:
+        """Carga la configuración desde el archivo."""
         try:
-            with open(self.config_path, 'r') as archivo:
-                datos = json.load(archivo)
-            return datos
+            if os.path.exists(self.config_path):
+                with open(self.config_path, 'r') as file:
+                    self._config = json.load(file)
+            else:
+                self.logger.warning(f"Archivo de configuración no encontrado: {self.config_path}")
         except Exception as e:
-            logger.error(f"Error al leer el archivo de configuración: {e}")
-            sys.exit(1)
-
-    def update_config(self, nueva_config):
+            self.logger.error(f"Error al cargar configuración desde archivo: {e}")
+    
+    def get_config(self) -> Dict[str, Any]:
+        """
+        Devuelve la configuración completa.
+        
+        Returns:
+            Diccionario con la configuración actual
+        """
+        return self._config.copy()
+    
+    def get_value(self, key: str, default: Any = None) -> Any:
+        """
+        Obtiene un valor específico de la configuración.
+        
+        Args:
+            key: Clave de la configuración a recuperar
+            default: Valor por defecto si la clave no existe
+            
+        Returns:
+            El valor de la configuración o el valor por defecto
+        """
+        return self._config.get(key, default)
+    
+    def update_config(self, new_config: Dict[str, Any]) -> None:
+        """
+        Actualiza la configuración y la persiste en el archivo.
+        
+        Args:
+            new_config: Diccionario con los valores a actualizar
+        """
+        # Actualizar la configuración en memoria
+        self._config.update(new_config)
+        
+        # Persistir en el archivo
         try:
-            with open(self.config_path, 'r+') as archivo:
-                config = json.load(archivo)
-                config.update(nueva_config)
-                archivo.seek(0)
-                json.dump(config, archivo, indent=4)
-                archivo.truncate()
+            # Asegurar que el directorio existe
+            os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
+            
+            with open(self.config_path, 'w') as file:
+                json.dump(self._config, file, indent=4)
+                
+            self.logger.debug(f"Configuración guardada en {self.config_path}")
         except Exception as e:
-            logger.error(f"Error al actualizar la configuración: {e}")
+            self.logger.error(f"Error al guardar configuración en archivo: {e}")

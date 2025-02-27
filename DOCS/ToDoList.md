@@ -1,104 +1,111 @@
-1. ### Tarea Principal 1: Optimización del Procesamiento en Tiempo Real  
-   **Dependencias:**  
-   - Módulos: video_stream.py, image_processing.py, ProcessingController en image_processing.py
+### 1. Tarea Principal: Refactorizar la separación de responsabilidades en main.py  
+- **Dependencias:**  
+  - Archivo principal de entrada (main.py).  
+  - Módulo de configuración (src/config_manager.py).  
+  - Módulo de logging (utils/logging/logger_configurator.py).  
 
-   #### 🔹 Subtareas  
-   - **Separar el procesamiento de imágenes del hilo de la interfaz**  
-     - **Archivos involucrados:**  
-       - video_stream.py  
-     - **Acción a realizar:** Modificar  
-     - **Justificación detallada:**  
-       La ejecución del procesamiento intensivo en el mismo hilo que la UI provoca bloqueos y reduce la fluidez, especialmente en transmisión en tiempo real o al manejar imágenes de alta resolución. Desacoplar este procesamiento (por ejemplo, implementando hilos o procesos separados) permitirá aprovechar mejor los recursos del sistema sin afectar la visualización.  
-     - **Archivos de referencia:**  
-       - image_processing.py (especialmente la clase ProcessingController)  
-       - rotacion.py y deteccion_bordes.py para entender la lógica de procesamiento.
+#### 🔹 Subtareas:
+- **Subtarea 1:** Extraer la lógica de recolección de parámetros y opciones de video a módulos o servicios independientes.  
+  - **Archivos involucrados:**  
+    - main.py  
+  - **Acción a realizar:** Modificar (reubicar) el código.  
+  - **Justificación:** Aislar las tareas de entrada de datos y selección de opciones mejora la adherencia al patrón MVC y facilita la prueba y mantenimiento de cada componente por separado.  
+  - **Archivos de referencia:**  
+    - El propio main.py con funciones como `obtener_opcion_video` y `recoger_parametros_usuario`.
 
-   - **Implementar gestión de sincronización y control de calidad de frames**  
-     - **Archivos involucrados:**  
-       - video_stream.py  
-     - **Acción a realizar:** Modificar  
-     - **Justificación detallada:**  
-       Es necesario garantizar que el reenvío de frames desde el procesamiento a la UI se haga de forma sincronizada para evitar pérdida de frames o errores de concurrencia.  
-     - **Archivos de referencia:**  
-       - Bibliotecas de Python para concurrencia (como threading o concurrent.futures) pueden ser consultadas.
-
----
-
-2. ### Tarea Principal 2: Refactorización para Adherencia a SOLID  
-   **Dependencias:**  
-   - Módulos: main.py, image_processing.py, video_stream.py, config_manager.py, config_logger.py
-
-   #### 🔹 Subtareas  
-   - **Revisión de responsabilidades y separación de preocupaciones**  
-     - **Archivos involucrados:**  
-       - main.py  
-       - image_processing.py  
-       - video_stream.py  
-     - **Acción a realizar:** Modificar  
-     - **Justificación detallada:**  
-       Identificar y aislar funciones con múltiples responsabilidades (por ejemplo, entrada del usuario, procesamiento, y actualización de UI) facilita su mantenibilidad y posterior extensión. Se recomienda separar claramente la lógica de entrada, la de procesamiento y la de presentación.  
-     - **Archivos de referencia:**  
-       - La documentación actual de cada módulo para comprender responsabilidades.
-
-   - **Implementar inyección de dependencias**  
-     - **Archivos involucrados:**  
-       - main.py  
-       - config_manager.py  
-       - video_stream.py  
-     - **Acción a realizar:** Modificar  
-     - **Justificación detallada:**  
-       Inyectar dependencias (como el logger, configuraciones o controladores de procesamiento) ayudará a reducir el acoplamiento y abrirá la posibilidad de testear cada componente de forma aislada.  
-     - **Archivos de referencia:**  
-       - config_manager.py y src/logs/config_logger.py, para entender cómo se gestionan actualmente estas dependencias.
+- **Subtarea 2:** Crear un controlador central que orqueste la inicialización de la configuración, la recogida de datos y la activación de la UI.  
+  - **Archivos involucrados:**  
+    - main.py  
+  - **Acción a realizar:** Modificar la estructura del flujo principal para delegar responsabilidades.  
+  - **Justificación:** Facilita futuras extensiones (por ejemplo, integración con Deep Learning) y permite una evolución clara de cada capa.  
+  - **Archivos de referencia:**  
+    - Diseño MVC y documentación relacionada en el proyecto.
 
 ---
 
-3. ### Tarea Principal 3: Desacoplar la Lógica de la Interfaz Gráfica  
-   **Dependencias:**  
-   - Módulos: video_stream.py, image_processing.py
+### 2. Tarea Principal: Aplicar principios SOLID mediante inyección de dependencias  
+- **Dependencias:**  
+  - Todos los módulos que actualmente usan dependencias globales (por ejemplo, Logger y ConfigManager).  
 
-   #### 🔹 Subtareas  
-   - **Separar la lógica de presentación de la lógica de procesamiento**  
-     - **Archivos involucrados:**  
-       - video_stream.py  
-     - **Acción a realizar:** Modificar  
-     - **Justificación detallada:**  
-       Se recomienda aplicar un patrón arquitectónico (como MVC o MVP) para que la UI (Tkinter) solo sea responsable de presentar resultados y obtenga los datos de un controlador o servicio. Esto facilita la migración futura a interfaces basadas en web (Flask/FastAPI) sin rehacer la lógica de procesamiento.  
-     - **Archivos de referencia:**  
-       - image_processing.py (para identificar la lógica de procesamiento)  
-       - Ejemplos de implementación de MVC en Python.
+#### 🔹 Subtareas:
+- **Subtarea 1:** Refactorizar el Logger, permitiendo que se inyecte la dependencia en lugar de instanciarlo directamente.  
+  - **Archivos involucrados:**  
+    - logger_configurator.py  
+    - main.py  
+  - **Acción a realizar:** Modificar el manejo del logger para aceptarlo desde un contenedor o pasarlo como parámetro.  
+  - **Justificación:** Aumenta la flexibilidad para pruebas unitarias y reduce el acoplamiento en el código.  
+  - **Archivos de referencia:**  
+    - El módulo Logger actual y patrones de inyección de dependencias.
 
-   - **Documentar la interdependencia actual entre UI y procesamiento**  
-     - **Archivos involucrados:**  
-       - main.py  
-       - video_stream.py  
-     - **Acción a realizar:** Modificar (comentarios y documentación)  
-     - **Justificación detallada:**  
-       Documentar cómo la UI obtiene y muestra los datos procesados ayudará en la futura migración hacia una arquitectura desacoplada o basada en API web.  
-     - **Archivos de referencia:**  
-       - La documentación interna del proyecto, si existe, o comentarios en el código actual.
+- **Subtarea 2:** Ajustar el ConfigManager para recibir parámetros de configuración mediante inyección, facilitando la extensión (por ejemplo, integrar otros orígenes de configuración).  
+  - **Archivos involucrados:**  
+    - config_manager.py  
+    - main.py  
+  - **Acción a realizar:** Modificar la inicialización y el uso de la configuración.  
+  - **Justificación:** Permite cumplir con el DIP y mejora la capacidad de modificar o extender la fuente de configuración sin tocar el código base de entrada.  
+  - **Archivos de referencia:**  
+    - Configuración actual y documentación sobre inyección de dependencias.
 
 ---
 
-4. ### Tarea Principal 4: Abstracción de la Gestión de la Base de Datos  
-   **Dependencias:**  
-   - Módulos: registro_desvios.py
+### 3. Tarea Principal: Desacoplar la lógica de selección de modo de video  
+- **Dependencias:**  
+  - main.py y módulos relacionados con el procesamiento de video (src/video_stream.py).  
 
-   #### 🔹 Subtareas  
-   - **Extraer y definir una capa de Acceso a Datos (DAO)**  
-     - **Archivos involucrados:**  
-       - registro_desvios.py  
-     - **Acción a realizar:** Modificar  
-     - **Justificación detallada:**  
-       Crear una capa de abstracción para el acceso a la base de datos permitirá cambiar fácilmente de MySQL a otra solución (u otras configuraciones) sin modificar la lógica principal de registro de desviaciones. Esto mejora la mantenibilidad y la escalabilidad.  
-     - **Archivos de referencia:**  
-       - Documentación de patrones DAO y ejemplos en Python.
+#### 🔹 Subtareas:
+- **Subtarea 1:** Extraer la función `obtener_opcion_video` de main.py y moverla a un módulo controlador específico.  
+  - **Archivos involucrados:**  
+    - main.py  
+    - Crear o modificar: `/src/controllers/video_option_controller.py` (nuevo)  
+  - **Acción a realizar:** Modificar (reubicar) la lógica en un módulo dedicado.  
+  - **Justificación:** Se mejora la separación entre la UI y la lógica de negocio, permitiendo la reutilización y una mayor claridad en el flujo de datos.  
+  - **Archivos de referencia:**  
+    - El contenido actual de `obtener_opcion_video` en main.py.
 
-   - **Configurar la abstracción para soportar múltiples motores de bases de datos**  
-     - **Archivos involucrados:**  
-       - registro_desvios.py  
-     - **Acción a realizar:** Modificar  
-     - **Justificación detallada:**  
-       Permitir que la configuración de la base de datos se defina de manera flexible en un archivo de configuración o mediante variables de entorno facilitará futuros cambios o migraciones.  
-     - **Archivos de referencia:**  
-       - config_manager.py para ver ejemplos de manejo de configuraciones.
+- **Subtarea 2:** Definir un contrato (por ejemplo, mediante una interfaz conceptual) que permita extender modos de video sin modificar el controlador.  
+  - **Archivos involucrados:**  
+    - `/src/controllers/video_option_controller.py`  
+  - **Acción a realizar:** Modificar y documentar la intención de extensión.  
+  - **Justificación:** Facilitar el cumplimiento del OCP y permitir la integración de nuevos métodos de entrada (Deep Learning, GPU, etc.).  
+  - **Archivos de referencia:**  
+    - Diseño actual y posibles futuros módulos de entrada.
+
+---
+
+### 4. Tarea Principal: Reestructurar la recolección de parámetros de entrada del usuario  
+- **Dependencias:**  
+  - main.py, junto con la interfaz de entrada en consola.  
+
+#### 🔹 Subtareas:
+- **Subtarea 1:** Dividir la función `recoger_parametros_usuario` en funciones más específicas o incluso en una clase dedicada a la validación y procesamiento de entradas.  
+  - **Archivos involucrados:**  
+    - main.py  
+    - Opcional: crear `/src/controllers/input_controller.py`  
+  - **Acción a realizar:** Modificar (dividir) la función en componentes más pequeños para manejar cada parámetro por separado.  
+  - **Justificación:** Mejorar la claridad y reducir la complejidad de la función, facilitando su mantenimiento y futuras validaciones.  
+  - **Archivos de referencia:**  
+    - La función original `recoger_parametros_usuario` en main.py.
+
+- **Subtarea 2:** Documentar la validación y los valores por defecto de cada parámetro para asegurar la consistencia en futuras modificaciones.  
+  - **Archivos involucrados:**  
+    - main.py o nuevo módulo de documentación / validación.  
+  - **Acción a realizar:** Modificar la documentación interna.  
+  - **Justificación:** Al documentar, se facilita la extensión del código y la comprensión por parte de nuevos desarrolladores.  
+  - **Archivos de referencia:**  
+    - Comentarios y docstrings existentes en main.py.
+
+---
+
+### 5. Tarea Principal: Centralizar el manejo de excepciones y logging  
+- **Dependencias:**  
+  - main.py y todos los módulos que actualmente realizan manejo de excepciones de forma individual.  
+
+#### 🔹 Subtareas:
+- **Subtarea 1:** Crear un sistema centralizado o patrón de manejo de errores para capturar y registrar las excepciones, evitando duplicación de código en cada función.  
+  - **Archivos involucrados:**  
+    - main.py  
+    - Módulo Logger y posiblemente un nuevo middleware para manejo de errores.  
+  - **Acción a realizar:** Modificar la estructura de try/except y centralizar la lógica.  
+  - **Justificación:** Garantiza una consistencia en la captación de errores y facilita la localización y solución de problemas.  
+  - **Archivos de referencia:**  
+    - El manejo actual de excepciones en main.py y la configuración del logger.
