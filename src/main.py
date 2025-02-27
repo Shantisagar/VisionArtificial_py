@@ -24,13 +24,19 @@ def manejar_menu(config):
             logger.info("Modo de transmisión RTSP activado.")
             return f"rtsp://{config['url_default']}:8080/h264.sdp"
         elif opcion == "2":
-            logger.info("Modo HTTP activado.") 
+            logger.info("Modo HTTP activado.")
             return f"http://{config['url_default']}:8080/photo.jpg"
         else:
             logger.error("Opción no válida.")
             sys.exit(1)
-    except Exception as e:
-        logger.error(f"Error al manejar el menú de opciones: {e}")
+    except ValueError as e:
+        logger.error("Error de valor al manejar el menú de opciones: %s", e)
+        sys.exit(1)
+    except KeyError as e:
+        logger.error("Error de clave al manejar el menú de opciones: %s", e)
+        sys.exit(1)
+    except (OSError, RuntimeError) as e:
+        logger.error("Error inesperado al manejar el menú de opciones: %s", e)
         sys.exit(1)
 
 def main():
@@ -57,7 +63,7 @@ def main():
         horizontal = float(input(
             f'Ingrese para corregir el eje horizontal en px, "{config["horizontal_default"]}" por defecto: ') 
             or config["horizontal_default"])
-        
+
         # Actualizar la configuración (dependency injection)
         nueva_config = {
             "grados_rotacion_default": grados_rotacion,
@@ -66,15 +72,23 @@ def main():
             "pixels_por_mm_default": pixels_por_mm
         }
         config_manager.update_config(nueva_config)
-        
+
+        # Obtener la URL del video o ruta de la imagen seleccionada
         default_video_url = manejar_menu(config)
-        
-        root = tk.Tk()
-        app = VideoStreamApp(root, default_video_url, grados_rotacion, altura, horizontal, pixels_por_mm)
-        app.run()
-    except Exception as e:
-        logger.error(f"Error al iniciar la aplicación: {e}")
+
+    except ValueError as e:
+        logger.error("Error de valor al iniciar la aplicación: %s", e)
         sys.exit(1)
+    except KeyError as e:
+        logger.error("Error de clave al iniciar la aplicación: %s", e)
+        sys.exit(1)
+    except (OSError, RuntimeError) as e:
+        logger.error("Error inesperado al iniciar la aplicación: %s", e)
+        sys.exit(1)
+
+    root = tk.Tk()
+    app = VideoStreamApp(root, default_video_url, grados_rotacion, altura, horizontal, pixels_por_mm)
+    app.run()
 
 if __name__ == '__main__':
     main()
