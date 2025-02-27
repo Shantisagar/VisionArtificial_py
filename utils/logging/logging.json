@@ -1,0 +1,38 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "filters": {
+        "info_error_filter": {
+            "()": "utils.logging.info_error_filter.InfoErrorFilter"
+        },
+        "exclude_http_logs": {
+            "()": "utils.logging.exclude_http_logs_filter.ExcludeHTTPLogsFilter"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "filters": ["exclude_http_logs"],
+            "formatter": "simpleFormatter"
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "filename": "utils/logging/sistema.log",
+            "formatter": "simpleFormatter",
+            "encoding": "utf8"
+        }
+    },
+    "loggers": {
+        "": {
+            "level": "DEBUG",
+            "handlers": ["console", "file"]
+        }
+    },
+    "formatters": {
+        "simpleFormatter": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
+        }
+    }
+}

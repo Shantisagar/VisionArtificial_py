@@ -6,10 +6,10 @@ Este módulo se encarga de leer y actualizar la configuración de la aplicación
 import json
 import os
 import sys
-from src.logs.config_logger import configurar_logging
+from utils.logging.logger_configurator import LoggerConfigurator
 
 # Configuración del logger
-logger = configurar_logging()
+logger = LoggerConfigurator().configure()
 
 DEFAULT_CONFIG = {
     "grados_rotacion_default": 0.0,

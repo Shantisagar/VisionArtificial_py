@@ -6,10 +6,10 @@ configuración e inicialización de la UI.
 import sys
 import tkinter as tk
 from src.video_stream import VideoStreamApp
-from src.logs.config_logger import configurar_logging
+from utils.logging.logger_configurator import LoggerConfigurator
 from src.config_manager import ConfigManager
 
-logger = configurar_logging()
+logger = LoggerConfigurator().configure()
 
 def obtener_opcion_video(config):
     """

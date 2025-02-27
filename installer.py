@@ -1,13 +1,13 @@
 import subprocess
 import os
 from pathlib import Path
-from src.logs.config_logger import configurar_logging
+from utils.logging.logger_configurator import LoggerConfigurator
 import winshell
 from win32com.client import Dispatch
 from pywintypes import com_error
 
 # Configuración del logger
-logger = configurar_logging()
+logger = LoggerConfigurator().configure()
 
 def crear_acceso_directo(ruta_archivo_bat, directorio_script):
     escritorio = Path(winshell.desktop())

@@ -1,12 +1,12 @@
 
-from src.logs.config_logger import configurar_logging
+from utils.logging.logger_configurator import LoggerConfigurator
 import mysql.connector
 from datetime import datetime
 from pytz import timezone
 import pytz
 
 # Configuración del logger
-logger = configurar_logging()
+logger = LoggerConfigurator().configure()
 
 def registrar_desvio(desvio_mm, TOLERANCIA):
     # Mostrar el desvío en la consola

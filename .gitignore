@@ -8,3 +8,4 @@ src/logs/sistema.log
 .vscode/
 docs/todo.md
 .pylintrc
+utils/logging/sistema.log

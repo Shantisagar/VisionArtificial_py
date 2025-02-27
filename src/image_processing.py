@@ -8,11 +8,11 @@ import numpy as np
 import datetime
 from src.rotacion import rotar_imagen
 from src.deteccion_bordes import encontrar_borde
-from src.logs.config_logger import configurar_logging
+from utils.logging.logger_configurator import LoggerConfigurator
 from src.registro_desvios import registrar_desvio
 
 TOLERANCIA = 2  # Tolerancia en milímetros
-logger = configurar_logging()
+logger = LoggerConfigurator().configure()
 
 # ----------------------- Utilidades de Dibujo y Cálculos -----------------------
 

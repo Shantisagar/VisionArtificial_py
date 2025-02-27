@@ -14,9 +14,9 @@ import time
 import requests
 import numpy as np
 from src.image_processing import ProcessingController
-from src.logs.config_logger import configurar_logging
+from utils.logging.logger_configurator import LoggerConfigurator
 
-logger = configurar_logging()
+logger = LoggerConfigurator().configure()
 
 class VideoStreamApp:
     def __init__(self, root, default_video_url, grados_rotacion, altura, horizontal, pixels_por_mm):
