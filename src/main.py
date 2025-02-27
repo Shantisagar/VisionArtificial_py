@@ -1,22 +1,24 @@
 """
-Path: src/main.py
-Archivo de entrada simplificado para iniciar la aplicación.
+Archivo de entrada para iniciar la aplicación separando la lógica de entrada,
+configuración e inicialización de la UI.
 """
 
 import sys
 import tkinter as tk
 from src.video_stream import VideoStreamApp
 from src.logs.config_logger import configurar_logging
-from src.config_manager import ConfigManager  # modified import
+from src.config_manager import ConfigManager
 
 logger = configurar_logging()
 
-def manejar_menu(config):
+def obtener_opcion_video(config):
     """
-    Maneja el menú de opciones de usuario y devuelve la URL del video o ruta de la imagen seleccionada.
+    Maneja el menú de opciones de usuario y devuelve la URL o ruta de la imagen.
     """
     try:
-        opcion = input("Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP\nOpción: ") or "2"
+        opcion = input(
+            "Seleccione una opción:\n0 - Testing\n1 - RTSP\n2 - HTTP\nOpción: "
+        ) or "2"
         if opcion == "0":
             logger.info("Modo de calibración de reconocimiento de imagen activado.")
             return config["ubicacion_default"]
@@ -29,42 +31,48 @@ def manejar_menu(config):
         else:
             logger.error("Opción no válida.")
             sys.exit(1)
-    except ValueError as e:
-        logger.error("Error de valor al manejar el menú de opciones: %s", e)
+    except Exception as e:
+        logger.error("Error al manejar el menú de opciones: %s", e)
         sys.exit(1)
-    except KeyError as e:
-        logger.error("Error de clave al manejar el menú de opciones: %s", e)
-        sys.exit(1)
-    except (OSError, RuntimeError) as e:
-        logger.error("Error inesperado al manejar el menú de opciones: %s", e)
+
+def recoger_parametros_usuario(config):
+    """
+    Recoge los parámetros necesarios desde la entrada estándar, utilizando valores por defecto
+    en caso de no especificar una entrada.
+    """
+    try:
+        grados_rotacion = float(
+            input(f'Ingrese los grados de rotación (valor por defecto "{config["grados_rotacion_default"]}"): ')
+            or config["grados_rotacion_default"]
+        )
+        pixels_por_mm = float(
+            input(f'Ingrese el valor de pixeles por mm (valor por defecto "{config["pixels_por_mm_default"]}"): ')
+            or config["pixels_por_mm_default"]
+        )
+        altura = float(
+            input(f'Ingrese la altura para corregir eje vertical (valor por defecto "{config["altura_default"]}"): ')
+            or config["altura_default"]
+        )
+        horizontal = float(
+            input(f'Ingrese el desplazamiento horizontal (valor por defecto "{config["horizontal_default"]}"): ')
+            or config["horizontal_default"]
+        )
+        return grados_rotacion, pixels_por_mm, altura, horizontal
+    except Exception as e:
+        logger.error("Error al recoger parámetros del usuario: %s", e)
         sys.exit(1)
 
 def main():
     """
-    Función principal para la ejecución de la aplicación.
+    Función principal que orquesta la inicialización de la configuración, recogida de datos e interfaz.
     """
     try:
-        # Ruta al archivo de configuración
         config_path = 'src/config.json'
-        # Instantiate ConfigManager to manage configuration dependencies
         config_manager = ConfigManager(config_path)
         config = config_manager.get_config()
 
-        # Recopilar inputs del usuario
-        grados_rotacion = float(input(
-            f'Ingrese los grados de rotación (en sentido horario, "{config["grados_rotacion_default"]}" por defecto): ') 
-            or config["grados_rotacion_default"])
-        pixels_por_mm = float(input(
-            f'Ingrese para corregir los pixeles por mm, "{config["pixels_por_mm_default"]}" por defecto: ') 
-            or config["pixels_por_mm_default"])
-        altura = float(input(
-            f'Ingrese la altura para corregir el eje vertical en px "{config["altura_default"]}" por defecto: ') 
-            or config["altura_default"])
-        horizontal = float(input(
-            f'Ingrese para corregir el eje horizontal en px, "{config["horizontal_default"]}" por defecto: ') 
-            or config["horizontal_default"])
-
-        # Actualizar la configuración (dependency injection)
+        # Recoger parámetros de entrada
+        grados_rotacion, pixels_por_mm, altura, horizontal = recoger_parametros_usuario(config)
         nueva_config = {
             "grados_rotacion_default": grados_rotacion,
             "altura_default": altura,
@@ -73,19 +81,14 @@ def main():
         }
         config_manager.update_config(nueva_config)
 
-        # Obtener la URL del video o ruta de la imagen seleccionada
-        default_video_url = manejar_menu(config)
+        # Seleccionar el modo de video según opción elegida
+        default_video_url = obtener_opcion_video(config)
 
-    except ValueError as e:
-        logger.error("Error de valor al iniciar la aplicación: %s", e)
-        sys.exit(1)
-    except KeyError as e:
-        logger.error("Error de clave al iniciar la aplicación: %s", e)
-        sys.exit(1)
-    except (OSError, RuntimeError) as e:
-        logger.error("Error inesperado al iniciar la aplicación: %s", e)
+    except Exception as e:
+        logger.error("Error al iniciar la aplicación: %s", e)
         sys.exit(1)
 
+    # Inicializar la interfaz y ejecutar la aplicación
     root = tk.Tk()
     app = VideoStreamApp(root, default_video_url, grados_rotacion, altura, horizontal, pixels_por_mm)
     app.run()
