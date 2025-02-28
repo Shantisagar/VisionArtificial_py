@@ -5,18 +5,19 @@ de calidad de frames mediante una cola, y se agrega una gestión robusta de
 errores y backoff en la captura HTTP.
 """
 
-import cv2
 import tkinter as tk
-from PIL import Image, ImageTk
 import threading
 import queue
 import time
+from PIL import Image, ImageTk
 import requests
 import numpy as np
+import cv2
 from src.image_processing import ProcessingController
 from utils.logging.logger_configurator import get_logger
 
 class VideoStreamApp:
+    "Esta clase se encarga de la transmisión de video y la actualización de la interfaz gráfica."
     def __init__(self, root, default_video_url, grados_rotacion, altura, horizontal, pixels_por_mm, logger=None):
         """
         Inicializa la aplicación de transmisión de video.
@@ -42,6 +43,11 @@ class VideoStreamApp:
         self.frame_queue = queue.Queue(maxsize=10)
         self.running = True
         self.cap = None
+        self.threads = []  # Lista para mantener referencia a todos los hilos activos
+        self.capture_lock = threading.Lock()  # Lock para proteger operaciones de captura
+        self.frames_processed = 0  # Contador de frames procesados
+        self.last_frame_time = time.time()  # Tiempo del último frame procesado
+        self.fps_stats = {'current': 0, 'average': 0, 'total_frames': 0, 'start_time': time.time()}
 
         self.setup_ui()
         self.start_worker_thread()
@@ -59,14 +65,27 @@ class VideoStreamApp:
         Crea y lanza el hilo dedicado a la captura y procesamiento de video.
         Se distingue entre fuentes HTTP y locales.
         """
-        if isinstance(self.default_video_url, str) and self.default_video_url.startswith('http'):
-            threading.Thread(target=self.http_capture_loop, daemon=True).start()
-        else:
-            self.cap = cv2.VideoCapture(self.default_video_url)
-            if not self.cap.isOpened():
-                self.logger.error("No se pudo abrir el flujo de video.")
-                return
-            threading.Thread(target=self.video_capture_loop, daemon=True).start()
+        try:
+            if isinstance(self.default_video_url, str) and self.default_video_url.startswith('http'):
+                capture_thread = threading.Thread(target=self.http_capture_loop, daemon=True)
+                capture_thread.start()
+                self.threads.append(capture_thread)
+            else:
+                with self.capture_lock:
+                    self.cap = cv2.VideoCapture(self.default_video_url)
+                    if not self.cap.isOpened():
+                        self.logger.error("No se pudo abrir el flujo de video.")
+                        return
+                capture_thread = threading.Thread(target=self.video_capture_loop, daemon=True)
+                capture_thread.start()
+                self.threads.append(capture_thread)
+            self.logger.info("Hilo de captura de video iniciado correctamente")
+        except (cv2.error.CvError, ValueError) as e:
+            self.logger.error(f"Error al configurar la fuente de video: {e}")
+        except (threading.ThreadError, RuntimeError) as e:
+            self.logger.error(f"Error al iniciar hilo de captura: {e}")
+        except OSError as e:
+            self.logger.error(f"Error de sistema al acceder al dispositivo de video: {e}")
 
     def video_capture_loop(self):
         """
@@ -108,10 +127,20 @@ class VideoStreamApp:
                 wait_time = min(2.5 * error_count, 10)
                 self.logger.error(f"Error en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
                 time.sleep(wait_time)
-            except Exception as e:
+            except (ValueError, TypeError) as e:
                 error_count += 1
                 wait_time = min(2.5 * error_count, 10)
-                self.logger.error(f"Error inesperado en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
+                self.logger.error(f"Error de datos en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
+                time.sleep(wait_time)
+            except cv2.error.CvError as e:
+                error_count += 1
+                wait_time = min(2.5 * error_count, 10)
+                self.logger.error(f"Error de OpenCV en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
+                time.sleep(wait_time)
+            except (IOError, OSError) as e:
+                error_count += 1
+                wait_time = min(2.5 * error_count, 10)
+                self.logger.error(f"Error de E/S en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
                 time.sleep(wait_time)
 
     def process_and_enqueue(self, frame):
@@ -131,14 +160,37 @@ class VideoStreamApp:
                     self.horizontal,
                     self.pixels_por_mm
                 )
+                # Actualizar estadísticas
+                current_time = time.time()
+                self.frames_processed += 1
+                self.fps_stats['total_frames'] += 1
+                
+                # Calcular FPS actual (basado en el tiempo entre este frame y el anterior)
+                time_diff = current_time - self.last_frame_time
+                if time_diff > 0:
+                    self.fps_stats['current'] = 1.0 / time_diff
+                    
+                # Calcular FPS promedio (basado en todos los frames desde el inicio)
+                total_time = current_time - self.fps_stats['start_time']
+                if total_time > 0:
+                    self.fps_stats['average'] = self.fps_stats['total_frames'] / total_time
+                    
+                self.last_frame_time = current_time
+                
                 # Vaciar la cola para descartar frames viejos
                 with self.frame_queue.mutex:
                     self.frame_queue.queue.clear()
                 self.frame_queue.put(processed_frame)
             else:
                 self.logger.error("No se pudo escalar el frame.")
-        except Exception as e:
-            self.logger.error("Error en process_and_enqueue: %s", e)
+        except (cv2.error.CvError, ValueError, TypeError) as e:
+            self.logger.error(f"Error de procesamiento de imagen: {e}")
+        except tk.TclError as e:
+            self.logger.error(f"Error de interfaz gráfica: {e}")
+        except (queue.Full, RuntimeError) as e:
+            self.logger.error(f"Error en la gestión de la cola de frames: {e}")
+        except AttributeError as e:
+            self.logger.error(f"Error de acceso a atributo en proceso de frame: {e}")
 
     def update_frame_from_queue(self):
         """
@@ -155,8 +207,16 @@ class VideoStreamApp:
                     imgtk = ImageTk.PhotoImage(image=img)
                     self.panel.imgtk = imgtk  # Previene recolección de basura
                     self.panel.config(image=imgtk)
-        except Exception as e:
-            self.logger.error("Error al actualizar la UI: %s", e)
+        except tk.TclError as e:
+            self.logger.error(f"Error de interfaz Tkinter: {e}")
+        except (ValueError, TypeError) as e:
+            self.logger.error(f"Error en conversión de datos de imagen: {e}")
+        except queue.Empty as e:
+            self.logger.warning(f"Cola de frames vacía al intentar actualizar: {e}")
+        except AttributeError as e:
+            self.logger.error(f"Error de atributo al actualizar frame: {e}")
+        except RuntimeError as e:
+            self.logger.error(f"Error de runtime al actualizar UI: {e}")
         finally:
             if self.running:
                 self.root.after(50, self.update_frame_from_queue)
@@ -174,7 +234,10 @@ class VideoStreamApp:
             new_height = int(image_height * scale)
             resized_frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
             return cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
-        except Exception as e:
+        except cv2.error.CvError as e:
+            self.logger.error("Error de OpenCV al escalar la imagen: %s", e)
+            return None
+        except (ValueError, TypeError) as e:
             self.logger.error("Error al escalar la imagen: %s", e)
             return None
 
@@ -182,9 +245,20 @@ class VideoStreamApp:
         """
         Finaliza la ejecución y libera recursos.
         """
+        self.logger.info("Deteniendo streaming de video...")
         self.running = False
-        if self.cap and self.cap.isOpened():
-            self.cap.release()
+
+        # Esperar a que los hilos terminen (con timeout)
+        for thread in self.threads:
+            if thread.is_alive():
+                thread.join(timeout=1.0)
+
+        # Liberar recursos de captura
+        with self.capture_lock:
+            if self.cap and hasattr(self.cap, 'release'):
+                self.cap.release()
+
+        self.logger.info("Streaming de video detenido correctamente")
 
     def run(self):
         """
@@ -192,5 +266,23 @@ class VideoStreamApp:
         """
         try:
             self.root.mainloop()
+        except tk.TclError as e:
+            self.logger.error(f"Error de Tkinter en el bucle principal: {e}")
+        except RuntimeError as e:
+            self.logger.error(f"Error de runtime en el bucle principal: {e}")
         finally:
             self.stop()
+
+    def get_processing_stats(self):
+        """
+        Obtiene estadísticas del procesamiento de video.
+        
+        Returns:
+            dict: Diccionario con estadísticas (frames procesados, FPS actual, FPS promedio)
+        """
+        return {
+            'frames_processed': self.frames_processed,
+            'fps_current': round(self.fps_stats['current'], 1),
+            'fps_average': round(self.fps_stats['average'], 1),
+            'processing_time': round(time.time() - self.fps_stats['start_time'], 1)
+        }
