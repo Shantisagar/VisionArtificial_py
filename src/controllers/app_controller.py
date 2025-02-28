@@ -11,6 +11,7 @@ from src.config_manager import ConfigManager
 from src.services.user_input_service import UserInputService
 from src.views.console_view import ConsoleView
 from src.views.gui_view import GUIView
+from src.controllers.input_controller import InputController
 
 class AppController:
     """Controlador central de la aplicación."""
@@ -42,6 +43,14 @@ class AppController:
         self.pixels_por_mm = None
         self.altura = None
         self.horizontal = None
+        
+        # Crear el controlador de entrada
+        self.input_controller = InputController(
+            console_view=console_view,
+            user_input_service=user_input_service,
+            config_manager=config_manager,
+            logger=logger
+        )
     
     def initialize(self) -> bool:
         """
@@ -51,27 +60,20 @@ class AppController:
             True si la inicialización fue exitosa, False en caso contrario
         """
         try:
-            # Recoger parámetros de entrada mediante la vista de consola
-            parametros = self.console_view.solicitar_parametros_usuario(self.config)
+            # Usar el controlador de entrada para recoger todos los parámetros
+            parametros = self.input_controller.collect_all_parameters()
             
-            # Validar los parámetros recogidos
-            if not self.user_input_service.validar_parametros(parametros):
-                self.console_view.mostrar_error("Parámetros inválidos.")
+            if parametros is None:
                 return False
                 
             # Extraer los valores validados en variables de clase
-            self.grados_rotacion, self.pixels_por_mm, self.altura, self.horizontal = (
-                self.user_input_service.convertir_a_tupla_parametros(parametros)
-            )
+            self.grados_rotacion = parametros['grados_rotacion']
+            self.pixels_por_mm = parametros['pixels_por_mm']
+            self.altura = parametros['altura']
+            self.horizontal = parametros['horizontal']
             
             # Actualizar la configuración con los nuevos valores
-            nueva_config = {
-                "grados_rotacion_default": self.grados_rotacion,
-                "altura_default": self.altura,
-                "horizontal_default": self.horizontal,
-                "pixels_por_mm_default": self.pixels_por_mm
-            }
-            self.config_manager.update_config(nueva_config)
+            self.input_controller.update_config_with_parameters(parametros)
             
             # Obtener las opciones de menú del controlador de video
             opciones_video = self.user_input_service.get_video_menu_options()

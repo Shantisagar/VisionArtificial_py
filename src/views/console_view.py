@@ -50,7 +50,7 @@ class ConsoleView:
     
     def solicitar_parametros_usuario(self, config: Dict[str, Any]) -> Dict[str, float]:
         """
-        Solicita y recoge los parámetros del usuario vía consola.
+        Solicita y recoge todos los parámetros del usuario vía consola.
         
         Args:
             config: Diccionario con valores por defecto para mostrar al usuario
@@ -58,29 +58,97 @@ class ConsoleView:
         Returns:
             Diccionario con los valores ingresados por el usuario
         """
-        grados_rotacion = input(
-            f'Ingrese los grados de rotación (valor por defecto "{config["grados_rotacion_default"]}"): '
-        ) or str(config["grados_rotacion_default"])
+        try:
+            grados_rotacion = self.solicitar_grados_rotacion(config["grados_rotacion_default"])
+            pixels_por_mm = self.solicitar_pixels_por_mm(config["pixels_por_mm_default"])
+            altura = self.solicitar_altura(config["altura_default"])
+            horizontal = self.solicitar_horizontal(config["horizontal_default"])
+            
+            return {
+                'grados_rotacion': grados_rotacion,
+                'pixels_por_mm': pixels_por_mm,
+                'altura': altura,
+                'horizontal': horizontal
+            }
+        except ValueError as e:
+            self.mostrar_error(f"Error al procesar un valor: {e}")
+            raise
+    
+    def solicitar_grados_rotacion(self, valor_default: float) -> float:
+        """
+        Solicita los grados de rotación al usuario.
         
-        pixels_por_mm = input(
-            f'Ingrese el valor de pixeles por mm (valor por defecto "{config["pixels_por_mm_default"]}"): '
-        ) or str(config["pixels_por_mm_default"])
+        Args:
+            valor_default: Valor por defecto a mostrar al usuario
+            
+        Returns:
+            Grados de rotación ingresados como número flotante
+            
+        Raises:
+            ValueError: Si el valor ingresado no puede convertirse a flotante
+        """
+        valor = input(f'Ingrese los grados de rotación (valor por defecto "{valor_default}"): ') or str(valor_default)
+        try:
+            return float(valor)
+        except ValueError:
+            raise ValueError("El valor de grados de rotación debe ser un número.")
+    
+    def solicitar_pixels_por_mm(self, valor_default: float) -> float:
+        """
+        Solicita los píxeles por milímetro al usuario.
         
-        altura = input(
-            f'Ingrese la altura para corregir eje vertical (valor por defecto "{config["altura_default"]}"): '
-        ) or str(config["altura_default"])
+        Args:
+            valor_default: Valor por defecto a mostrar al usuario
+            
+        Returns:
+            Píxeles por milímetro ingresados como número flotante
+            
+        Raises:
+            ValueError: Si el valor ingresado no puede convertirse a flotante o es negativo
+        """
+        valor = input(f'Ingrese el valor de pixeles por mm (valor por defecto "{valor_default}"): ') or str(valor_default)
+        try:
+            return float(valor)
+        except ValueError:
+            raise ValueError("El valor de píxeles por mm debe ser un número positivo.")
+    
+    def solicitar_altura(self, valor_default: float) -> float:
+        """
+        Solicita el valor de altura para corrección del eje vertical.
         
-        horizontal = input(
-            f'Ingrese el desplazamiento horizontal (valor por defecto "{config["horizontal_default"]}"): '
-        ) or str(config["horizontal_default"])
+        Args:
+            valor_default: Valor por defecto a mostrar al usuario
+            
+        Returns:
+            Altura ingresada como número flotante
+            
+        Raises:
+            ValueError: Si el valor ingresado no puede convertirse a flotante
+        """
+        valor = input(f'Ingrese la altura para corregir eje vertical (valor por defecto "{valor_default}"): ') or str(valor_default)
+        try:
+            return float(valor)
+        except ValueError:
+            raise ValueError("El valor de altura debe ser un número.")
+    
+    def solicitar_horizontal(self, valor_default: float) -> float:
+        """
+        Solicita el desplazamiento horizontal al usuario.
         
-        # Retornamos un diccionario con los valores ingresados
-        return {
-            'grados_rotacion': float(grados_rotacion),
-            'pixels_por_mm': float(pixels_por_mm),
-            'altura': float(altura),
-            'horizontal': float(horizontal)
-        }
+        Args:
+            valor_default: Valor por defecto a mostrar al usuario
+            
+        Returns:
+            Desplazamiento horizontal ingresado como número flotante
+            
+        Raises:
+            ValueError: Si el valor ingresado no puede convertirse a flotante
+        """
+        valor = input(f'Ingrese el desplazamiento horizontal (valor por defecto "{valor_default}"): ') or str(valor_default)
+        try:
+            return float(valor)
+        except ValueError:
+            raise ValueError("El valor de desplazamiento horizontal debe ser un número.")
     
     def mostrar_error(self, mensaje: str) -> None:
         """
