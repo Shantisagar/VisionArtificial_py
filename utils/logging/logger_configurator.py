@@ -1,71 +1,125 @@
 """
-Configurador de logging que permite inyectar configuraciones personalizadas.
+Módulo para la configuración centralizada del sistema de logging.
+Implementa el patrón singleton con soporte para inyección de dependencias.
 """
 
 import logging
-import sys
+import os
+from datetime import datetime
 from typing import Optional
 
-# Singleton logger para mantener una referencia global
-_default_logger = None
-
 class LoggerConfigurator:
-    """Configura loggers con diferentes niveles y formatos."""
-
-    def __init__(self, 
-                 level: int = logging.INFO, 
-                 format_string: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+    """Configurador de logger que implementa el patrón singleton con soporte para DI."""
+    
+    _instance = None
+    _logger = None
+    
+    def __new__(cls, *args, **kwargs):
+        """Implementación del patrón singleton con soporte para reinicialización."""
+        if cls._instance is None:
+            cls._instance = super(LoggerConfigurator, cls).__new__(cls)
+        return cls._instance
+    
+    def __init__(self, log_level: int = logging.INFO, log_file: Optional[str] = None):
         """
-        Inicializa el configurador con opciones personalizables.
+        Inicializa el configurador con nivel de log y archivo opcionales.
         
         Args:
-            level: Nivel de log (INFO, DEBUG, etc.)
-            format_string: Formato de las entradas de log
+            log_level: Nivel de logging (default: logging.INFO)
+            log_file: Ruta al archivo de logs (default: auto-generado)
         """
-        self.level = level
-        self.format_string = format_string
-        
-    def configure(self, name: str = "app_logger") -> logging.Logger:
+        # Solo configurar una vez
+        if LoggerConfigurator._logger is None:
+            self.log_level = log_level
+            self.log_file = log_file or self._generate_log_file()
+    
+    def _generate_log_file(self) -> str:
         """
-        Configura y devuelve un logger.
+        Genera un nombre de archivo de log basado en la fecha y hora actuales.
         
-        Args:
-            name: Nombre del logger a configurar
-            
         Returns:
-            El logger configurado
+            Ruta al archivo de log generado
         """
-        global _default_logger
+        log_dir = os.path.join(os.getcwd(), 'logs')
+        os.makedirs(log_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return os.path.join(log_dir, f"app_{timestamp}.log")
+    
+    def configure(self) -> logging.Logger:
+        """
+        Configura y devuelve el logger global.
         
-        # Crear o obtener el logger por nombre
-        logger = logging.getLogger(name)
+        Returns:
+            Logger configurado
+        """
+        if LoggerConfigurator._logger is None:
+            # Crear el logger
+            logger = logging.getLogger('VisionArtificial')
+            logger.setLevel(self.log_level)
+            
+            # Evitar duplicación de handlers
+            if not logger.handlers:
+                # Configurar handler de archivo
+                file_handler = logging.FileHandler(self.log_file)
+                file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                file_handler.setFormatter(file_format)
+                logger.addHandler(file_handler)
+                
+                # Configurar handler de consola
+                console_handler = logging.StreamHandler()
+                console_format = logging.Formatter('%(levelname)s: %(message)s')
+                console_handler.setFormatter(console_format)
+                logger.addHandler(console_handler)
+            
+            LoggerConfigurator._logger = logger
+            logger.info(f"Logging configurado. Archivo de log: {self.log_file}")
         
-        # Evitar duplicar handlers si ya está configurado
-        if not logger.handlers:
-            logger.setLevel(self.level)
-            handler = logging.StreamHandler(sys.stdout)
-            handler.setLevel(self.level)
-            formatter = logging.Formatter(self.format_string)
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
+        return LoggerConfigurator._logger
+    
+    @classmethod
+    def reset(cls) -> None:
+        """Reinicia el singleton y el logger (útil para pruebas)."""
+        cls._instance = None
+        cls._logger = None
+    
+    @classmethod
+    def get_logger(cls) -> logging.Logger:
+        """
+        Obtiene el logger configurado o crea uno nuevo si no existe.
         
-        # Almacenar como logger predeterminado si es el primero
-        if _default_logger is None:
-            _default_logger = logger
+        Returns:
+            Logger configurado
+        """
+        if cls._logger is None:
+            cls._logger = cls().configure()
+        return cls._logger
+    
+    @classmethod
+    def set_logger(cls, logger: logging.Logger) -> None:
+        """
+        Establece un logger personalizado (para inyección de dependencias).
         
-        return logger
+        Args:
+            logger: El logger personalizado a utilizar
+        """
+        cls._logger = logger
+
 
 def get_logger() -> logging.Logger:
     """
-    Función de utilidad para acceder al logger predeterminado.
+    Función auxiliar para obtener el logger global configurado.
     
     Returns:
-        El logger predeterminado configurado o uno nuevo si no existe
+        Logger global configurado
     """
-    global _default_logger
+    return LoggerConfigurator.get_logger()
+
+
+def set_logger(logger: logging.Logger) -> None:
+    """
+    Función auxiliar para establecer un logger personalizado.
     
-    if _default_logger is None:
-        # Si no hay logger predeterminado, crear uno básico
-        _default_logger = LoggerConfigurator().configure()
-        
-    return _default_logger
+    Args:
+        logger: El logger personalizado a utilizar
+    """
+    LoggerConfigurator.set_logger(logger)

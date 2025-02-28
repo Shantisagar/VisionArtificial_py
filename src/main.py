@@ -5,7 +5,8 @@ configuración e inicialización de la UI.
 """
 
 import sys
-from utils.logging.logger_configurator import LoggerConfigurator, get_logger
+import logging  # Added import here, at the top of the file
+from utils.logging.logger_configurator import LoggerConfigurator
 from src.config_manager import ConfigManager
 from src.controllers.app_controller import AppController
 from src.services.user_input_service import UserInputService
@@ -17,14 +18,14 @@ def main():
     Función principal que utiliza el controlador central para iniciar la aplicación.
     """
     try:
-        # Configurar el logger
-        logger_configurator = LoggerConfigurator()
+        # Configurar el logger con inyección de parámetros
+        logger_configurator = LoggerConfigurator(log_level=logging.INFO)
         logger = logger_configurator.configure()
         
-        # Crear las dependencias necesarias
-        config_manager = ConfigManager.from_file('src/config.json')  # Ruta correcta
+        # Crear las dependencias necesarias con inyección del logger
+        config_manager = ConfigManager.from_file('src/config.json', logger=logger)
         
-        # Crear componentes del patrón MVC
+        # Crear componentes del patrón MVC con inyección de dependencias
         # Modelo: Servicios y gestores de datos
         user_input_service = UserInputService(logger)
         
@@ -50,6 +51,7 @@ def main():
         controller.run_ui()
         
     except Exception as e:
-        # Usando get_logger para obtener el logger sin importar el contexto
-        get_logger().error(f"Error fatal en la aplicación: {e}")
+        # En caso de error, obtener un logger de emergencia
+        emergency_logger = LoggerConfigurator().get_logger()
+        emergency_logger.error(f"Error fatal en la aplicación: {e}")
         sys.exit(1)

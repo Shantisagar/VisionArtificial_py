@@ -73,8 +73,11 @@ class AppController:
             }
             self.config_manager.update_config(nueva_config)
             
+            # Obtener las opciones de menú del controlador de video
+            opciones_video = self.user_input_service.get_video_menu_options()
+            
             # Seleccionar el modo de video según opción elegida
-            opcion_video = self.console_view.mostrar_menu_fuente_video()
+            opcion_video = self.console_view.mostrar_menu_fuente_video(opciones_video)
             self.video_url = self.user_input_service.procesar_opcion_video(opcion_video, self.config)
             
             if self.video_url is None:

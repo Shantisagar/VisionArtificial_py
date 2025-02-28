@@ -4,7 +4,7 @@ Implementa la capa de presentación del patrón MVC.
 """
 
 import logging
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple, Optional, List
 
 class ConsoleView:
     """Clase responsable de la interacción con el usuario vía consola."""
@@ -18,21 +18,35 @@ class ConsoleView:
         """
         self.logger = logger
     
-    def mostrar_menu_fuente_video(self) -> str:
+    def mostrar_menu_fuente_video(self, options: Optional[List[str]] = None) -> str:
         """
         Muestra el menú de opciones de fuente de video y captura la elección del usuario.
         
+        Args:
+            options: Lista de opciones a mostrar (opcional)
+            
         Returns:
             La opción seleccionada por el usuario
         """
-        return input(
-            "Seleccione una opción:\n"
-            "0 - Testing\n"
-            "1 - RTSP\n"
-            "2 - HTTP\n"
-            "3 - Cámara web\n"
-            "Opción: "
-        ) or "3"
+        menu_text = "Seleccione una opción:\n"
+        
+        # Si no se proporcionan opciones, usar las predeterminadas
+        if options is None:
+            options = [
+                "0 - Testing",
+                "1 - RTSP",
+                "2 - HTTP",
+                "3 - Cámara web"
+            ]
+        
+        # Construir el menú
+        for option in options:
+            menu_text += f"{option}\n"
+        
+        menu_text += "Opción: "
+        
+        # Solicitar y retornar la opción
+        return input(menu_text) or "3"  # Por defecto, cámara web
     
     def solicitar_parametros_usuario(self, config: Dict[str, Any]) -> Dict[str, float]:
         """

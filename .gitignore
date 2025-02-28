@@ -9,3 +9,4 @@ src/logs/sistema.log
 docs/todo.md
 .pylintrc
 utils/logging/sistema.log
+logs/*.log

@@ -14,15 +14,22 @@ import time
 import requests
 import numpy as np
 from src.image_processing import ProcessingController
-from utils.logging.logger_configurator import LoggerConfigurator
-
-logger = LoggerConfigurator().configure()
+from utils.logging.logger_configurator import get_logger
 
 class VideoStreamApp:
-    def __init__(self, root, default_video_url, grados_rotacion, altura, horizontal, pixels_por_mm):
+    def __init__(self, root, default_video_url, grados_rotacion, altura, horizontal, pixels_por_mm, logger=None):
         """
         Inicializa la aplicación de transmisión de video.
         Se inyectan las dependencias y se separan la captura y actualización de UI.
+        
+        Args:
+            root: Raíz de la interfaz Tkinter
+            default_video_url: URL o índice de la fuente de video
+            grados_rotacion: Grados de rotación para la imagen
+            altura: Ajuste vertical para la imagen
+            horizontal: Ajuste horizontal para la imagen
+            pixels_por_mm: Relación de píxeles por milímetro
+            logger: Logger configurado (opcional, se usa el global si es None)
         """
         self.root = root
         self.default_video_url = default_video_url
@@ -30,10 +37,11 @@ class VideoStreamApp:
         self.altura = altura
         self.horizontal = horizontal
         self.pixels_por_mm = pixels_por_mm
-        self.controller = ProcessingController()  # Lógica de procesamiento
-        self.frame_queue = queue.Queue(maxsize=10)  # Control de frames
+        self.logger = logger or get_logger()
+        self.controller = ProcessingController()
+        self.frame_queue = queue.Queue(maxsize=10)
         self.running = True
-        self.cap = None  # Fuente de video local
+        self.cap = None
 
         self.setup_ui()
         self.start_worker_thread()
@@ -56,7 +64,7 @@ class VideoStreamApp:
         else:
             self.cap = cv2.VideoCapture(self.default_video_url)
             if not self.cap.isOpened():
-                logger.error("No se pudo abrir el flujo de video.")
+                self.logger.error("No se pudo abrir el flujo de video.")
                 return
             threading.Thread(target=self.video_capture_loop, daemon=True).start()
 
@@ -67,7 +75,7 @@ class VideoStreamApp:
         while self.running:
             ret, frame = self.cap.read()
             if not ret:
-                logger.warning("Frame no recibido. Reintentando captura...")
+                self.logger.warning("Frame no recibido. Reintentando captura...")
                 time.sleep(0.1)
                 continue
             self.process_and_enqueue(frame)
@@ -90,20 +98,20 @@ class VideoStreamApp:
                         self.process_and_enqueue(frame)
                         error_count = 0  # Reiniciar el contador tras una conexión exitosa
                     else:
-                        logger.error("No se pudo decodificar la imagen HTTP.")
+                        self.logger.error("No se pudo decodificar la imagen HTTP.")
                 else:
-                    logger.error(f"Fallo al cargar la imagen desde HTTP: Estado {response.status_code}")
+                    self.logger.error(f"Fallo al cargar la imagen desde HTTP: Estado {response.status_code}")
                 # Espera fija para HTTP tras una petición exitosa o fallida sin excepción
                 time.sleep(2.5)
             except requests.exceptions.RequestException as e:
                 error_count += 1
                 wait_time = min(2.5 * error_count, 10)
-                logger.error(f"Error en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
+                self.logger.error(f"Error en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
                 time.sleep(wait_time)
             except Exception as e:
                 error_count += 1
                 wait_time = min(2.5 * error_count, 10)
-                logger.error(f"Error inesperado en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
+                self.logger.error(f"Error inesperado en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
                 time.sleep(wait_time)
 
     def process_and_enqueue(self, frame):
@@ -128,9 +136,9 @@ class VideoStreamApp:
                     self.frame_queue.queue.clear()
                 self.frame_queue.put(processed_frame)
             else:
-                logger.error("No se pudo escalar el frame.")
+                self.logger.error("No se pudo escalar el frame.")
         except Exception as e:
-            logger.error("Error en process_and_enqueue: %s", e)
+            self.logger.error("Error en process_and_enqueue: %s", e)
 
     def update_frame_from_queue(self):
         """
@@ -148,7 +156,7 @@ class VideoStreamApp:
                     self.panel.imgtk = imgtk  # Previene recolección de basura
                     self.panel.config(image=imgtk)
         except Exception as e:
-            logger.error("Error al actualizar la UI: %s", e)
+            self.logger.error("Error al actualizar la UI: %s", e)
         finally:
             if self.running:
                 self.root.after(50, self.update_frame_from_queue)
@@ -167,7 +175,7 @@ class VideoStreamApp:
             resized_frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
             return cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
         except Exception as e:
-            logger.error("Error al escalar la imagen: %s", e)
+            self.logger.error("Error al escalar la imagen: %s", e)
             return None
 
     def stop(self):

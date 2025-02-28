@@ -1,11 +1,12 @@
 """
 Gestor de configuración con soporte para múltiples fuentes y acceso unificado.
+Implementa principios SOLID mediante inyección de dependencias.
 """
 
 import json
 import os
-import sys
-from typing import Dict, Any, Optional
+import logging
+from typing import Dict, Any, Optional, Union
 from utils.logging.logger_configurator import get_logger
 
 class ConfigManager:
@@ -14,31 +15,74 @@ class ConfigManager:
     y provee una interfaz unificada para acceder a la configuración.
     """
     
-    def __init__(self, config_path=None):
+    def __init__(self, config_data: Optional[Dict[str, Any]] = None, 
+                 config_path: Optional[str] = None,
+                 logger: Optional[logging.Logger] = None):
         """
-        Inicializa el gestor de configuración con la ruta de configuración especificada.
+        Inicializa el gestor de configuración con datos o ruta especificados.
         
         Args:
+            config_data: Diccionario de configuración predefinido o None
             config_path: Ruta al archivo de configuración o None
+            logger: Logger a utilizar (inyección de dependencia) o None para usar el global
         """
-        self.logger = get_logger()
+        self.logger = logger or get_logger()
         self.config_path = config_path
-        self._config = {}
-        if config_path:
+        self._config = config_data or {}
+        
+        # Cargar configuración desde archivo si se proporciona una ruta
+        if config_path and not config_data:
             self._load_config()
     
     @classmethod
-    def from_file(cls, file_path: str) -> 'ConfigManager':
+    def from_file(cls, file_path: str, 
+                 logger: Optional[logging.Logger] = None) -> 'ConfigManager':
         """
         Crea un ConfigManager con una fuente de archivo.
         
         Args:
             file_path: Ruta al archivo de configuración
+            logger: Logger a utilizar (opcional)
             
         Returns:
             Una instancia de ConfigManager configurada
         """
-        return cls(config_path=file_path)
+        return cls(config_path=file_path, logger=logger)
+    
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any], 
+                 logger: Optional[logging.Logger] = None) -> 'ConfigManager':
+        """
+        Crea un ConfigManager con un diccionario predefinido.
+        
+        Args:
+            config_dict: Diccionario de configuración
+            logger: Logger a utilizar (opcional)
+            
+        Returns:
+            Una instancia de ConfigManager configurada
+        """
+        return cls(config_data=config_dict, logger=logger)
+    
+    @classmethod
+    def from_env_vars(cls, prefix: str = "APP_", 
+                     logger: Optional[logging.Logger] = None) -> 'ConfigManager':
+        """
+        Crea un ConfigManager a partir de variables de entorno.
+        
+        Args:
+            prefix: Prefijo para filtrar las variables de entorno
+            logger: Logger a utilizar (opcional)
+            
+        Returns:
+            Una instancia de ConfigManager configurada
+        """
+        config = {
+            key[len(prefix):].lower(): value
+            for key, value in os.environ.items()
+            if key.startswith(prefix)
+        }
+        return cls(config_data=config, logger=logger)
     
     def _load_config(self) -> None:
         """Carga la configuración desde el archivo."""
@@ -75,7 +119,7 @@ class ConfigManager:
     
     def update_config(self, new_config: Dict[str, Any]) -> None:
         """
-        Actualiza la configuración y la persiste en el archivo.
+        Actualiza la configuración y la persiste en el archivo si hay uno configurado.
         
         Args:
             new_config: Diccionario con los valores a actualizar
@@ -83,7 +127,12 @@ class ConfigManager:
         # Actualizar la configuración en memoria
         self._config.update(new_config)
         
-        # Persistir en el archivo
+        # Persistir en el archivo si hay uno configurado
+        if self.config_path:
+            self._save_config()
+    
+    def _save_config(self) -> None:
+        """Guarda la configuración en el archivo configurado."""
         try:
             # Asegurar que el directorio existe
             os.makedirs(os.path.dirname(self.config_path), exist_ok=True)

@@ -1,10 +1,11 @@
 """
+Path: src/services/user_input_service.py
 Servicio para gestionar la entrada de parámetros de usuario y selección de opciones.
 """
 
-import sys
 import logging
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, Optional
+from src.controllers.video_option_controller import VideoOptionController
 
 class UserInputService:
     """Clase que encapsula las operaciones relacionadas con la entrada del usuario."""
@@ -17,10 +18,12 @@ class UserInputService:
             logger: Logger configurado para registrar eventos
         """
         self.logger = logger
+        # Utilizamos el nuevo controlador para manejar las opciones de video
+        self.video_controller = VideoOptionController(logger)
     
     def procesar_opcion_video(self, opcion: str, config: Dict[str, Any]) -> Any:
         """
-        Procesa la opción de video seleccionada por el usuario.
+        Procesa la opción de video seleccionada por el usuario utilizando el controlador.
         
         Args:
             opcion: Opción seleccionada por el usuario
@@ -30,25 +33,21 @@ class UserInputService:
             URL o ruta de la imagen seleccionada
         """
         try:
-            if opcion == "0":
-                self.logger.info("Modo de calibración de reconocimiento de imagen activado.")
-                return config["ubicacion_default"]
-            elif opcion == "1":
-                self.logger.info("Modo de transmisión RTSP activado.")
-                return f"rtsp://{config['url_default']}:8080/h264.sdp"
-            elif opcion == "2":
-                self.logger.info("Modo HTTP activado.")
-                return f"http://{config['url_default']}:8080/photo.jpg"
-            elif opcion == "3":
-                self.logger.info("Modo de cámara web activado.")
-                return 0  # Se utiliza el índice 0 para la cámara web por defecto
-            else:
-                self.logger.error("Opción no válida.")
-                return None
+            # Delegamos la responsabilidad al controlador especializado
+            return self.video_controller.get_source_url(opcion, config)
         except Exception as e:
             self.logger.error(f"Error al procesar la opción de video: {e}")
             raise
     
+    def get_video_menu_options(self) -> list[str]:
+        """
+        Obtiene las opciones de menú para las fuentes de video.
+        
+        Returns:
+            Lista de opciones formateadas para mostrar al usuario
+        """
+        return self.video_controller.get_menu_options()
+
     def validar_parametros(self, parametros: Dict[str, float]) -> bool:
         """
         Valida que los parámetros de configuración sean correctos.
