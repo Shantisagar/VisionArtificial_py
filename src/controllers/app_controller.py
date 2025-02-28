@@ -5,8 +5,6 @@ la recogida de datos y la activación de la UI.
 """
 
 import sys
-import logging
-from typing import Dict, Any
 from src.config_manager import ConfigManager
 from src.services.user_input_service import UserInputService
 from src.views.console_view import ConsoleView
@@ -21,7 +19,7 @@ class AppController:
                  user_input_service: UserInputService, 
                  console_view: ConsoleView,
                  gui_view: GUIView,
-                 logger: logging.Logger):
+                 logger=None):
         """
         Inicializa el controlador con dependencias inyectadas.
         
