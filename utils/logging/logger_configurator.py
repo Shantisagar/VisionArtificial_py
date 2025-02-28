@@ -10,16 +10,16 @@ from typing import Optional
 
 class LoggerConfigurator:
     """Configurador de logger que implementa el patrón singleton con soporte para DI."""
-    
+
     _instance = None
     _logger = None
-    
+
     def __new__(cls, *args, **kwargs):
         """Implementación del patrón singleton con soporte para reinicialización."""
         if cls._instance is None:
             cls._instance = super(LoggerConfigurator, cls).__new__(cls)
         return cls._instance
-    
+
     def __init__(self, log_level: int = logging.INFO, log_file: Optional[str] = None):
         """
         Inicializa el configurador con nivel de log y archivo opcionales.
@@ -32,7 +32,7 @@ class LoggerConfigurator:
         if LoggerConfigurator._logger is None:
             self.log_level = log_level
             self.log_file = log_file or self._generate_log_file()
-    
+
     def _generate_log_file(self) -> str:
         """
         Genera un nombre de archivo de log basado en la fecha y hora actuales.
@@ -44,7 +44,7 @@ class LoggerConfigurator:
         os.makedirs(log_dir, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return os.path.join(log_dir, f"app_{timestamp}.log")
-    
+
     def configure(self) -> logging.Logger:
         """
         Configura y devuelve el logger global.
@@ -56,7 +56,7 @@ class LoggerConfigurator:
             # Crear el logger
             logger = logging.getLogger('VisionArtificial')
             logger.setLevel(self.log_level)
-            
+
             # Evitar duplicación de handlers
             if not logger.handlers:
                 # Configurar handler de archivo
@@ -64,24 +64,24 @@ class LoggerConfigurator:
                 file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
                 file_handler.setFormatter(file_format)
                 logger.addHandler(file_handler)
-                
+
                 # Configurar handler de consola
                 console_handler = logging.StreamHandler()
                 console_format = logging.Formatter('%(levelname)s: %(message)s')
                 console_handler.setFormatter(console_format)
                 logger.addHandler(console_handler)
-            
+
             LoggerConfigurator._logger = logger
-            logger.info(f"Logging configurado. Archivo de log: {self.log_file}")
-        
+            logger.info("Logging configurado. Archivo de log: %s", self.log_file)
+
         return LoggerConfigurator._logger
-    
+
     @classmethod
     def reset(cls) -> None:
         """Reinicia el singleton y el logger (útil para pruebas)."""
         cls._instance = None
         cls._logger = None
-    
+
     @classmethod
     def get_logger(cls) -> logging.Logger:
         """
@@ -93,7 +93,7 @@ class LoggerConfigurator:
         if cls._logger is None:
             cls._logger = cls().configure()
         return cls._logger
-    
+
     @classmethod
     def set_logger(cls, logger: logging.Logger) -> None:
         """

@@ -5,7 +5,6 @@ configuración e inicialización de la UI.
 """
 
 import sys
-import logging
 from utils.logging.logger_configurator import LoggerConfigurator
 from utils.error_handling import (
     get_error_handler, ErrorSeverity, error_context,
@@ -27,8 +26,7 @@ def setup_dependencies():
         Tupla con todas las dependencias inicializadas
     """
     # Configurar el logger con inyección de parámetros
-    logger_configurator = LoggerConfigurator(log_level=logging.INFO)
-    logger = logger_configurator.configure()
+    logger = LoggerConfigurator.get_logger()
 
     # Crear las dependencias necesarias con inyección del logger
     with error_context(
@@ -76,7 +74,3 @@ def main():
     # Iniciar la interfaz de usuario
     with error_context(severity=ErrorSeverity.CRITICAL, context={"phase": "ui_execution"}):
         controller.run_ui()
-
-
-if __name__ == "__main__":
-    main()

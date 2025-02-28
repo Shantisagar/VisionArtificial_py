@@ -4,12 +4,12 @@ Servicio para gestionar la entrada de parámetros de usuario y selección de opc
 """
 
 import logging
-from typing import Tuple, Dict, Any, Optional
+from typing import Tuple, Dict, Any
 from src.controllers.video_option_controller import VideoOptionController
 
 class UserInputService:
     """Clase que encapsula las operaciones relacionadas con la entrada del usuario."""
-    
+
     # Límites de validación para los parámetros
     # Estos valores podrían moverse a la configuración si necesitan ser ajustables
     GRADOS_ROTACION_MIN = -180.0
@@ -19,7 +19,7 @@ class UserInputService:
     ALTURA_MAX = 1000.0
     HORIZONTAL_MIN = -1000.0
     HORIZONTAL_MAX = 1000.0
-    
+
     def __init__(self, logger: logging.Logger):
         """
         Inicializa el servicio con un logger inyectado.
@@ -30,7 +30,7 @@ class UserInputService:
         self.logger = logger
         # Utilizamos el nuevo controlador para manejar las opciones de video
         self.video_controller = VideoOptionController(logger)
-    
+
     def procesar_opcion_video(self, opcion: str, config: Dict[str, Any]) -> Any:
         """
         Procesa la opción de video seleccionada por el usuario utilizando el controlador.
@@ -48,7 +48,7 @@ class UserInputService:
         except Exception as e:
             self.logger.error(f"Error al procesar la opción de video: {e}")
             raise
-    
+
     def get_video_menu_options(self) -> list[str]:
         """
         Obtiene las opciones de menú para las fuentes de video.
@@ -75,13 +75,13 @@ class UserInputService:
         if not isinstance(grados, (int, float)):
             self.logger.error("Grados de rotación debe ser un número.")
             return False
-            
+
         if grados < self.GRADOS_ROTACION_MIN or grados > self.GRADOS_ROTACION_MAX:
             self.logger.error(f"Grados de rotación fuera de rango ({self.GRADOS_ROTACION_MIN} a {self.GRADOS_ROTACION_MAX})")
             return False
-            
+
         return True
-    
+
     def validar_pixels_por_mm(self, pixels: float) -> bool:
         """
         Valida que los píxeles por milímetro sean positivos y tengan un valor razonable.
@@ -100,13 +100,13 @@ class UserInputService:
         if not isinstance(pixels, (int, float)):
             self.logger.error("Píxeles por mm debe ser un número.")
             return False
-            
+
         if pixels < self.PIXELS_POR_MM_MIN:
             self.logger.error(f"Píxeles por mm debe ser mayor que {self.PIXELS_POR_MM_MIN}")
             return False
-            
+
         return True
-    
+
     def validar_altura(self, altura: float) -> bool:
         """
         Valida que el valor de altura para la corrección del eje vertical esté en un rango válido.
@@ -124,13 +124,13 @@ class UserInputService:
         if not isinstance(altura, (int, float)):
             self.logger.error("Altura debe ser un número.")
             return False
-            
+
         if altura < self.ALTURA_MIN or altura > self.ALTURA_MAX:
             self.logger.error(f"Altura fuera de rango ({self.ALTURA_MIN} a {self.ALTURA_MAX})")
             return False
-            
+
         return True
-    
+
     def validar_horizontal(self, horizontal: float) -> bool:
         """
         Valida que el desplazamiento horizontal esté en un rango válido.
@@ -148,13 +148,13 @@ class UserInputService:
         if not isinstance(horizontal, (int, float)):
             self.logger.error("Desplazamiento horizontal debe ser un número.")
             return False
-            
+
         if horizontal < self.HORIZONTAL_MIN or horizontal > self.HORIZONTAL_MAX:
             self.logger.error(f"Desplazamiento horizontal fuera de rango ({self.HORIZONTAL_MIN} a {self.HORIZONTAL_MAX})")
             return False
-            
+
         return True
-    
+
     def validar_parametros(self, parametros: Dict[str, float]) -> bool:
         """
         Valida que los parámetros de configuración sean correctos.
@@ -177,28 +177,28 @@ class UserInputService:
                 if param not in parametros:
                     self.logger.error(f"Falta el parámetro requerido: {param}")
                     return False
-            
+
             # Validar cada parámetro individual
             if not self.validar_grados_rotacion(parametros['grados_rotacion']):
                 return False
-                
+
             if not self.validar_pixels_por_mm(parametros['pixels_por_mm']):
                 return False
-                
+
             if not self.validar_altura(parametros['altura']):
                 return False
-                
+
             if not self.validar_horizontal(parametros['horizontal']):
                 return False
-            
+
             # Aquí podríamos agregar validaciones adicionales que involucren
             # relaciones entre múltiples parámetros
-                
+
             return True
         except Exception as e:
             self.logger.error(f"Error al validar parámetros: {e}")
             return False
-    
+
     def convertir_a_tupla_parametros(self, parametros: Dict[str, float]) -> Tuple[float, float, float, float]:
         """
         Convierte un diccionario de parámetros a una tupla ordenada.
