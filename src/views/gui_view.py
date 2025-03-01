@@ -32,8 +32,8 @@ class GUIView:
         self.notifier = GUINotifier(logger)
         
         # Vistas específicas
-        self.main_display = MainDisplayView(logger)
-        self.control_panel = ControlPanelView(logger)
+        self.main_display = None
+        self.control_panel = None
         
         # Callback para cuando se actualicen los parámetros
         self.on_parameters_update = None
@@ -49,7 +49,8 @@ class GUIView:
             callback: Función a llamar con los nuevos parámetros
         """
         self.on_parameters_update = callback
-        self.control_panel.set_parameters_update_callback(callback)
+        if self.control_panel:
+            self.control_panel.set_parameters_update_callback(callback)
 
     def inicializar_ui(self, video_url, grados_rotacion, altura, horizontal, pixels_por_mm):
         """
@@ -109,11 +110,18 @@ class GUIView:
             # Iniciar actualización periódica de estadísticas
             self.update_stats()
 
+            # Programar maximización de la ventana después de 2 segundos
+            self.root.after(2000, self.maximizar_ventana)
+
             self.logger.info("Interfaz gráfica inicializada correctamente.")
             self.notifier.notify_info("Interfaz gráfica iniciada")
         except Exception as e:
             self.logger.error(f"Error al inicializar la interfaz gráfica: {e}")
             raise
+
+    def maximizar_ventana(self):
+        """Maximiza la ventana principal."""
+        self.root.state('zoomed')
 
     def ejecutar(self):
         """Inicia el bucle principal de la interfaz gráfica de manera no bloqueante."""

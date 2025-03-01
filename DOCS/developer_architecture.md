@@ -14,6 +14,9 @@ Este documento es una herramienta para desarrolladores con el objetivo de entend
    1. [Función "Ajustar Altura" en el GUI](#función-ajustar-altura-en-el-gui)
    2. [Botones [ - ] y [ + ] al lado de la barra horizontal](#botones--y--al-lado-de-la-barra-horizontal)
    3. [Visualización de FPS y Métricas de CPU](#visualización-de-fps-y-métricas-de-cpu)
+   4. [Incorporar una barra horizontal de "zoom"](#incorporar-una-barra-horizontal-de-zoom)
+   5. [Selector de color de papel](#selector-de-color-de-papel)
+   6. [Maximizar la ventana de la GUI después de 2 segundos](#maximizar-la-ventana-de-la-gui-después-de-2-segundos)
 4. [Notas Adicionales](#notas-adicionales)
 
 ---
@@ -159,11 +162,31 @@ src/
   - **Posible Ubicación:** Dado que actualmente no se muestra, puedes crear una nueva función o módulo que reciba la información de rendimiento y actualice la interfaz en `control_panel_view.py`.  
   - **Acción:** Determinar la lógica de conexión con OpenHardwareMonitor y ubicar el panel de estadísticas donde se mostrará esta información.
 
+### Incorporar una barra horizontal de "zoom"
+
+- **Contexto:**  
+  Se requiere agregar una barra horizontal para ajustar el nivel de zoom en la visualización del video.
+- **Posible Ubicación:**  
+  La barra de zoom debe ubicarse en el panel de control, posiblemente debajo de los controles de parámetros.
+- **Acción:**  
+  Investigar la implementación de la barra de zoom en `control_panel_view.py` y `main_display_view.py`. Asegurarse de que el valor de zoom se aplique correctamente a la visualización del video.
+
+### Selector de color de papel
+
+- **Contexto:**  
+  Se necesita un selector para elegir entre diferentes colores de papel (Blanco, Marrón). Dependiendo del color seleccionado, se aplicará un filtro de contraste específico.
+- **Posible Ubicación:**  
+  El selector de color de papel debe ubicarse en el panel de control, junto a otros controles de parámetros.
+- **Acción:**  
+  Implementar el selector en `control_panel_view.py` y `gui_parameter_panel_view.py`. Definir los filtros de contraste en `video_processor.py` para aplicar los cambios en la visualización del video según el color de papel seleccionado.
+
+### Maximizar la ventana de la GUI después de 2 segundos
+
+- **Contexto:**  
+  Se requiere que la ventana de la GUI se maximice automáticamente 2 segundos después de inicializarla.
+- **Posible Ubicación:**  
+  La lógica para maximizar la ventana debe implementarse en `gui_view.py`.
+- **Acción:**  
+  Programar la maximización de la ventana utilizando `self.root.after(2000, self.maximizar_ventana)` en el método `inicializar_ui` de `gui_view.py`.
+
 ---
-
-## Notas Adicionales
-
-- Se recomienda revisar el archivo 00-Prompt-for-ProjectAnalysis.md para obtener un análisis detallado de las funciones y estructuras de cada archivo del proyecto.  
-- Cada módulo está diseñado para mantener una separación de responsabilidades: el procesamiento de video y la captura (en capture y controllers) están desacoplados de la lógica de la interfaz (en views).
-
-Este documento es un punto de partida para ubicar y comprender las áreas donde se deben efectuar modificaciones o agregar nuevas funcionalidades. Adaptarlo conforme se vayan definiendo más detalles o surjan nuevos requerimientos es parte del proceso de desarrollo.

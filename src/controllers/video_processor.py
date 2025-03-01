@@ -45,6 +45,8 @@ class VideoProcessor:
         self.altura = altura
         self.horizontal = horizontal
         self.pixels_por_mm = pixels_por_mm
+        self.zoom = 1.0
+        self.paper_color = "Blanco"
         
         # Estadísticas de procesamiento
         self.stats = {
@@ -75,6 +77,12 @@ class VideoProcessor:
                 
             if 'pixels_por_mm' in parameters:
                 self.pixels_por_mm = parameters['pixels_por_mm']
+                
+            if 'zoom' in parameters:
+                self.zoom = parameters['zoom']
+                
+            if 'paper_color' in parameters:
+                self.paper_color = parameters['paper_color']
                 
             # Actualizar el controlador de procesamiento si es necesario
             if hasattr(self, 'controller') and self.controller:
@@ -109,6 +117,18 @@ class VideoProcessor:
                 self.horizontal,
                 self.pixels_por_mm
             )
+            
+            # Aplicar zoom
+            height, width = frame.shape[:2]
+            new_width = int(width * self.zoom)
+            new_height = int(height * self.zoom)
+            frame = cv2.resize(frame, (new_width, new_height))
+
+            # Aplicar filtro de contraste según el color de papel
+            if self.paper_color == "Blanco":
+                frame = self.apply_white_paper_filter(frame)
+            elif self.paper_color == "Marrón":
+                frame = self.apply_brown_paper_filter(frame)
             
             # Actualizar estadísticas
             current_time = time.time()
@@ -223,3 +243,17 @@ class VideoProcessor:
                 self.notifier.notify_error(f"Error de procesamiento de imagen: {str(e)}")
                 
             return image
+
+    def apply_white_paper_filter(self, frame):
+        # Lógica para aplicar filtro de contraste para papel blanco
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+        frame[binary == 0] = (0, 0, 0)
+        return frame
+
+    def apply_brown_paper_filter(self, frame):
+        # Lógica para aplicar filtro de contraste para papel marrón
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+        frame[binary == 0] = (255, 0, 0)
+        return frame

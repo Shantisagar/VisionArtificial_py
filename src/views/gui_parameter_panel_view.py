@@ -31,6 +31,8 @@ class GUIParameterPanelView:
         self.pixels_por_mm_var = tk.StringVar()
         self.altura_var = tk.StringVar()
         self.horizontal_var = tk.StringVar()
+        self.zoom_var = tk.DoubleVar(value=1.0)
+        self.paper_color_var = tk.StringVar(value="Blanco")
 
         # Referencias a los controles de la UI
         self.rotation_slider = None
@@ -103,6 +105,20 @@ class GUIParameterPanelView:
         # Crear los controles en la interfaz
         self._create_parameter_inputs()
         self.logger.info("Panel de parámetros inicializado correctamente")
+
+        # Barra de zoom
+        tk.Label(self.parent_frame, text="Zoom").pack()
+        self.zoom_scale = tk.Scale(self.parent_frame, from_=0.1, to=3.0, resolution=0.1, orient=tk.HORIZONTAL, variable=self.zoom_var)
+        self.zoom_scale.pack()
+
+        # Selector de color de papel
+        tk.Label(self.parent_frame, text="Color de Papel").pack()
+        self.paper_color_menu = tk.OptionMenu(self.parent_frame, self.paper_color_var, "Blanco", "Marrón")
+        self.paper_color_menu.pack()
+
+        # Botón para aplicar cambios
+        self.apply_button = tk.Button(self.parent_frame, text="Aplicar Cambios", command=self.apply_changes)
+        self.apply_button.pack()
 
     def update_parameters_display(self, parameters: Dict[str, float]) -> None:
         """
@@ -254,3 +270,16 @@ class GUIParameterPanelView:
         """Maneja el evento del botón de guardar como valores predeterminados."""
         if self.on_save_as_default_callback:
             self.on_save_as_default_callback()
+
+    def apply_changes(self):
+        """Aplica los cambios de parámetros y llama al callback correspondiente."""
+        parameters = {
+            'grados_rotacion': self.grados_rotacion_var.get(),
+            'pixels_por_mm': self.pixels_por_mm_var.get(),
+            'altura': self.altura_var.get(),
+            'horizontal': self.horizontal_var.get(),
+            'zoom': self.zoom_var.get(),
+            'paper_color': self.paper_color_var.get()
+        }
+        if self.on_update_parameters_callback:
+            self.on_update_parameters_callback(parameters)

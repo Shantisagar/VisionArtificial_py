@@ -30,6 +30,8 @@ class ControlPanelView:
         self.update_interval = 500
         self.on_parameters_update = None
         self.notifier = None
+        self.zoom_var = tk.DoubleVar(value=1.0)
+        self.paper_color_var = tk.StringVar(value="Blanco")
 
     def set_notifier(self, notifier: GUINotifier) -> None:
         """
@@ -104,6 +106,20 @@ class ControlPanelView:
             if self.on_parameters_update:
                 self.parameter_panel.set_parameters_update_callback(self.on_parameters_update)
 
+            # Barra de zoom
+            tk.Label(self.control_frame, text="Zoom").pack()
+            self.zoom_scale = tk.Scale(self.control_frame, from_=0.1, to=3.0, resolution=0.1, orient=tk.HORIZONTAL, variable=self.zoom_var)
+            self.zoom_scale.pack()
+
+            # Selector de color de papel
+            tk.Label(self.control_frame, text="Color de Papel").pack()
+            self.paper_color_menu = tk.OptionMenu(self.control_frame, self.paper_color_var, "Blanco", "Marrón")
+            self.paper_color_menu.pack()
+
+            # Botón para aplicar cambios
+            self.apply_button = tk.Button(self.control_frame, text="Aplicar Cambios", command=self.apply_changes)
+            self.apply_button.pack()
+
             # Crear etiqueta para estadísticas
             stats_frame = tk.LabelFrame(self.control_frame, text="Estadísticas")
             stats_frame.pack(fill="x", padx=5, pady=5)
@@ -149,3 +165,15 @@ class ControlPanelView:
         if self.parameter_panel:
             self.parameter_panel.update_parameters(parameters)
             self.logger.info(f"Parámetros actualizados en el panel: {parameters}")
+
+    def apply_changes(self):
+        """
+        Aplica los cambios de zoom y color de papel.
+        """
+        parameters = {
+            'zoom': self.zoom_var.get(),
+            'paper_color': self.paper_color_var.get()
+        }
+        if self.on_parameters_update:
+            self.on_parameters_update(parameters)
+        self.logger.info(f"Cambios aplicados: {parameters}")

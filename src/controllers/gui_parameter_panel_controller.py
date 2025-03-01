@@ -44,6 +44,9 @@ class GUIParameterPanelController:
             'on_save_as_default': None
         }
         
+        self.zoom = 1.0
+        self.paper_color = "Blanco"
+        
     def set_view(self, view):
         """
         Establece la vista asociada al controlador.
@@ -195,28 +198,24 @@ class GUIParameterPanelController:
                 self.notifier.notify_warning(f"Valor inválido: {error_msg}")
             return False, error_msg
     
-    def on_update_parameters(self) -> None:
+    def on_update_parameters(self, parameters: Optional[Dict[str, float]] = None) -> None:
         """Maneja el evento del botón de aplicar cambios."""
         try:
             if not self.view:
                 self.logger.error("No hay vista configurada")
                 return
                 
-            # Obtener valores actuales desde la vista
-            string_values = self.view.get_current_values()
-            
-            # Convertir a valores float para procesamiento
-            float_values = {}
+            # Obtener valores actuales desde la vista si no se proporcionan parámetros
+            if parameters is None:
+                string_values = self.view.get_current_values()
+                parameters = {param_name: float(value_str) for param_name, value_str in string_values.items()}
             
             # Validar todos los valores antes de actualizar
             all_valid = True
-            for param_name, value_str in string_values.items():
-                valid, _ = self.validate_entry(param_name, value_str)
+            for param_name, value in parameters.items():
+                valid, _ = self.validate_entry(param_name, str(value))
                 if not valid:
                     all_valid = False
-                else:
-                    # Si es válido, convertir a float para el procesamiento
-                    float_values[param_name] = float(value_str)
             
             if all_valid:
                 # Llamar al callback externo de actualización si existe
@@ -225,7 +224,7 @@ class GUIParameterPanelController:
                 
                 # Notificar a través del callback de parámetros si existe
                 if self.parameters_update_callback:
-                    self.parameters_update_callback(float_values)
+                    self.parameters_update_callback(parameters)
                 
                 self.logger.info("Parámetros actualizados correctamente")
                 if self.notifier:
@@ -315,3 +314,17 @@ class GUIParameterPanelController:
         if self.view and hasattr(self.view, 'layout'):
             self.view.layout.set_slider_ranges(self.parameter_ranges)
             self.logger.debug(f"Rangos de parámetros actualizados: {ranges}")
+    
+    def update_parameters(self, parameters):
+        """
+        Actualiza los parámetros del controlador.
+        
+        Args:
+            parameters: Diccionario con los parámetros a actualizar
+        """
+        if 'zoom' in parameters:
+            self.zoom = parameters['zoom']
+        if 'paper_color' in parameters:
+            self.paper_color = parameters['paper_color']
+        
+        self.view.update_parameters(parameters)
