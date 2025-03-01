@@ -33,22 +33,19 @@ def handle_exceptions(severity: ErrorSeverity = ErrorSeverity.ERROR,
             except Exception as e:
                 # Crear contexto
                 context = {}
-                
                 # Añadir nombre de función al contexto si se solicita
                 if add_function_name:
                     context["function"] = func.__name__
-                    
+
                 # Obtener contexto adicional si se proporciona una función
                 if context_fn:
                     try:
-                        # Verificar si la función de contexto necesita los parámetros de la función original
                         if inspect.signature(context_fn).parameters:
-                            # Pasar los mismos argumentos que la función original
                             additional_context = context_fn(*args, **kwargs)
                         else:
                             # No pasar argumentos
                             additional_context = context_fn()
-                            
+  
                         if additional_context:
                             context.update(additional_context)
                     except Exception as context_error:
@@ -57,14 +54,14 @@ def handle_exceptions(severity: ErrorSeverity = ErrorSeverity.ERROR,
                             ErrorSeverity.WARNING,
                             {"message": "Error al obtener contexto adicional"}
                         )
-                
+
                 # Manejar la excepción
                 get_error_handler().handle_exception(e, severity, context)
-                
+
                 # Relanzar si es necesario
                 if reraise:
                     raise
-                
+
                 # Retornar un valor por defecto según el tipo de retorno
                 # Si hay una anotación de retorno, intentamos crear un valor por defecto
                 return_annotation = inspect.signature(func).return_annotation
@@ -104,7 +101,7 @@ def handle_specific_exceptions(exceptions: Union[Type[Exception], List[Type[Exce
     """
     if not isinstance(exceptions, (list, tuple)):
         exceptions = [exceptions]
-        
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -114,25 +111,24 @@ def handle_specific_exceptions(exceptions: Union[Type[Exception], List[Type[Exce
                 # Solo manejar excepciones específicas
                 if not any(isinstance(e, exc) for exc in exceptions):
                     raise
-                    
+
                 # Crear contexto
                 context = {}
-                
+
                 # Añadir nombre de función al contexto si se solicita
                 if add_function_name:
                     context["function"] = func.__name__
-                    
+
                 # Obtener contexto adicional si se proporciona una función
                 if context_fn:
                     try:
-                        # Verificar si la función de contexto necesita los parámetros de la función original
                         if inspect.signature(context_fn).parameters:
                             # Pasar los mismos argumentos que la función original
                             additional_context = context_fn(*args, **kwargs)
                         else:
                             # No pasar argumentos
                             additional_context = context_fn()
-                            
+
                         if additional_context:
                             context.update(additional_context)
                     except Exception as context_error:
@@ -141,14 +137,14 @@ def handle_specific_exceptions(exceptions: Union[Type[Exception], List[Type[Exce
                             ErrorSeverity.WARNING,
                             {"message": "Error al obtener contexto adicional"}
                         )
-                
+
                 # Manejar la excepción
                 get_error_handler().handle_exception(e, severity, context)
-                
+
                 # Relanzar si es necesario
                 if reraise:
                     raise
-                
+
                 # Retornar un valor por defecto
                 return_annotation = inspect.signature(func).return_annotation
                 if return_annotation is not inspect.Signature.empty:

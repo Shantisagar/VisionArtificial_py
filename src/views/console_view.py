@@ -5,6 +5,7 @@ Implementa la capa de presentación del patrón MVC.
 
 import logging
 from typing import Dict, Any, Optional, List
+from src.views.notifier import Notifier, ConsoleNotifier
 
 class ConsoleView:
     """Clase responsable de la interacción con el usuario vía consola."""
@@ -17,6 +18,7 @@ class ConsoleView:
             logger: Logger configurado para registrar eventos
         """
         self.logger = logger
+        self.notifier = ConsoleNotifier(logger)
 
     def mostrar_menu_fuente_video(self, options: Optional[List[str]] = None) -> str:
         """
@@ -29,8 +31,7 @@ class ConsoleView:
         Returns:
             Siempre devuelve "1" (opción para cámara web)
         """
-        print("Se utilizará la cámara web como fuente de video.")
-        self.logger.info("Seleccionada automáticamente la opción de cámara web")
+        self.notifier.notify_info("Se utilizará la cámara web como fuente de video.")
         return "1"  # Devuelve directamente la opción de cámara web
 
     def solicitar_parametros_usuario(self, config: Dict[str, Any]) -> Dict[str, float]:
@@ -72,7 +73,10 @@ class ConsoleView:
         Raises:
             ValueError: Si el valor ingresado no puede convertirse a flotante
         """
-        valor = input(f'Ingrese los grados de rotación (valor por defecto "{valor_default}"): ') or str(valor_default)
+        prompt = (
+            f'Ingrese los grados de rotación (valor por defecto "{valor_default}"): '
+        )
+        valor = input(prompt) or str(valor_default)
         try:
             return float(valor)
         except ValueError:
@@ -91,7 +95,10 @@ class ConsoleView:
         Raises:
             ValueError: Si el valor ingresado no puede convertirse a flotante o es negativo
         """
-        valor = input(f'Ingrese el valor de pixeles por mm (valor por defecto "{valor_default}"): ') or str(valor_default)
+        prompt = (
+            f'Ingrese el valor de pixeles por mm (valor por defecto "{valor_default}"): '
+        )
+        valor = input(prompt) or str(valor_default)
         try:
             return float(valor)
         except ValueError:
@@ -110,7 +117,9 @@ class ConsoleView:
         Raises:
             ValueError: Si el valor ingresado no puede convertirse a flotante
         """
-        valor = input(f'Ingrese la altura para corregir eje vertical (valor por defecto "{valor_default}"): ') or str(valor_default)
+        valor = input(
+            f'Ingrese la altura para corregir eje vertical (valor por defecto "{valor_default}"): '
+        ) or str(valor_default)
         try:
             return float(valor)
         except ValueError:
@@ -129,7 +138,11 @@ class ConsoleView:
         Raises:
             ValueError: Si el valor ingresado no puede convertirse a flotante
         """
-        valor = input(f'Ingrese el desplazamiento horizontal (valor por defecto "{valor_default}"): ') or str(valor_default)
+        prompt = (
+            f'Ingrese el desplazamiento horizontal '
+            f'(valor por defecto "{valor_default}"): '
+        )
+        valor = input(prompt) or str(valor_default)
         try:
             return float(valor)
         except ValueError:
@@ -142,8 +155,7 @@ class ConsoleView:
         Args:
             mensaje: Mensaje de error a mostrar
         """
-        print(f"ERROR: {mensaje}")
-        self.logger.error(mensaje)
+        self.notifier.notify_error(mensaje)
 
     def mostrar_info(self, mensaje: str) -> None:
         """
@@ -152,5 +164,4 @@ class ConsoleView:
         Args:
             mensaje: Mensaje informativo a mostrar
         """
-        print(f"INFO: {mensaje}")
-        self.logger.info(mensaje)
+        self.notifier.notify_info(mensaje)

@@ -8,7 +8,6 @@ import time
 import queue
 import tkinter as tk
 import logging
-import numpy as np
 import cv2
 from PIL import Image, ImageTk
 
@@ -134,7 +133,7 @@ class VideoStreamProcessApp:
                             try:
                                 if not stats_queue.full():
                                     stats_queue.put(stats, block=False)
-                            except:
+                            except queue.Full:
                                 pass
 
                         last_frame_time = now
@@ -177,7 +176,7 @@ class VideoStreamProcessApp:
             if self.running.value:
                 self.root.after(50, self.update_frame)
 
-        except Exception as e:
+        except (queue.Empty, RuntimeError, ValueError) as e:
             self.logger.error(f"Error al actualizar frame: {e}")
             if self.running.value:
                 self.root.after(100, self.update_frame)
@@ -190,7 +189,7 @@ class VideoStreamProcessApp:
         if hasattr(self, 'command_queue'):
             try:
                 self.command_queue.put("STOP", block=False)
-            except:
+            except queue.Full:
                 pass
 
         if hasattr(self, 'capture_process'):

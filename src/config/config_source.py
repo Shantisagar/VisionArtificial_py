@@ -8,7 +8,7 @@ from typing import Dict, Any
 
 class ConfigSource(ABC):
     """Interfaz abstracta para diferentes fuentes de configuración."""
-    
+
     @abstractmethod
     def load_config(self) -> Dict[str, Any]:
         """
@@ -18,7 +18,7 @@ class ConfigSource(ABC):
             Un diccionario con la configuración
         """
         pass
-    
+
     @abstractmethod
     def save_config(self, config: Dict[str, Any]) -> None:
         """

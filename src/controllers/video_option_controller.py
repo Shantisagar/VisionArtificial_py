@@ -77,9 +77,11 @@ class VideoOptionController:
         """
         self.logger = logger
         self._source = WebcamSource()
-        
+
         if self.logger:
-            self.logger.debug(f"Inicializado controlador de video con fuente: {self._source.get_description()}")
+            self.logger.debug(
+                f"Inicializado controlador de video con fuente: {self._source.get_description()}"
+            )
 
     def get_menu_options(self) -> List[str]:
         """
@@ -104,5 +106,5 @@ class VideoOptionController:
         """
         if self.logger:
             self.logger.info(f"Usando fuente de video: {self._source.get_description()}")
-        
+
         return self._source.get_source_url(config)

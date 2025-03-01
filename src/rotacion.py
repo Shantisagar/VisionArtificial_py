@@ -1,4 +1,8 @@
-#VisionArtificial\src\rotacion.py
+"""
+Path: src/rotacion.py
+Este script contiene una función para rotar una imagen en sentido antihorario.
+"""
+
 import cv2
 from utils.logging.logger_configurator import LoggerConfigurator
 
@@ -9,7 +13,8 @@ def rotar_imagen(frame, grados):
     """
     Rota la imagen un número específico de grados en sentido antihorario.
     
-    Utiliza la matriz de rotación de OpenCV para rotar la imagen alrededor de su centro sin cambiar su escala.
+    Utiliza la matriz de rotación de OpenCV para rotar 
+    la imagen alrededor de su centro sin cambiar su escala.
     
     Parámetros:
     - frame (np.ndarray): Imagen a rotar.

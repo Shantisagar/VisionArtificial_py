@@ -1,4 +1,5 @@
 """
+Path: src/video_stream.py
 Módulo de transmisión de video que separa la captura y el procesamiento
 de imágenes del hilo de la interfaz. Se implementa la sincronización y control
 de calidad de frames mediante una cola, y se agrega una gestión robusta de
@@ -15,11 +16,12 @@ import numpy as np
 import cv2
 from src.image_processing import ProcessingController
 from utils.logging.logger_configurator import get_logger
+from src.views.notifier import Notifier, ConsoleNotifier
 
 class VideoStreamApp:
     "Esta clase se encarga de la transmisión de video y la actualización de la interfaz gráfica."
-    def __init__(self, root, default_video_url, grados_rotacion, altura, 
-                 horizontal, pixels_por_mm, logger=None):
+    def __init__(self, root, default_video_url, grados_rotacion, altura,
+                 horizontal, pixels_por_mm, logger=None, notifier=None):
         """
         Inicializa la aplicación de transmisión de video.
         Se inyectan las dependencias y se separan la captura y actualización de UI.
@@ -32,6 +34,7 @@ class VideoStreamApp:
             horizontal: Ajuste horizontal para la imagen
             pixels_por_mm: Relación de píxeles por milímetro
             logger: Logger configurado (opcional, se usa el global si es None)
+            notifier: Notificador para comunicar mensajes al usuario (opcional)
         """
         self.root = root
         self.default_video_url = default_video_url
@@ -40,7 +43,8 @@ class VideoStreamApp:
         self.horizontal = horizontal
         self.pixels_por_mm = pixels_por_mm
         self.logger = logger or get_logger()
-        self.controller = ProcessingController()
+        self.notifier = notifier or ConsoleNotifier(self.logger)
+        self.controller = ProcessingController(notifier=self.notifier)
         self.frame_queue = queue.Queue(maxsize=10)
         self.running = True
         self.cap = None
@@ -67,7 +71,8 @@ class VideoStreamApp:
         Se distingue entre fuentes HTTP y locales.
         """
         try:
-            if isinstance(self.default_video_url, str) and self.default_video_url.startswith('http'):
+            if isinstance(self.default_video_url, str) and \
+               self.default_video_url.startswith('http'):
                 capture_thread = threading.Thread(target=self.http_capture_loop, daemon=True)
                 capture_thread.start()
                 self.threads.append(capture_thread)
@@ -120,28 +125,42 @@ class VideoStreamApp:
                     else:
                         self.logger.error("No se pudo decodificar la imagen HTTP.")
                 else:
-                    self.logger.error(f"Fallo al cargar la imagen desde HTTP: Estado {response.status_code}")
+                    self.logger.error(
+                        f"Fallo al cargar la imagen desde HTTP: Estado {response.status_code}"
+                    )
                 # Espera fija para HTTP tras una petición exitosa o fallida sin excepción
                 time.sleep(2.5)
             except requests.exceptions.RequestException as e:
                 error_count += 1
                 wait_time = min(2.5 * error_count, 10)
-                self.logger.error(f"Error en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
+                self.logger.error(
+                    f"Error en http_capture_loop: {e} (Intento {error_count}). "
+                    f"Esperando {wait_time} s."
+                )
                 time.sleep(wait_time)
             except (ValueError, TypeError) as e:
                 error_count += 1
                 wait_time = min(2.5 * error_count, 10)
-                self.logger.error(f"Error de datos en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
+                self.logger.error(
+                    f"Error de datos en http_capture_loop: {e} (Intento {error_count}). "
+                    f"Esperando {wait_time} s."
+                )
                 time.sleep(wait_time)
             except cv2.error.CvError as e:
                 error_count += 1
                 wait_time = min(2.5 * error_count, 10)
-                self.logger.error(f"Error de OpenCV en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
+                self.logger.error(
+                    f"Error de OpenCV en http_capture_loop: {e} (Intento {error_count}). "
+                    f"Esperando {wait_time} s."
+                )
                 time.sleep(wait_time)
             except (IOError, OSError) as e:
                 error_count += 1
                 wait_time = min(2.5 * error_count, 10)
-                self.logger.error(f"Error de E/S en http_capture_loop: {e} (Intento {error_count}). Esperando {wait_time} s.")
+                self.logger.error(
+                    f"Error de E/S en http_capture_loop: {e} (Intento {error_count}). "
+                    f"Esperando {wait_time} s."
+                )
                 time.sleep(wait_time)
 
     def process_and_enqueue(self, frame):
@@ -184,14 +203,12 @@ class VideoStreamApp:
                 self.frame_queue.put(processed_frame)
             else:
                 self.logger.error("No se pudo escalar el frame.")
-        except (cv2.error.CvError, ValueError, TypeError) as e:
+                if self.notifier:
+                    self.notifier.notify_error("No se pudo escalar el frame")
+        except Exception as e:
             self.logger.error(f"Error de procesamiento de imagen: {e}")
-        except tk.TclError as e:
-            self.logger.error(f"Error de interfaz gráfica: {e}")
-        except (queue.Full, RuntimeError) as e:
-            self.logger.error(f"Error en la gestión de la cola de frames: {e}")
-        except AttributeError as e:
-            self.logger.error(f"Error de acceso a atributo en proceso de frame: {e}")
+            if self.notifier:
+                self.notifier.notify_error("Error de procesamiento de imagen", e)
 
     def update_frame_from_queue(self):
         """

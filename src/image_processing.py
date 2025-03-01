@@ -1,15 +1,17 @@
 """
+Path: src/image_processing.py
 Módulo de procesamiento de imágenes que incluye funciones de transformación,
 detección de bordes y anotación gráfica.
 """
 
+import datetime
 import cv2
 import numpy as np
-import datetime
 from src.rotacion import rotar_imagen
 from src.deteccion_bordes import encontrar_borde
 from utils.logging.logger_configurator import LoggerConfigurator
 from src.registro_desvios import registrar_desvio
+from src.views.notifier import Notifier, ConsoleNotifier
 
 TOLERANCIA = 2  # Tolerancia en milímetros
 logger = LoggerConfigurator().configure()
@@ -64,8 +66,17 @@ def desplazar_horizontal(frame, horizontal):
 # ------------------ Clase Controladora del Procesamiento ------------------
 
 class ProcessingController:
-    def __init__(self, default_pixels_por_mm=20):
+    " Controlador de procesamiento de imágenes para la detección de bordes. "
+    def __init__(self, default_pixels_por_mm=20, notifier=None):
+        """
+        Inicializa el controlador de procesamiento.
+        
+        Args:
+            default_pixels_por_mm: Valor predeterminado de píxeles por milímetro
+            notifier: Instancia de Notifier para manejar las notificaciones (opcional)
+        """
         self.default_pixels_por_mm = default_pixels_por_mm
+        self.notifier = notifier or ConsoleNotifier(logger)
 
     def process(self, frame, grados, altura, horizontal, pixels_por_mm):
         """
@@ -87,7 +98,10 @@ class ProcessingController:
             now = datetime.datetime.now()
             fecha_hora = now.strftime("%d-%m-%Y %H:%M:%S")
             texto0 = fecha_hora
-            texto1 = registrar_desvio(desvio_mm, TOLERANCIA)
+            
+            # Usar el notificador para registrar el desvío
+            texto1 = registrar_desvio(desvio_mm, TOLERANCIA, self.notifier)
+            
             # Ejemplo de otros textos informativos
             texto2 = "Ancho de bobina: 790mm"
             texto3 = "Formato bolsa: 260x120x360"
@@ -111,5 +125,7 @@ class ProcessingController:
 
             return frame
         except Exception as e:
+            if self.notifier:
+                self.notifier.notify_error("Error al procesar la imagen", e)
             logger.error("Error al procesar la imagen: %s", e)
             raise
