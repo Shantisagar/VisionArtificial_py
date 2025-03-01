@@ -13,7 +13,7 @@ from utils.error_handling.contexts import (
     error_context, specific_error_context, collect_context
 )
 from utils.error_handling.exceptions import (
-    AppException, ConfigurationError, VideoSourceError, 
+    AppException, ConfigurationError, VideoSourceError,
     InputValidationError, ImageProcessingError, UIError
 )
 

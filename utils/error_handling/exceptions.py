@@ -22,7 +22,7 @@ class AppException(Exception):
 # Configuration errors
 class ConfigurationError(AppException):
     """Error relacionado con la configuración de la aplicación."""
-    pass
+    # No empty pass statement needed
 
 
 class ConfigFileNotFoundError(ConfigurationError):
@@ -43,18 +43,18 @@ class ConfigFileNotFoundError(ConfigurationError):
 
 class ConfigParsingError(ConfigurationError):
     """Error al interpretar el archivo de configuración."""
-    pass
+    # No empty pass statement needed
 
 
 # Video source errors
 class VideoSourceError(AppException):
     """Error relacionado con la fuente de video."""
-    pass
+    # No empty pass statement needed
 
 
 class VideoConnectionError(VideoSourceError):
     """Error de conexión con la fuente de video."""
-    pass
+    # No empty pass statement needed
 
 
 class InvalidVideoOptionError(VideoSourceError):
@@ -76,7 +76,7 @@ class InvalidVideoOptionError(VideoSourceError):
 # Input validation errors
 class InputValidationError(AppException):
     """Error de validación de entrada."""
-    pass
+    # No empty pass statement needed
 
 
 class NumericRangeError(InputValidationError):
@@ -123,30 +123,30 @@ class RequiredParameterError(InputValidationError):
 # Image processing errors
 class ImageProcessingError(AppException):
     """Error durante el procesamiento de la imagen."""
-    pass
+    # No empty pass statement needed
 
 
 class FrameCapturingError(ImageProcessingError):
     """Error al capturar un frame de video."""
-    pass
+    # No empty pass statement needed
 
 
 class ImageTransformationError(ImageProcessingError):
     """Error al transformar una imagen."""
-    pass
+    # No empty pass statement needed
 
 
 # UI errors
 class UIError(AppException):
     """Error relacionado con la interfaz de usuario."""
-    pass
+    # No empty pass statement needed
 
 
 class UIInitializationError(UIError):
     """Error al inicializar la interfaz de usuario."""
-    pass
+    # No empty pass statement needed
 
 
 class UIRenderingError(UIError):
     """Error al renderizar elementos de la interfaz."""
-    pass
+    # No empty pass statement needed

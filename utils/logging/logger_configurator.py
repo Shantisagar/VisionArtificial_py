@@ -1,125 +1,120 @@
 """
-Módulo para la configuración centralizada del sistema de logging.
-Implementa el patrón singleton con soporte para inyección de dependencias.
+Configurador de logging para la aplicación.
+Proporciona una API unificada para configurar el logging.
 """
 
 import logging
+import logging.handlers
 import os
-from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Any
+
+# Singleton para acceso global al logger
+_APP_LOGGER: Optional[logging.Logger] = None
+
 
 class LoggerConfigurator:
-    """Configurador de logger que implementa el patrón singleton con soporte para DI."""
+    """Configurador de logging para la aplicación."""
 
-    _instance = None
-    _logger = None
-
-    def __new__(cls, *args, **kwargs):
-        """Implementación del patrón singleton con soporte para reinicialización."""
-        if cls._instance is None:
-            cls._instance = super(LoggerConfigurator, cls).__new__(cls)
-        return cls._instance
-
-    def __init__(self, log_level: int = logging.INFO, log_file: Optional[str] = None):
+    def __init__(self, log_path: str = "logs", log_level: int = logging.INFO):
         """
-        Inicializa el configurador con nivel de log y archivo opcionales.
+        Inicializa el configurador de logging.
         
         Args:
-            log_level: Nivel de logging (default: logging.INFO)
-            log_file: Ruta al archivo de logs (default: auto-generado)
+            log_path: Ruta donde se almacenarán los logs
+            log_level: Nivel de logging predeterminado
         """
-        # Solo configurar una vez
-        if LoggerConfigurator._logger is None:
-            self.log_level = log_level
-            self.log_file = log_file or self._generate_log_file()
+        self.log_path = log_path
+        self.log_level = log_level
+        self.filters = []
 
-    def _generate_log_file(self) -> str:
-        """
-        Genera un nombre de archivo de log basado en la fecha y hora actuales.
-        
-        Returns:
-            Ruta al archivo de log generado
-        """
-        log_dir = os.path.join(os.getcwd(), 'logs')
-        os.makedirs(log_dir, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return os.path.join(log_dir, f"app_{timestamp}.log")
+        # Crear el directorio de logs si no existe
+        os.makedirs(log_path, exist_ok=True)
 
-    def configure(self) -> logging.Logger:
+    def register_filter(self, filter_class: Any) -> None:
         """
-        Configura y devuelve el logger global.
+        Registra un filtro para usarlo en la configuración.
         
+        Args:
+            filter_class: Clase del filtro a instanciar
+        """
+        self.filters.append(filter_class())
+
+    def configure(self, filters: Optional[List[Any]] = None) -> logging.Logger:
+        """
+        Configura y devuelve un logger con los filtros proporcionados.
+        
+        Args:
+            filters: Lista opcional de filtros a aplicar
+            
         Returns:
             Logger configurado
         """
-        if LoggerConfigurator._logger is None:
-            # Crear el logger
-            logger = logging.getLogger('VisionArtificial')
-            logger.setLevel(self.log_level)
+        # Crear logger
+        logger = logging.getLogger('vision_artificial')
+        logger.setLevel(self.log_level)
 
-            # Evitar duplicación de handlers
-            if not logger.handlers:
-                # Configurar handler de archivo
-                file_handler = logging.FileHandler(self.log_file)
-                file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-                file_handler.setFormatter(file_format)
-                logger.addHandler(file_handler)
+        # Evitar duplicación de handlers
+        if logger.handlers:
+            return logger
 
-                # Configurar handler de consola
-                console_handler = logging.StreamHandler()
-                console_format = logging.Formatter('%(levelname)s: %(message)s')
-                console_handler.setFormatter(console_format)
-                logger.addHandler(console_handler)
+        # Configurar handler para consola
+        console = logging.StreamHandler()
+        console.setLevel(self.log_level)
 
-            LoggerConfigurator._logger = logger
-            logger.info("Logging configurado. Archivo de log: %s", self.log_file)
+        # Configurar handler para archivo
+        file_handler = logging.handlers.RotatingFileHandler(
+            os.path.join(self.log_path, 'app.log'),
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5
+        )
+        file_handler.setLevel(self.log_level)
 
-        return LoggerConfigurator._logger
+        # Aplicar filtros si se proporcionan
+        all_filters = self.filters
+        if filters:
+            all_filters.extend(filters)
 
-    @classmethod
-    def reset(cls) -> None:
-        """Reinicia el singleton y el logger (útil para pruebas)."""
-        cls._instance = None
-        cls._logger = None
+        for f in all_filters:
+            console.addFilter(f)
+            file_handler.addFilter(f)
 
-    @classmethod
-    def get_logger(cls) -> logging.Logger:
-        """
-        Obtiene el logger configurado o crea uno nuevo si no existe.
-        
-        Returns:
-            Logger configurado
-        """
-        if cls._logger is None:
-            cls._logger = cls().configure()
-        return cls._logger
+        # Configurar formato
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        console.setFormatter(formatter)
+        file_handler.setFormatter(formatter)
 
-    @classmethod
-    def set_logger(cls, logger: logging.Logger) -> None:
-        """
-        Establece un logger personalizado (para inyección de dependencias).
-        
-        Args:
-            logger: El logger personalizado a utilizar
-        """
-        cls._logger = logger
+        # Agregar handlers
+        logger.addHandler(console)
+        logger.addHandler(file_handler)
+
+        # Guardar referencia global sin usar global statement
+        # Use a class-level approach instead
+        _set_app_logger(logger)
+
+        return logger
+
+
+def _set_app_logger(logger: logging.Logger) -> None:
+    """
+    Sets the application logger without using global statement.
+    
+    Args:
+        logger: Logger to set
+    """
+    # Using globals() dictionary to avoid global statement
+    globals()['_APP_LOGGER'] = logger
 
 
 def get_logger() -> logging.Logger:
     """
-    Función auxiliar para obtener el logger global configurado.
+    Retorna el logger global configurado.
+    Si no está configurado, devuelve un logger básico.
     
     Returns:
-        Logger global configurado
+        Logger configurado
     """
-    return LoggerConfigurator.get_logger()
-
-
-def set_logger(logger: logging.Logger) -> None:
-    """
-    Función auxiliar para establecer un logger personalizado.
-    
-    Args:
-        logger: El logger personalizado a utilizar
-    """
-    LoggerConfigurator.set_logger(logger)
+    if _APP_LOGGER is None:
+        return logging.getLogger('vision_artificial')
+    return _APP_LOGGER

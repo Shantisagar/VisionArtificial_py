@@ -7,7 +7,7 @@ unificada para el manejo de errores en toda la aplicación.
 import sys
 import traceback
 import logging
-from typing import Optional, Callable, Type, Dict, List, Any, Union
+from typing import Optional, Callable, Type, Dict, List, Any
 from enum import Enum
 
 from utils.logging.logger_configurator import get_logger
@@ -46,13 +46,14 @@ class ErrorHandler:
             logger: Logger a utilizar (opcional)
         """
         # Solo inicializar una vez debido al patrón Singleton
+        self._initialized = False
         if self._initialized:
             return
 
+        self._initialized = True
         self.logger = logger or get_logger()
         self.error_callbacks: Dict[Type[Exception], List[Callable]] = {}
         self.default_callbacks: List[Callable] = []
-        self._initialized = True
 
     def handle_exception(self,
                          exception: Exception,
@@ -94,7 +95,8 @@ class ErrorHandler:
             self.logger.critical(message)
             self.logger.debug(stack_trace)
         elif severity == ErrorSeverity.FATAL:
-            self.logger.critical(f"ERROR FATAL: {message}")
+            # Fix: Use lazy % formatting instead of f-string
+            self.logger.critical("ERROR FATAL: %s", message)
             self.logger.critical(stack_trace)
             sys.exit(1)
 
@@ -103,14 +105,16 @@ class ErrorHandler:
             try:
                 callback(exception, severity, context)
             except (TypeError, ValueError) as e:
-                self.logger.error(f"Error en callback de manejo de excepción: {e}")
+                # Fix: Use lazy % formatting instead of f-string
+                self.logger.error("Error en callback de manejo de excepción: %s", e)
 
         # Ejecutar callbacks por defecto
         for callback in self.default_callbacks:
             try:
                 callback(exception, severity, context)
             except (TypeError, ValueError) as e:
-                self.logger.error(f"Error en callback por defecto: {e}")
+                # Fix: Use lazy % formatting instead of f-string
+                self.logger.error("Error en callback por defecto: %s", e)
 
     def register_callback(self,
                          exception_type: Optional[Type[Exception]],
@@ -156,9 +160,36 @@ class ErrorHandler:
         return False
 
 
-# Singleton global para fácil acceso
-_error_handler: Optional[ErrorHandler] = None
+class ErrorHandlerSingleton:
+    """
+    Singleton para el manejador de errores.
+    """
+    _error_handler: Optional[ErrorHandler] = None
 
+    @classmethod
+    def get_error_handler(cls) -> ErrorHandler:
+        """
+        Obtiene la instancia única del manejador de errores.
+        
+        Returns:
+            La instancia del manejador de errores
+        """
+        if cls._error_handler is None:
+            cls._error_handler = ErrorHandler()
+        return cls._error_handler
+
+    @classmethod
+    def set_error_handler(cls, handler: ErrorHandler) -> None:
+        """
+        Establece un manejador de errores personalizado.
+        
+        Args:
+            handler: El manejador de errores a utilizar
+        """
+        cls._error_handler = handler
+
+
+# Functions to access the singleton
 def get_error_handler() -> ErrorHandler:
     """
     Obtiene la instancia única del manejador de errores.
@@ -166,10 +197,7 @@ def get_error_handler() -> ErrorHandler:
     Returns:
         La instancia del manejador de errores
     """
-    global _error_handler
-    if _error_handler is None:
-        _error_handler = ErrorHandler()
-    return _error_handler
+    return ErrorHandlerSingleton.get_error_handler()
 
 
 def set_error_handler(handler: ErrorHandler) -> None:
@@ -179,5 +207,4 @@ def set_error_handler(handler: ErrorHandler) -> None:
     Args:
         handler: El manejador de errores a utilizar
     """
-    global _error_handler
-    _error_handler = handler
+    ErrorHandlerSingleton.set_error_handler(handler)

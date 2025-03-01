@@ -4,12 +4,75 @@ Decoradores para estandarizar el manejo de excepciones en funciones y métodos.
 
 import functools
 import inspect
-from typing import Callable, Optional, Dict, Any, Type, Union, List
+from typing import Callable, Optional, Type, Union, List, Any
 
 from utils.error_handling.error_handler import get_error_handler, ErrorSeverity
 
 
-def handle_exceptions(severity: ErrorSeverity = ErrorSeverity.ERROR, 
+def _get_default_return_value(return_annotation) -> Any:
+    """
+    Helper function to create a default return value based on type annotation.
+    
+    Args:
+        return_annotation: The return type annotation
+        
+    Returns:
+        A default value appropriate for the annotation
+    """
+    # Initialize default value
+    default_value = None
+
+    if return_annotation is not inspect.Signature.empty:
+        if return_annotation in (int, float):
+            default_value = 0
+        elif return_annotation is bool:
+            default_value = False
+        elif return_annotation is str:
+            default_value = ""
+        else:
+            origin = getattr(return_annotation, "__origin__", None)
+            if origin is list:
+                default_value = []
+            elif origin is dict:
+                default_value = {}
+
+    return default_value
+
+
+def _get_context(func, add_function_name, context_fn, args, kwargs):
+    """
+    Helper function to build context dict for error handling.
+    
+    Returns:
+        dict: Context dictionary for error handling
+    """
+    context = {}
+
+    # Add function name if needed
+    if add_function_name:
+        context["function"] = func.__name__
+
+    # Get additional context if provided
+    if context_fn:
+        try:
+            if inspect.signature(context_fn).parameters:
+                additional_context = context_fn(*args, **kwargs)
+            else:
+                additional_context = context_fn()
+
+            if additional_context:
+                context.update(additional_context)
+        except (TypeError, ValueError, KeyError) as context_error:
+            get_error_handler().handle_exception(
+                context_error,
+                ErrorSeverity.WARNING,
+                {"message": "Error al obtener contexto adicional"}
+            )
+
+    return context
+
+
+def handle_exceptions(severity: ErrorSeverity = ErrorSeverity.ERROR,
                       context_fn: Optional[Callable] = None,
                       reraise: bool = False,
                       add_function_name: bool = True):
@@ -30,53 +93,19 @@ def handle_exceptions(severity: ErrorSeverity = ErrorSeverity.ERROR,
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except Exception as e:
-                # Crear contexto
-                context = {}
-                # Añadir nombre de función al contexto si se solicita
-                if add_function_name:
-                    context["function"] = func.__name__
-
-                # Obtener contexto adicional si se proporciona una función
-                if context_fn:
-                    try:
-                        if inspect.signature(context_fn).parameters:
-                            additional_context = context_fn(*args, **kwargs)
-                        else:
-                            # No pasar argumentos
-                            additional_context = context_fn()
-  
-                        if additional_context:
-                            context.update(additional_context)
-                    except Exception as context_error:
-                        get_error_handler().handle_exception(
-                            context_error, 
-                            ErrorSeverity.WARNING,
-                            {"message": "Error al obtener contexto adicional"}
-                        )
-
-                # Manejar la excepción
+            except (ValueError, TypeError, KeyError) as e:  # Replace with specific exceptions
+                # Create context and handle the exception
+                context = _get_context(func, add_function_name, context_fn, args, kwargs)
                 get_error_handler().handle_exception(e, severity, context)
 
-                # Relanzar si es necesario
+                # Reraise if needed
                 if reraise:
                     raise
 
-                # Retornar un valor por defecto según el tipo de retorno
-                # Si hay una anotación de retorno, intentamos crear un valor por defecto
+                # Return appropriate default value based on return annotation
                 return_annotation = inspect.signature(func).return_annotation
-                if return_annotation is not inspect.Signature.empty:
-                    if return_annotation in (int, float):
-                        return 0
-                    elif return_annotation is bool:
-                        return False
-                    elif return_annotation is str:
-                        return ""
-                    elif getattr(return_annotation, "__origin__", None) is list:
-                        return []
-                    elif getattr(return_annotation, "__origin__", None) is dict:
-                        return {}
-                return None
+                return _get_default_return_value(return_annotation)
+
         return wrapper
     return decorator
 
@@ -107,57 +136,23 @@ def handle_specific_exceptions(exceptions: Union[Type[Exception], List[Type[Exce
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
+            # pylint: disable=broad-exception-caught
             except Exception as e:
-                # Solo manejar excepciones específicas
+                # Only handle specific exceptions
                 if not any(isinstance(e, exc) for exc in exceptions):
                     raise
 
-                # Crear contexto
-                context = {}
-
-                # Añadir nombre de función al contexto si se solicita
-                if add_function_name:
-                    context["function"] = func.__name__
-
-                # Obtener contexto adicional si se proporciona una función
-                if context_fn:
-                    try:
-                        if inspect.signature(context_fn).parameters:
-                            # Pasar los mismos argumentos que la función original
-                            additional_context = context_fn(*args, **kwargs)
-                        else:
-                            # No pasar argumentos
-                            additional_context = context_fn()
-
-                        if additional_context:
-                            context.update(additional_context)
-                    except Exception as context_error:
-                        get_error_handler().handle_exception(
-                            context_error, 
-                            ErrorSeverity.WARNING,
-                            {"message": "Error al obtener contexto adicional"}
-                        )
-
-                # Manejar la excepción
+                # Create context and handle the exception
+                context = _get_context(func, add_function_name, context_fn, args, kwargs)
                 get_error_handler().handle_exception(e, severity, context)
 
-                # Relanzar si es necesario
+                # Reraise if needed
                 if reraise:
                     raise
 
-                # Retornar un valor por defecto
+                # Return appropriate default value
                 return_annotation = inspect.signature(func).return_annotation
-                if return_annotation is not inspect.Signature.empty:
-                    if return_annotation in (int, float):
-                        return 0
-                    elif return_annotation is bool:
-                        return False
-                    elif return_annotation is str:
-                        return ""
-                    elif getattr(return_annotation, "__origin__", None) is list:
-                        return []
-                    elif getattr(return_annotation, "__origin__", None) is dict:
-                        return {}
-                return None
+                return _get_default_return_value(return_annotation)
+
         return wrapper
     return decorator

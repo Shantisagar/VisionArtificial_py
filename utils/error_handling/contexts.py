@@ -25,7 +25,7 @@ def error_context(severity: ErrorSeverity = ErrorSeverity.ERROR,
     """
     try:
         yield
-    except Exception as e:
+    except (TypeError, ValueError, KeyError) as e:
         # Manejar la excepción
         get_error_handler().handle_exception(e, severity, context)
 
@@ -56,7 +56,7 @@ def specific_error_context(exceptions: Union[Type[Exception], List[Type[Exceptio
 
     try:
         yield
-    except Exception as e:
+    except (TypeError, ValueError, KeyError) as e:
         # Solo manejar excepciones específicas
         if not any(isinstance(e, exc) for exc in exceptions):
             raise
@@ -81,7 +81,7 @@ def collect_context(func: Callable) -> Dict[str, Any]:
     try:
         context = func()
         return context if context else {}
-    except Exception as e:
+    except (TypeError, ValueError, KeyError) as e:
         get_error_handler().handle_exception(
             e,
             ErrorSeverity.WARNING,
