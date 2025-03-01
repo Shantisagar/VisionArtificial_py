@@ -24,6 +24,7 @@ class ParameterPanelLayout:
         """
         self.parent_frame = parent_frame
         self.logger = logger
+        self.logger.debug("Inicializando ParameterPanelLayout")
         
         # Lista para almacenar referencias a tooltips
         self.tooltips: List[ToolTip] = []
@@ -47,6 +48,7 @@ class ParameterPanelLayout:
             'horizontal': 
             "Ajusta la posición horizontal de la línea de referencia en la imagen. Valores positivos mueven hacia la derecha, negativos hacia la izquierda."
         }
+        self.logger.debug(f"Configuración por defecto - Rangos: {self.slider_ranges}")
         
     def set_slider_ranges(self, ranges: Dict[str, Tuple[float, float]]) -> None:
         """
@@ -55,6 +57,7 @@ class ParameterPanelLayout:
         Args:
             ranges: Diccionario con los rangos para cada parámetro
         """
+        self.logger.debug(f"Actualizando rangos de sliders: {ranges}")
         self.slider_ranges.update(ranges)
             
     def set_parameter_help(self, help_texts: Dict[str, str]) -> None:
@@ -64,6 +67,7 @@ class ParameterPanelLayout:
         Args:
             help_texts: Diccionario con los textos de ayuda para cada parámetro
         """
+        self.logger.debug(f"Actualizando textos de ayuda para parámetros: {list(help_texts.keys())}")
         self.parameter_help.update(help_texts)
 
     def create_parameter_inputs(self, 
@@ -87,6 +91,9 @@ class ParameterPanelLayout:
         Returns:
             Diccionario de sliders creados
         """
+        self.logger.debug("Creando controles de parámetros en la interfaz")
+        self.logger.debug(f"Valores iniciales: {[(k, v.get()) for k, v in var_dict.items()]}")
+        
         # Frame para instrucciones
         help_frame = tk.Frame(self.parent_frame)
         help_frame.pack(fill="x", padx=10, pady=5)
@@ -178,7 +185,8 @@ class ParameterPanelLayout:
         save_default_button.pack(padx=5, pady=5, fill="x")
         self.tooltips.append(ToolTip(save_default_button, 
                               "Guarda los valores actuales como nuevos valores predeterminados para futuras sesiones"))
-                              
+        
+        self.logger.debug(f"Creados {len(sliders)} controles de parámetros")
         return sliders
 
     def _create_parameter_row(self, param_name: str, label_text: str, slider_callback: Callable, 
@@ -196,6 +204,17 @@ class ParameterPanelLayout:
         Returns:
             tuple: (frame, slider) - El frame contenedor y el slider creado
         """
+        self.logger.debug(f"Creando controles para parámetro: {param_name}, valor actual: {var.get()}")
+        
+        # Wrapping callbacks para añadir logging
+        def on_slider_change(value):
+            self.logger.debug(f"Slider {param_name} ajustado a: {value}")
+            return slider_callback(value)
+        
+        def on_entry_validate(param, value):
+            self.logger.debug(f"Validando entrada para {param}: {value}")
+            return entry_validate_callback(param, value)
+            
         # Crear frame contenedor
         frame = tk.Frame(self.parent_frame)
         frame.pack(fill="x", padx=10, pady=5)
@@ -217,7 +236,7 @@ class ParameterPanelLayout:
             'to': self.slider_ranges[param_name][1],
             'orient': tk.HORIZONTAL,
             'length': 200,
-            'command': slider_callback
+            'command': on_slider_change
         }
 
         # Añadir parámetro 'resolution' solo si es para pixels_por_mm
@@ -226,7 +245,9 @@ class ParameterPanelLayout:
 
         slider = tk.Scale(frame, **slider_args)
         try:
-            slider.set(float(var.get()))
+            current_value = float(var.get())
+            slider.set(current_value)
+            self.logger.debug(f"Slider {param_name} inicializado con valor: {current_value}")
         except (ValueError, TypeError):
             self.logger.warning(f"No se pudo convertir '{var.get()}' a float para el slider {param_name}")
             slider.set(0)  # Valor por defecto seguro
@@ -242,10 +263,10 @@ class ParameterPanelLayout:
         help_icon.grid(row=0, column=3, padx=5, pady=2)
 
         # Configurar validaciones para el entry
-        entry.bind('<FocusOut>', lambda e, pn=param_name: entry_validate_callback(pn, var.get()))
+        entry.bind('<FocusOut>', lambda e, pn=param_name: on_entry_validate(pn, var.get()))
         
         # Aplicar cambios al presionar Enter
-        entry.bind('<Return>', lambda e, pn=param_name: entry_validate_callback(pn, var.get()))
+        entry.bind('<Return>', lambda e, pn=param_name: on_entry_validate(pn, var.get()))
 
         return frame, slider
 
@@ -278,6 +299,8 @@ class ParameterPanelLayout:
         Args:
             help_text: Texto de ayuda a mostrar
         """
+        self.logger.debug(f"Mostrando ventana de ayuda con texto: {help_text[:20]}...")
+        
         # Encontrar la ventana raíz para que la ventana emergente sea modal
         root = self.parent_frame.winfo_toplevel()
 

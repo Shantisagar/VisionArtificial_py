@@ -154,7 +154,7 @@ class GUINotifier:
         self._clean_old_notifications(current_time, 10)
         
         # Registrar en el log una sola vez
-        self.logger.warning(log_message)
+        #self.logger.warning(log_message)
             
         # Actualizar la UI con el mensaje, sin generar un segundo log
         if self.status_label:
