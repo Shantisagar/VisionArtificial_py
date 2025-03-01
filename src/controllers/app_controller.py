@@ -1,181 +1,142 @@
 """
 Path: src/controllers/app_controller.py
-Controlador central para orquestar la inicialización de la configuración,
-la recogida de datos y la activación de la UI.
+Controlador principal de la aplicación.
+Implementa la lógica de negocio y coordina la vista y el modelo.
 """
 
-import sys
-from src.config_manager import ConfigManager
-from src.services.user_input_service import UserInputService
-from src.views.console_view import ConsoleView
+import logging
+from typing import Dict, Any, Optional
 from src.views.gui_view import GUIView
-from src.controllers.input_controller import InputController
+import json
+import os
 
 class AppController:
-    """Controlador central de la aplicación."""
-
-    def __init__(self,
-                 config_manager: ConfigManager,
-                 user_input_service: UserInputService,
-                 console_view: ConsoleView,
-                 gui_view: GUIView,
-                 logger=None):
+    """Controlador principal de la aplicación."""
+    
+    def __init__(self, logger: logging.Logger):
         """
-        Inicializa el controlador con dependencias inyectadas.
+        Inicializa el controlador.
         
         Args:
-            config_manager: Gestor de configuración
-            user_input_service: Servicio de entrada de usuario
-            console_view: Vista para interacciones de consola
-            gui_view: Vista para la interfaz gráfica
-            logger: Logger configurado
+            logger: Logger configurado para registrar eventos
         """
-        self.config_manager = config_manager
-        self.config = config_manager.get_config()
-        self.user_input_service = user_input_service
-        self.console_view = console_view
-        self.gui_view = gui_view
         self.logger = logger
-        self.video_url = None
-        self.grados_rotacion = None
-        self.pixels_por_mm = None
-        self.altura = None
-        self.horizontal = None
-
-        # Crear el controlador de entrada
-        self.input_controller = InputController(
-            console_view=console_view,
-            user_input_service=user_input_service,
-            config_manager=config_manager,
-            logger=logger
-        )
-
-    def initialize(self) -> bool:
+        self.view: Optional[GUIView] = None
+        self.config_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
+                                      'config', 'parameters.json')
+        self.config = self._load_config()
+        
+    def _load_config(self) -> Dict[str, Any]:
         """
-        Inicializa los parámetros de la aplicación.
-        Ahora simplemente carga los valores predeterminados de la configuración.
+        Carga la configuración desde el archivo JSON.
         
         Returns:
-            True si la inicialización fue exitosa, False en caso contrario
+            Diccionario con la configuración
         """
         try:
-            # Cargar valores predeterminados de la configuración
-            self.grados_rotacion = self.config.get("grados_rotacion_default", 0)
-            self.pixels_por_mm = self.config.get("pixels_por_mm_default", 10)
-            self.altura = self.config.get("altura_default", 0)
-            self.horizontal = self.config.get("horizontal_default", 0)
-
-            # Configurar la fuente de video (siempre webcam)
-            self.video_url = self.user_input_service.get_webcam_url(self.config)
-
-            if self.video_url is None:
-                self.console_view.mostrar_error("No se pudo inicializar la cámara web.")
-                return False
+            with open(self.config_file, 'r') as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            self.logger.error(f"Error al cargar configuración: {e}")
+            # Valores predeterminados
+            return {
+                "video_source": 0,
+                "parameters": {
+                    "grados_rotacion": 0,
+                    "pixels_por_mm": 10,
+                    "altura": 0,
+                    "horizontal": 0
+                }
+            }
+    
+    def _save_config(self, config: Dict[str, Any]) -> None:
+        """
+        Guarda la configuración en el archivo JSON.
+        
+        Args:
+            config: Diccionario con la configuración a guardar
+        """
+        try:
+            # Asegurar que existe el directorio
+            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+            
+            with open(self.config_file, 'w') as f:
+                json.dump(config, f, indent=4)
                 
-            self.logger.info("Parámetros inicializados con valores predeterminados")
-            self.logger.info(f"Grados de rotación: {self.grados_rotacion}")
-            self.logger.info(f"Píxeles por mm: {self.pixels_por_mm}")
-            self.logger.info(f"Altura: {self.altura}")
-            self.logger.info(f"Horizontal: {self.horizontal}")
+            self.logger.info(f"Configuración guardada en {self.config_file}")
+        except (IOError, OSError) as e:
+            self.logger.error(f"Error al guardar configuración: {e}")
             
-            return True
-        except (KeyError, ValueError, TypeError) as e:
-            self.console_view.mostrar_error(f"Error al inicializar la aplicación: {e}")
-            return False
-
-    def run_ui(self) -> None:
-        """Inicia la interfaz de usuario de la aplicación."""
-        try:
-            # Inicializar la UI gráfica con los parámetros predeterminados
-            self.gui_view.inicializar_ui(
-                self.video_url,
-                self.grados_rotacion,
-                self.altura,
-                self.horizontal,
-                self.pixels_por_mm
-            )
-            
-            # Configurar el callback para recibir actualizaciones de parámetros desde la GUI
-            self.gui_view.set_parameters_update_callback(self._on_parameters_update)
-
-            # Ejecutar la UI
-            self.gui_view.ejecutar()
-        except (RuntimeError, ValueError, TypeError) as e:
-            self.console_view.mostrar_error(f"Error al iniciar la interfaz gráfica: {e}")
-            sys.exit(1)
-            
-    def _on_parameters_update(self, parameters: dict) -> None:
+    def setup_view(self, view: GUIView) -> None:
         """
-        Callback para procesar las actualizaciones de parámetros desde la GUI.
+        Configura la vista y establece los callbacks necesarios.
+        
+        Args:
+            view: Instancia de GUIView a configurar
+        """
+        self.view = view
+        
+        # Este es el paso clave - conectar el callback para actualizar parámetros
+        self.view.set_parameters_update_callback(self.on_parameters_update)
+        
+        # Inicializar la interfaz con los valores de configuración
+        video_source = self.config.get("video_source", 0)
+        params = self.config.get("parameters", {})
+        
+        grados_rotacion = params.get("grados_rotacion", 0)
+        pixels_por_mm = params.get("pixels_por_mm", 10)
+        altura = params.get("altura", 0)
+        horizontal = params.get("horizontal", 0)
+        
+        self.view.inicializar_ui(
+            video_source, 
+            grados_rotacion, 
+            altura, 
+            horizontal, 
+            pixels_por_mm
+        )
+        
+        self.logger.info("Vista configurada correctamente")
+        
+    def on_parameters_update(self, parameters: Dict[str, float]) -> None:
+        """
+        Callback que se llama cuando los parámetros se actualizan desde la GUI.
         
         Args:
             parameters: Diccionario con los nuevos valores de parámetros
         """
-        try:
-            # Verificar si es una solicitud de reset (restaurar valores predeterminados)
-            if 'reset' in parameters and parameters['reset']:
-                # Cargar valores predeterminados de la configuración
-                default_params = {
-                    'grados_rotacion': self.config["grados_rotacion_default"],
-                    'pixels_por_mm': self.config["pixels_por_mm_default"],
-                    'altura': self.config["altura_default"],
-                    'horizontal': self.config["horizontal_default"]
-                }
-                
-                # Actualizar la interfaz con valores predeterminados
-                self.gui_view.update_parameters(default_params)
-                
-                # Actualizar variables internas
-                self.grados_rotacion = default_params['grados_rotacion']
-                self.pixels_por_mm = default_params['pixels_por_mm']
-                self.altura = default_params['altura']
-                self.horizontal = default_params['horizontal']
-                
-                self.logger.info("Valores de parámetros restaurados a valores predeterminados")
-                return
+        self.logger.info(f"Actualización de parámetros recibida: {parameters}")
+        
+        # Comprobar si es una solicitud de reset
+        if parameters.get('reset', False):
+            self.logger.info("Solicitada restauración de valores predeterminados")
+            params = self.config.get("parameters", {})
             
-            # Verificar si es una solicitud para guardar como valores predeterminados
-            if 'save_as_default' in parameters and parameters['save_as_default']:
-                # Crear una copia limpia de los parámetros (sin la flag especial)
-                clean_params = {k: v for k, v in parameters.items() if k != 'save_as_default'}
-                
-                # Validar los parámetros
-                if not self.user_input_service.validar_parametros(clean_params):
-                    self.gui_view.notifier.notify_error("Combinación de parámetros inválida para guardar como predeterminados")
-                    return
-                
-                # Actualizar la configuración con los nuevos valores predeterminados
-                default_config = {
-                    "grados_rotacion_default": clean_params['grados_rotacion'],
-                    "pixels_por_mm_default": clean_params['pixels_por_mm'],
-                    "altura_default": clean_params['altura'],
-                    "horizontal_default": clean_params['horizontal']
-                }
-                
-                # Guardar en la configuración
-                self.config_manager.update_config(default_config)
-                
-                # Actualizar la referencia local a la configuración
-                self.config = self.config_manager.get_config()
-                
-                self.logger.info("Valores actuales guardados como nuevos valores predeterminados")
-                return
-                
-            # Validar los parámetros usando el servicio de entrada
-            if not self.user_input_service.validar_parametros(parameters):
-                self.gui_view.notifier.notify_error("Combinación de parámetros inválida")
-                return
-                
-            # Actualizar las variables internas
-            self.grados_rotacion = parameters['grados_rotacion']
-            self.pixels_por_mm = parameters['pixels_por_mm']
-            self.altura = parameters['altura']
-            self.horizontal = parameters['horizontal']
+            # Actualizar la vista con los valores originales
+            if self.view:
+                self.view.update_parameters(params)
+            return
+        
+        # Comprobar si es una solicitud para guardar como predeterminados
+        if parameters.get('save_as_default', False):
+            self.logger.info("Guardando valores actuales como predeterminados")
             
-            # Actualizar la configuración con los nuevos valores
-            self.input_controller.update_config_with_parameters(parameters)
+            # Eliminar la flag especial antes de guardar
+            parameters.pop('save_as_default', None)
             
-            self.logger.info(f"Parámetros actualizados desde GUI: {parameters}")
-            
-        except (KeyError, ValueError) as e:
-            self.gui_view.notifier.notify_error(f"Error al procesar parámetros: {str(e)}")
+            # Actualizar la configuración
+            self.config["parameters"] = parameters
+            self._save_config(self.config)
+            return
+        
+        # Actualizar la vista y el procesamiento con los nuevos valores
+        # Esto es crucial: asegurarse de que los parámetros se apliquen al procesamiento
+        if self.view:
+            self.view.update_parameters(parameters)
+        
+    def run(self) -> None:
+        """Inicia la ejecución de la aplicación."""
+        if self.view:
+            self.view.ejecutar()
+        else:
+            self.logger.error("No se puede ejecutar la aplicación sin una vista configurada")

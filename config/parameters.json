@@ -1,0 +1,9 @@
+{
+    "video_source": 0,
+    "parameters": {
+        "grados_rotacion": 0.0,
+        "pixels_por_mm": 35.0,
+        "altura": 0.0,
+        "horizontal": 0.0
+    }
+}

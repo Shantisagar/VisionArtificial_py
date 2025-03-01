@@ -1,76 +1,72 @@
 """
 Path: src/main.py
-Archivo de entrada para iniciar la aplicación separando la lógica de entrada,
-configuración e inicialización de la UI.
+Punto de entrada principal de la aplicación
+Configura la aplicación e inicia la interfaz gráfica
 """
 
+import logging
 import sys
-from utils.logging.logger_configurator import LoggerConfigurator
-from utils.error_handling import (
-    get_error_handler, ErrorSeverity, error_context,
-    handle_exceptions
-)
-from src.config_manager import ConfigManager
-from src.controllers.app_controller import AppController
-from src.services.user_input_service import UserInputService
-from src.views.console_view import ConsoleView
+import os
 from src.views.gui_view import GUIView
+from src.controllers.app_controller import AppController
 
-
-@handle_exceptions(severity=ErrorSeverity.FATAL)
-def setup_dependencies():
-    """
-    Configura e inicializa las dependencias de la aplicación.
+def configure_logging():
+    """Configura el sistema de logging"""
+    log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+    os.makedirs(log_dir, exist_ok=True)
     
-    Returns:
-        Tupla con todas las dependencias inicializadas
-    """
-    # Configurar el logger con inyección de parámetros
-    logger = LoggerConfigurator.get_logger()
+    log_file = os.path.join(log_dir, "vision_artificial.log")
+    
+    logger = logging.getLogger("vision_artificial")
+    logger.setLevel(logging.INFO)
+    
+    # Handler para archivo
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.INFO)
+    
+    # Handler para consola
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    
+    # Formato
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    # Agregar handlers
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    
+    return logger
 
-    # Crear las dependencias necesarias con inyección del logger
-    with error_context(
-        severity=ErrorSeverity.CRITICAL,
-        context={"component": "ConfigManager"},
-        reraise=True
-    ):
-        config_manager = ConfigManager.from_file('src/config.json', logger=logger)
-
-    # Crear componentes del patrón MVC con inyección de dependencias
-    user_input_service = UserInputService(logger)
-    console_view = ConsoleView(logger)
-    gui_view = GUIView(logger)
-
-    # Controlador: Orquesta la aplicación
-    controller = AppController(
-        config_manager=config_manager,
-        user_input_service=user_input_service,
-        console_view=console_view,
-        gui_view=gui_view,
-        logger=logger
-    )
-
-    return controller, logger
-
-
-@handle_exceptions(severity=ErrorSeverity.FATAL)
 def main():
-    """
-    Función principal que utiliza el controlador central para iniciar la aplicación.
-    """
-    # Inicializar el manejador de errores global
-    # Se configurará automáticamente cuando se inicialice el logger
-    get_error_handler()
+    """Función principal que inicia la aplicación"""
+    try:
+        # Configurar logging
+        logger = configure_logging()
+        logger.info("Iniciando aplicación de Visión Artificial...")
+        
+        # Crear controlador
+        controller = AppController(logger)
+        
+        # Crear vista y configurarla
+        view = GUIView(logger)
+        
+        # Este es el paso clave: el controlador configura la vista y establece los callbacks
+        controller.setup_view(view)
+        
+        # Ejecutar la aplicación
+        controller.run()
+        
+        logger.info("Aplicación finalizada correctamente")
+        return 0
+        
+    except Exception as e:
+        if 'logger' in locals():
+            logger.exception(f"Error al iniciar la aplicación: {e}")
+        else:
+            print(f"Error crítico: {e}")
+        return 1
 
-    # Configurar dependencias
-    controller, logger = setup_dependencies()
-
-    # Inicializar parámetros y configuración
-    with error_context(severity=ErrorSeverity.CRITICAL, context={"phase": "initialization"}):
-        if not controller.initialize():
-            logger.error("No se pudo inicializar la aplicación correctamente.")
-            sys.exit(1)
-
-    # Iniciar la interfaz de usuario
-    with error_context(severity=ErrorSeverity.CRITICAL, context={"phase": "ui_execution"}):
-        controller.run_ui()
+if __name__ == "__main__":
+    sys.exit(main())
