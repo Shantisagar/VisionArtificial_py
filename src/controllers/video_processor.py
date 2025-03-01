@@ -192,3 +192,34 @@ class VideoProcessor:
             'current_fps': 0.0,
             'average_fps': 0.0
         }
+
+    def process_image(self, image):
+        """
+        Procesa una imagen y detecta objetos.
+        
+        Args:
+            image: Imagen a procesar
+            
+        Returns:
+            Imagen procesada con detecciones
+        """
+        try:
+            # Usar el controlador de procesamiento para procesar la imagen
+            if self.controller:
+                return self.controller.process(
+                    image,
+                    self.grados_rotacion,
+                    self.altura,
+                    self.horizontal,
+                    self.pixels_por_mm
+                )
+            return image
+        except Exception as e:
+            self.logger.error(f"Error de procesamiento de imagen: {str(e)}")
+            
+            # Si hay un notificador, usar el método actualizado
+            if hasattr(self, 'notifier') and self.notifier:
+                # Usar correctamente el método, con message como único parámetro
+                self.notifier.notify_error(f"Error de procesamiento de imagen: {str(e)}")
+                
+            return image

@@ -28,6 +28,14 @@ class GUIParameterPanelController:
             'horizontal': 0.0
         }
         
+        # Rangos para los parámetros (deben coincidir con ParameterPanelLayout.slider_ranges)
+        self.parameter_ranges = {
+            'grados_rotacion': (-180, 180),
+            'pixels_por_mm': (0.1, 50),
+            'altura': (-500, 500),
+            'horizontal': (-500, 500)
+        }
+        
         # Callbacks externos
         self.parameters_update_callback = None
         self.external_callbacks = {
@@ -53,6 +61,10 @@ class GUIParameterPanelController:
             on_save_as_default=self.on_save_as_default,
             on_entry_validate=self.validate_entry
         )
+        
+        # Si la vista tiene un layout, actualizar los rangos de los sliders
+        if hasattr(self.view, 'layout'):
+            self.view.layout.set_slider_ranges(self.parameter_ranges)
         
     def set_notifier(self, notifier):
         """
@@ -289,3 +301,17 @@ class GUIParameterPanelController:
         """
         if self.view:
             self.view.update_parameters_display(parameters)
+    
+    def set_parameter_ranges(self, ranges: Dict[str, Tuple[float, float]]) -> None:
+        """
+        Establece los rangos permitidos para los parámetros.
+        
+        Args:
+            ranges: Diccionario con los rangos para cada parámetro
+        """
+        self.parameter_ranges.update(ranges)
+        
+        # Actualizar también los rangos en el layout si ya está configurado
+        if self.view and hasattr(self.view, 'layout'):
+            self.view.layout.set_slider_ranges(self.parameter_ranges)
+            self.logger.debug(f"Rangos de parámetros actualizados: {ranges}")

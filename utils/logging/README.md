@@ -15,7 +15,7 @@ Este proyecto implementa una estrategia dual para el manejo de información:
 - **Destino**: Archivos de log y/o consola del sistema (no visibles directamente al usuario final).
 - **Nivel de detalle**: Alto - incluye trazas, información de depuración, y detalles técnicos.
 - **Persistencia**: Almacenamiento a largo plazo para análisis posterior.
-- **Formato**: Estandarizado y optimizado para análisis técnico (timestamps, niveles, contexto).
+- **Formato**: Estandarizado y optimizado para análisis técnico (timestamps, niveles, contexto, archivo y línea).
 
 ### Sistema de Notificaciones (`Notifier`)
 
@@ -44,4 +44,9 @@ Este proyecto implementa una estrategia dual para el manejo de información:
 ## Implementación
 
 ### Configuración del Logger
+
+El sistema de logging se puede configurar de dos maneras:
+
+#### 1. Configuración basada en JSON (Recomendada)
+La aplicación intentará cargar la configuración desde un archivo JSON utilizando `logging.config.dictConfig`:
 

@@ -1,23 +1,27 @@
 """
-Path: app/logs/dependency_injection.py
+Path: utils/logging/dependency_injection.py
 Contenedor de dependencias para inyección de dependencias.
 """
 
+import os
 from utils.logging.logger_configurator import LoggerConfigurator
 from utils.logging.info_error_filter import InfoErrorFilter
 from utils.logging.exclude_http_logs_filter import ExcludeHTTPLogsFilter
 
+# Definir la ruta al archivo JSON
+JSON_CONFIG_PATH = '/c:/AppServ/www/VisionArtificial_py/utils/logging/logging.json'
+
 # Crear una instancia global de LoggerConfigurator
 configurator = LoggerConfigurator()
 
-# Añadir filtros directamente a la configuración
-# En lugar de usar register_filter que no existe
-# Suponemos que configure() acepta filtros como parámetros
-info_error_filter = InfoErrorFilter()
-exclude_http_logs_filter = ExcludeHTTPLogsFilter()
-
-# Configurar el logger con los filtros
-APP_LOGGER = configurator.configure(filters=[info_error_filter, exclude_http_logs_filter])
+# Intenta configurar desde JSON primero
+if os.path.exists(JSON_CONFIG_PATH):
+    APP_LOGGER = configurator.configure_from_json(JSON_CONFIG_PATH)
+else:
+    # Fallback a la configuración anterior
+    configurator.register_filter(InfoErrorFilter)
+    configurator.register_filter(ExcludeHTTPLogsFilter)
+    APP_LOGGER = configurator.configure()
 
 def get_logger():
     """

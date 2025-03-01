@@ -240,3 +240,28 @@ class VideoStreamApp:
             # Notificar al usuario a través del notifier si está disponible
             if self.notifier:
                 self.notifier.notify_error("Error al actualizar parámetros", e)
+
+    def _process_frame(self, frame):
+        """
+        Procesa un frame de video.
+        
+        Args:
+            frame: Frame a procesar
+            
+        Returns:
+            Frame procesado
+        """
+        try:
+            # Delegamos el procesamiento al procesador de video
+            if frame is not None and self.video_processor is not None:
+                return self.video_processor.process_frame(frame)
+            return frame
+        except Exception as e:
+            self.logger.error(f"Error al procesar frame: {str(e)}")
+            
+            # Verificar si el notificador está disponible y usar el método modificado
+            if self.notifier:
+                # Usar correctamente el método con dos argumentos
+                self.notifier.notify_error(f"Error al procesar frame: {str(e)}")
+                
+            return frame
