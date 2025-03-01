@@ -9,7 +9,6 @@ from tkinter import ttk
 import logging
 from typing import Dict, Callable
 from src.video_stream import VideoStreamApp
-from src.views.tool_tip import ToolTip
 from src.views.gui_notifier import GUINotifier
 from src.views.gui_parameter_panel import GUIParameterPanel
 
@@ -32,9 +31,10 @@ class GUIView:
         self.status_label = None
         self.update_interval = 500  # Actualizar estadísticas cada 500ms
         self.notifier = None
-        
+
         # Nuevo: referencia al panel de parámetros
         self.parameter_panel = None
+        self.parameter_frame = None
 
         # Callback para cuando se actualicen los parámetros
         self.on_parameters_update = None
@@ -114,7 +114,7 @@ class GUIView:
             self.parameter_panel = GUIParameterPanel(control_frame, self.logger)
             self.parameter_panel.set_notifier(self.notifier)
             self.parameter_panel.initialize(grados_rotacion, pixels_por_mm, altura, horizontal)
-            
+
             # Establecer el callback para actualizaciones de parámetros
             if self.on_parameters_update:
                 self.parameter_panel.set_parameters_update_callback(self.on_parameters_update)
@@ -202,11 +202,11 @@ class GUIView:
             parameters: Diccionario con los nuevos valores
         """
         self.logger.info(f"Actualizando parámetros en GUI: {parameters}")
-        
+
         # Actualizar los controles de la UI a través del panel de parámetros
         if self.parameter_panel:
             self.parameter_panel.update_parameters(parameters)
-            
+
         # Si el procesamiento de video está activo, actualizarlo también
         if self.app:
             # Esta es la línea clave - asegurarse de que los parámetros llegan a la app de video
@@ -232,12 +232,12 @@ class GUIView:
         # Frame principal para parámetros de configuración
         self.parameter_frame = ttk.LabelFrame(self.main_frame, text="Parámetros de configuración")
         self.parameter_frame.pack(fill="both", expand=False, padx=10, pady=5)
-        
+
         # Crear el panel de parámetros y configurarlo
         self.parameter_panel = GUIParameterPanel(self.parameter_frame, self.logger)
         self.parameter_panel.set_notifier(self)
         self.parameter_panel.set_parameters_update_callback(self._on_parameters_update)
-        
+
         # Inicializar con los valores actuales del modelo
         self.parameter_panel.initialize(
             grados_rotacion=self.video_processor.get_rotation(),
@@ -255,35 +255,35 @@ class GUIView:
             if 'reset' in parameters:
                 # Restaurar valores predeterminados del procesador
                 default_params = self.video_processor.get_default_parameters()
-                
+
                 # Actualizar la UI con esos valores
                 if self.parameter_panel:
                     self.parameter_panel.update_parameters(default_params)
-                
+
                 # Actualizar el procesador
                 self._update_processor_parameters(default_params)
                 return
-                
+
             # Verificar si es una solicitud para guardar como predeterminados
             if 'save_as_default' in parameters:
                 # Eliminar la flag especial
                 params_to_save = parameters.copy()
                 params_to_save.pop('save_as_default')
-                
+
                 # Guardar como predeterminados
                 success = self.video_processor.save_as_default_parameters(params_to_save)
-                
+
                 if success:
                     self.notify_info("Parámetros guardados como predeterminados")
                 else:
                     self.notify_error("Error al guardar parámetros predeterminados")
-                
+
                 return
-            
+
             # Actualizar los parámetros en el procesador
             self._update_processor_parameters(parameters)
-            
-        except Exception as e:
+
+        except (KeyError, AttributeError, TypeError) as e:
             self.logger.error(f"Error al actualizar parámetros: {str(e)}")
             self.notify_error(f"Error al actualizar parámetros: {str(e)}")
 
@@ -292,20 +292,20 @@ class GUIView:
         try:
             if 'grados_rotacion' in parameters:
                 self.video_processor.set_rotation(parameters['grados_rotacion'])
-            
-            if 'pixels_por_mm' in parameters:  
+
+            if 'pixels_por_mm' in parameters:
                 self.video_processor.set_pixels_per_mm(parameters['pixels_por_mm'])
-                
+
             if 'altura' in parameters:
                 self.video_processor.set_height_adjustment(parameters['altura'])
-                
+
             if 'horizontal' in parameters:
                 self.video_processor.set_horizontal_adjustment(parameters['horizontal'])
-                
+
             # Actualizar el procesamiento si el video está activo
             if self.video_processor.is_processing():
                 self.video_processor.refresh_processing()
-                
+
         except Exception as e:
             self.logger.error(f"Error al actualizar parámetros en el procesador: {str(e)}")
             raise

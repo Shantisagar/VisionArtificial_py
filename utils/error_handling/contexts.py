@@ -28,7 +28,7 @@ def error_context(severity: ErrorSeverity = ErrorSeverity.ERROR,
     except Exception as e:
         # Manejar la excepción
         get_error_handler().handle_exception(e, severity, context)
-        
+
         # Relanzar si es necesario
         if reraise:
             raise
@@ -53,18 +53,17 @@ def specific_error_context(exceptions: Union[Type[Exception], List[Type[Exceptio
     """
     if not isinstance(exceptions, (list, tuple)):
         exceptions = [exceptions]
-        
+
     try:
         yield
     except Exception as e:
         # Solo manejar excepciones específicas
         if not any(isinstance(e, exc) for exc in exceptions):
             raise
-            
+
         # Manejar la excepción
         get_error_handler().handle_exception(e, severity, context)
-        
-        # Relanzar si es necesario
+
         if reraise:
             raise
 

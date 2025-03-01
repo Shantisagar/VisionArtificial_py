@@ -150,6 +150,39 @@ class GUIParameterPanelView:
             'altura': self.altura_var.get(),
             'horizontal': self.horizontal_var.get()
         }
+    
+    def update_parameter_text(self, param_name: str, value: str) -> None:
+        """
+        Actualiza solo el texto de un parámetro específico.
+        
+        Args:
+            param_name: Nombre del parámetro a actualizar
+            value: Nuevo valor como string
+        """
+        var = getattr(self, f"{param_name}_var", None)
+        if var:
+            var.set(value)
+    
+    def update_slider_value(self, param_name: str, value: float) -> None:
+        """
+        Actualiza el valor de un slider específico.
+        
+        Args:
+            param_name: Nombre del parámetro asociado al slider
+            value: Nuevo valor para el slider
+        """
+        slider = None
+        if param_name == 'grados_rotacion' and self.rotation_slider:
+            slider = self.rotation_slider
+        elif param_name == 'pixels_por_mm' and self.pixels_slider:
+            slider = self.pixels_slider
+        elif param_name == 'altura' and self.altura_slider:
+            slider = self.altura_slider
+        elif param_name == 'horizontal' and self.horizontal_slider:
+            slider = self.horizontal_slider
+            
+        if slider:
+            slider.set(value)
 
     def _create_parameter_inputs(self) -> None:
         """Crea los campos de entrada y sliders para los parámetros en el frame especificado."""
@@ -291,9 +324,23 @@ class GUIParameterPanelView:
 
         # Configurar validaciones para el entry
         entry.bind('<FocusOut>', lambda e, pn=param_name: self._validate_entry(pn))
-        entry.bind('<Return>', lambda e, pn=param_name: self._validate_entry(pn))
+        
+        # Modificado: Aplicar cambios al presionar Enter
+        entry.bind('<Return>', lambda e, pn=param_name: self._on_entry_enter(pn))
 
         return frame, slider
+
+    def _on_entry_enter(self, param_name: str) -> None:
+        """
+        Maneja el evento cuando se presiona Enter en un campo de entrada.
+        Valida y aplica el cambio inmediatamente.
+        
+        Args:
+            param_name: Nombre del parámetro a validar y aplicar
+        """
+        self._validate_entry(param_name)
+        # No es necesario llamar explícitamente a actualizar parámetros,
+        # ya que validate_entry en el controlador ahora aplica el cambio automáticamente
 
     def _create_help_button(self, parent: tk.Widget, help_text: str) -> tk.Label:
         """
@@ -368,7 +415,13 @@ class GUIParameterPanelView:
         if self.on_entry_validate_callback:
             # Obtener el valor según el parámetro
             value = getattr(self, f"{param_name}_var").get()
-            self.on_entry_validate_callback(param_name, value)
+            is_valid, error_message = self.on_entry_validate_callback(param_name, value)
+            
+            # Si hay un mensaje de error, mostrar retroalimentación al usuario
+            if not is_valid and error_message:
+                # Aquí podrías mostrar el error en la interfaz (ej. cambiar color del campo, mostrar mensaje)
+                self.logger.warning(f"Valor inválido en {param_name}: {error_message}")
+                # Como mejora futura: Mostrar el mensaje de error visualmente al usuario
 
     def _on_update_parameters(self) -> None:
         """Maneja el evento del botón de aplicar cambios."""
