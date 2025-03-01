@@ -67,6 +67,3 @@ def main():
         else:
             print(f"Error crítico: {e}")
         return 1
-
-if __name__ == "__main__":
-    sys.exit(main())

@@ -1,83 +1,95 @@
 """
 Path: src/controllers/gui_parameter_panel_controller.py
-Controlador para el panel de parámetros de configuración en la interfaz gráfica.
-Se encarga de la lógica, validación y procesamiento de eventos de la UI.
+Controlador para el panel de parámetros en la interfaz gráfica.
 """
 
 import logging
-from typing import Dict, Callable, Tuple, Optional, Any
+from typing import Dict, Callable, Optional, Any, Tuple
 
 class GUIParameterPanelController:
-    """Controlador responsable de la lógica del panel de parámetros."""
+    """Controlador para el panel de parámetros."""
 
     def __init__(self, logger: logging.Logger):
         """
         Inicializa el controlador del panel de parámetros.
         
         Args:
-            logger: Logger configurado para registrar eventos
+            logger: Logger para registrar eventos
         """
         self.logger = logger
         self.view = None
         self.notifier = None
         
-        # Rangos para validación de parámetros
-        self.parameter_ranges = {
-            'grados_rotacion': (-180, 180),
-            'pixels_por_mm': (0.1, 50),
-            'altura': (-500, 500),
-            'horizontal': (-500, 500)
+        # Parámetros actuales
+        self.current_parameters = {
+            'grados_rotacion': 0.0,
+            'pixels_por_mm': 1.0,
+            'altura': 0.0,
+            'horizontal': 0.0
         }
         
-        # Callbacks externos (desde el modelo o servicio)
+        # Callbacks externos
+        self.parameters_update_callback = None
         self.external_callbacks = {
             'on_update_parameters': None,
             'on_reset_parameters': None,
             'on_save_as_default': None
         }
         
-        # Callback para notificar cambios en los parámetros
-        self.parameters_update_callback = None
-    
     def set_view(self, view):
         """
-        Establece la vista que será controlada y configura los callbacks.
+        Establece la vista asociada al controlador.
         
         Args:
-            view: Vista del panel de parámetros que será controlada
+            view: Vista del panel de parámetros
         """
         self.view = view
-        # Configurar los callbacks de la vista
-        self._setup_view_callbacks()
-    
+        
+        # Configurar callbacks en la vista
+        self.view.set_callbacks(
+            on_slider_change=self.on_slider_change,
+            on_update_parameters=self.on_update_parameters,
+            on_reset_parameters=self.on_reset_parameters,
+            on_save_as_default=self.on_save_as_default,
+            on_entry_validate=self.validate_entry
+        )
+        
     def set_notifier(self, notifier):
         """
-        Establece el notificador para informar al usuario.
+        Establece el notificador para mostrar mensajes al usuario.
         
         Args:
-            notifier: Objeto notificador con métodos notify_info, notify_warning, etc.
+            notifier: Objeto notificador
         """
         self.notifier = notifier
-    
+        
     def set_parameters_update_callback(self, callback: Callable[[Dict[str, Any]], None]):
         """
-        Establece el callback para notificar cuando los parámetros cambian.
+        Establece un callback para cuando se actualizan los parámetros.
         
         Args:
             callback: Función a llamar cuando se actualicen los parámetros
         """
         self.parameters_update_callback = callback
-    
-    def _setup_view_callbacks(self) -> None:
-        """Configura los callbacks de la vista para que llamen a los métodos del controlador."""
-        if self.view:
-            self.view.set_callbacks(
-                on_slider_change=self.handle_slider_change,
-                on_update_parameters=self.handle_update_parameters,
-                on_reset_parameters=self.handle_reset_parameters,
-                on_save_as_default=self.handle_save_as_default,
-                on_entry_validate=self.validate_entry
-            )
+        
+    def set_external_callbacks(self, 
+                              on_update_parameters: Optional[Callable[[], None]] = None,
+                              on_reset_parameters: Optional[Callable[[], None]] = None,
+                              on_save_as_default: Optional[Callable[[], None]] = None):
+        """
+        Establece callbacks externos para eventos del panel.
+        
+        Args:
+            on_update_parameters: Callback para actualizar parámetros
+            on_reset_parameters: Callback para restaurar valores predeterminados
+            on_save_as_default: Callback para guardar como valores predeterminados
+        """
+        if on_update_parameters:
+            self.external_callbacks['on_update_parameters'] = on_update_parameters
+        if on_reset_parameters:
+            self.external_callbacks['on_reset_parameters'] = on_reset_parameters
+        if on_save_as_default:
+            self.external_callbacks['on_save_as_default'] = on_save_as_default
     
     def initialize(self, grados_rotacion: float, pixels_por_mm: float, altura: float, horizontal: float) -> None:
         """
@@ -92,23 +104,7 @@ class GUIParameterPanelController:
         if self.view:
             self.view.initialize(grados_rotacion, pixels_por_mm, altura, horizontal)
     
-    def set_external_callbacks(self, 
-                              on_update_parameters: Optional[Callable[[], None]] = None,
-                              on_reset_parameters: Optional[Callable[[], None]] = None,
-                              on_save_as_default: Optional[Callable[[], None]] = None) -> None:
-        """
-        Establece callbacks externos que serán llamados cuando se procesen eventos.
-        
-        Args:
-            on_update_parameters: Callback para actualizar parámetros
-            on_reset_parameters: Callback para restaurar valores predeterminados
-            on_save_as_default: Callback para guardar como valores predeterminados
-        """
-        self.external_callbacks['on_update_parameters'] = on_update_parameters
-        self.external_callbacks['on_reset_parameters'] = on_reset_parameters
-        self.external_callbacks['on_save_as_default'] = on_save_as_default
-    
-    def handle_slider_change(self, param_name: str, value: float) -> None:
+    def on_slider_change(self, param_name: str, value: float) -> None:
         """
         Maneja los cambios en los sliders.
         
@@ -187,7 +183,7 @@ class GUIParameterPanelController:
                 self.notifier.notify_warning(f"Valor inválido: {error_msg}")
             return False, error_msg
     
-    def handle_update_parameters(self) -> None:
+    def on_update_parameters(self) -> None:
         """Maneja el evento del botón de aplicar cambios."""
         try:
             if not self.view:
@@ -231,7 +227,7 @@ class GUIParameterPanelController:
             if self.notifier:
                 self.notifier.notify_error(f"Error al actualizar parámetros: {e}")
     
-    def handle_reset_parameters(self) -> None:
+    def on_reset_parameters(self) -> None:
         """Maneja el evento del botón de restaurar valores predeterminados."""
         if self.external_callbacks['on_reset_parameters']:
             self.external_callbacks['on_reset_parameters']()
@@ -239,7 +235,7 @@ class GUIParameterPanelController:
             if self.notifier:
                 self.notifier.notify_info("Parámetros restablecidos a valores predeterminados")
     
-    def handle_save_as_default(self) -> None:
+    def on_save_as_default(self) -> None:
         """Maneja el evento del botón de guardar como valores predeterminados."""
         try:
             if not self.view:

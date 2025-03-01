@@ -10,6 +10,7 @@ import logging
 from typing import Dict, Callable, Tuple, List, Optional, Any
 
 from src.views.tool_tip import ToolTip
+from src.views.parameter_panel_layout import ParameterPanelLayout
 
 class GUIParameterPanelView:
     """Clase responsable de la visualización de los parámetros en la interfaz gráfica."""
@@ -45,18 +46,9 @@ class GUIParameterPanelView:
             'horizontal': (-500, 500)
         }
 
-        # Descripciones de ayuda para los parámetros
-        self.parameter_help = {
-            'grados_rotacion':
-            "Ajusta la rotación de la imagen en grados. Valores positivos rotan en sentido horario, negativos en sentido antihorario.",
-            'pixels_por_mm':
-            "Define la escala de conversión de píxeles a milímetros. A mayor valor, mayor precisión en la medición de distancias.",
-            'altura':
-            "Ajusta la posición vertical de la línea de referencia en la imagen. Valores positivos mueven hacia abajo, negativos hacia arriba.",
-            'horizontal': 
-            "Ajusta la posición horizontal de la línea de referencia en la imagen. Valores positivos mueven hacia la derecha, negativos hacia la izquierda."
-        }
-
+        # Objeto de layout para la construcción de la UI
+        self.layout_manager = ParameterPanelLayout(parent_frame, logger)
+        
         # Lista para almacenar referencias a tooltips
         self.tooltips: List[ToolTip] = []
         
@@ -104,6 +96,9 @@ class GUIParameterPanelView:
         self.pixels_por_mm_var.set(str(pixels_por_mm))
         self.altura_var.set(str(altura))
         self.horizontal_var.set(str(horizontal))
+
+        # Configurar el layout manager con los rangos de sliders
+        self.layout_manager.set_slider_ranges(self.slider_ranges)
 
         # Crear los controles en la interfaz
         self._create_parameter_inputs()
@@ -186,208 +181,32 @@ class GUIParameterPanelView:
 
     def _create_parameter_inputs(self) -> None:
         """Crea los campos de entrada y sliders para los parámetros en el frame especificado."""
-        # Frame para instrucciones
-        help_frame = tk.Frame(self.parent_frame)
-        help_frame.pack(fill="x", padx=10, pady=5)
-
-        help_text = "Ajuste los parámetros usando los controles deslizantes o ingresando valores directamente. " + \
-                    "Pase el cursor sobre cada elemento para ver más información."
-        help_label = tk.Label(help_frame, text=help_text, justify=tk.LEFT, wraplength=400,
-                              font=('Helvetica', 9, 'italic'))
-        help_label.pack(pady=5, anchor=tk.W)
-
-        # Sección para Grados de rotación
-        _, rotation_slider = self._create_parameter_row(
-            'grados_rotacion', 
-            'Grados de rotación:', 
-            lambda v: self._on_slider_change('grados_rotacion', v)
-        )
-        self.rotation_slider = rotation_slider
-
-        # Sección para Píxeles por mm
-        _, pixels_slider = self._create_parameter_row(
-            'pixels_por_mm', 
-            'Píxeles por mm:', 
-            lambda v: self._on_slider_change('pixels_por_mm', v)
-        )
-        self.pixels_slider = pixels_slider
-
-        # Sección para Altura (ajuste vertical)
-        _, altura_slider = self._create_parameter_row(
-            'altura', 
-            'Altura (ajuste vertical):', 
-            lambda v: self._on_slider_change('altura', v)
-        )
-        self.altura_slider = altura_slider
-
-        # Sección para desplazamiento horizontal
-        _, horizontal_slider = self._create_parameter_row(
-            'horizontal', 
-            'Ajuste horizontal:', 
-            lambda v: self._on_slider_change('horizontal', v)
-        )
-        self.horizontal_slider = horizontal_slider
-
-        # Frame para botones de acción
-        buttons_frame = tk.Frame(self.parent_frame)
-        buttons_frame.pack(fill="x", padx=10, pady=10)
-
-        # Botón para actualizar todos los parámetros
-        update_button = ttk.Button(
-            buttons_frame, 
-            text="Aplicar cambios", 
-            command=self._on_update_parameters,
-            style="Accent.TButton"
-        )
-        update_button.pack(side=tk.LEFT, padx=5, pady=5, fill="x", expand=True)
-        self.tooltips.append(ToolTip(update_button, "Aplica todos los cambios de parámetros al procesamiento de video"))
-
-        # Botón para restaurar valores predeterminados
-        reset_button = ttk.Button(
-            buttons_frame,
-            text="Restaurar valores predeterminados",
-            command=self._on_reset_parameters,
-            style="Default.TButton"
-        )
-        reset_button.pack(side=tk.LEFT, padx=5, pady=5, fill="x", expand=True)
-        self.tooltips.append(ToolTip(reset_button, "Restaura los valores originales de los parámetros"))
-
-        # Segundo frame para botones adicionales
-        buttons_frame2 = tk.Frame(self.parent_frame)
-        buttons_frame2.pack(fill="x", padx=10, pady=(0,10))
-
-        # Botón para guardar como valores predeterminados
-        save_default_button = ttk.Button(
-            buttons_frame2,
-            text="Guardar como valores predeterminados",
-            command=self._on_save_as_default,
-            style="Save.TButton"
-        )
-        save_default_button.pack(padx=5, pady=5, fill="x")
-        self.tooltips.append(ToolTip(save_default_button, 
-                                   "Guarda los valores actuales como nuevos valores predeterminados para futuras sesiones"))
-
-    def _create_parameter_row(self, param_name: str, label_text: str, slider_callback: Callable) -> Tuple[tk.Frame, tk.Scale]:
-        """
-        Crea una fila de controles para un parámetro (label, entry, slider, help button).
-        
-        Args:
-            param_name: Nombre del parámetro (ej: 'grados_rotacion')
-            label_text: Texto para la etiqueta del parámetro
-            slider_callback: Función callback para el slider
-            
-        Returns:
-            tuple: (frame, slider) - El frame contenedor y el slider creado
-        """
-        # Crear frame contenedor
-        frame = tk.Frame(self.parent_frame)
-        frame.pack(fill="x", padx=10, pady=5)
-
-        # Crear etiqueta
-        label = tk.Label(frame, text=label_text)
-        label.grid(row=0, column=0, sticky="w", pady=2)
-        self.tooltips.append(ToolTip(label, self.parameter_help[param_name]))
-
-        # Obtener la variable StringVar correspondiente
-        var = getattr(self, f"{param_name}_var")
-
-        # Crear entry
-        entry = tk.Entry(frame, textvariable=var, width=10)
-        entry.grid(row=0, column=1, padx=5, pady=2)
-        tooltip_text = f"Ingrese un valor entre {self.slider_ranges[param_name][0]} y {self.slider_ranges[param_name][1]}"
-        self.tooltips.append(ToolTip(entry, tooltip_text))
-
-        # Crear slider
-        slider_args = {
-            'from_': self.slider_ranges[param_name][0],
-            'to': self.slider_ranges[param_name][1],
-            'orient': tk.HORIZONTAL,
-            'length': 200,
-            'command': slider_callback
+        # Crear un diccionario con las variables StringVar para cada parámetro
+        var_dict = {
+            'grados_rotacion': self.grados_rotacion_var,
+            'pixels_por_mm': self.pixels_por_mm_var,
+            'altura': self.altura_var,
+            'horizontal': self.horizontal_var
         }
-
-        # Añadir parámetro 'resolution' solo si es para pixels_por_mm
-        if param_name == 'pixels_por_mm':
-            slider_args['resolution'] = 0.1
-
-        slider = tk.Scale(frame, **slider_args)
-        slider.set(float(var.get()))
-        slider.grid(row=0, column=2, padx=5, pady=2, sticky="w")
-
-        # Añadir tooltip al slider
-        slider_tooltip_text = f"Deslice para ajustar {label_text.lower().rstrip(':')}"
-        self.tooltips.append(ToolTip(slider, slider_tooltip_text))
-
-        # Crear botón de ayuda
-        help_icon = self._create_help_button(frame, self.parameter_help[param_name])
-        help_icon.grid(row=0, column=3, padx=5, pady=2)
-
-        # Configurar validaciones para el entry
-        entry.bind('<FocusOut>', lambda e, pn=param_name: self._validate_entry(pn))
         
-        # Modificado: Aplicar cambios al presionar Enter
-        entry.bind('<Return>', lambda e, pn=param_name: self._on_entry_enter(pn))
-
-        return frame, slider
-
-    def _on_entry_enter(self, param_name: str) -> None:
-        """
-        Maneja el evento cuando se presiona Enter en un campo de entrada.
-        Valida y aplica el cambio inmediatamente.
+        # Delegar la creación de la UI al layout manager
+        sliders = self.layout_manager.create_parameter_inputs(
+            var_dict,
+            self._on_slider_change,
+            self._on_update_parameters,
+            self._on_reset_parameters,
+            self._on_save_as_default,
+            self._validate_entry
+        )
         
-        Args:
-            param_name: Nombre del parámetro a validar y aplicar
-        """
-        self._validate_entry(param_name)
-        # No es necesario llamar explícitamente a actualizar parámetros,
-        # ya que validate_entry en el controlador ahora aplica el cambio automáticamente
-
-    def _create_help_button(self, parent: tk.Widget, help_text: str) -> tk.Label:
-        """
-        Crea un botón de ayuda que muestra información al hacer clic.
+        # Almacenar referencias a los sliders
+        self.rotation_slider = sliders['grados_rotacion']
+        self.pixels_slider = sliders['pixels_por_mm']
+        self.altura_slider = sliders['altura']
+        self.horizontal_slider = sliders['horizontal']
         
-        Args:
-            parent: Widget padre
-            help_text: Texto de ayuda a mostrar
-            
-        Returns:
-            Botón de ayuda configurado
-        """
-        help_button = tk.Label(parent, text="?", font=("Arial", 8, "bold"),
-                              width=2, height=1, relief=tk.RAISED, bg="#f0f0f0")
-
-        # Crear tooltip para el botón de ayuda
-        self.tooltips.append(ToolTip(help_button, "Haga clic para ver información de ayuda"))
-
-        # Configurar el comportamiento del botón
-        help_button.bind("<Button-1>", lambda e: self._show_help_window(help_text))
-
-        return help_button
-
-    def _show_help_window(self, help_text: str) -> None:
-        """
-        Muestra una ventana emergente con información de ayuda.
-        
-        Args:
-            help_text: Texto de ayuda a mostrar
-        """
-        # Encontrar la ventana raíz para que la ventana emergente sea modal
-        root = self.parent_frame.winfo_toplevel()
-
-        help_window = tk.Toplevel(root)
-        help_window.title("Ayuda")
-        help_window.geometry("300x150")
-        help_window.resizable(False, False)
-        help_window.transient(root)
-        help_window.grab_set()
-
-        # Texto de ayuda
-        help_label = tk.Label(help_window, text=help_text, wraplength=280, justify=tk.LEFT, padx=10, pady=10)
-        help_label.pack(fill=tk.BOTH, expand=True)
-
-        # Botón para cerrar
-        close_button = ttk.Button(help_window, text="Cerrar", command=help_window.destroy)
-        close_button.pack(pady=10)
+        # Copiar los tooltips creados en el layout manager
+        self.tooltips.extend(self.layout_manager.tooltips)
 
     def _on_slider_change(self, param_name: str, value: Any) -> None:
         """
@@ -405,21 +224,19 @@ class GUIParameterPanelView:
             except (ValueError, TypeError) as e:
                 self.logger.error(f"Error en _on_slider_change para {param_name}: {e}")
 
-    def _validate_entry(self, param_name: str) -> None:
+    def _validate_entry(self, param_name: str, value: str) -> None:
         """
         Valida el valor ingresado en un campo de entrada.
         
         Args:
             param_name: Nombre del parámetro a validar
+            value: Valor a validar
         """
         if self.on_entry_validate_callback:
-            # Obtener el valor según el parámetro
-            value = getattr(self, f"{param_name}_var").get()
             is_valid, error_message = self.on_entry_validate_callback(param_name, value)
             
             # Si hay un mensaje de error, mostrar retroalimentación al usuario
             if not is_valid and error_message:
-                # Aquí podrías mostrar el error en la interfaz (ej. cambiar color del campo, mostrar mensaje)
                 self.logger.warning(f"Valor inválido en {param_name}: {error_message}")
                 # Como mejora futura: Mostrar el mensaje de error visualmente al usuario
 
