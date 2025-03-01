@@ -129,3 +129,28 @@ class ProcessingController:
                 self.notifier.notify_error("Error al procesar la imagen", e)
             logger.error("Error al procesar la imagen: %s", e)
             raise
+
+    def update_parameters(self, grados_rotacion, altura, horizontal, pixels_por_mm):
+        """
+        Actualiza los parámetros de procesamiento.
+        
+        Args:
+            grados_rotacion: Nuevos grados de rotación para la imagen
+            altura: Nuevo ajuste vertical para la imagen
+            horizontal: Nuevo ajuste horizontal para la imagen
+            pixels_por_mm: Nueva relación de píxeles por milímetro
+        """
+        # Actualiza los parámetros que se usarán en la próxima llamada a process
+        self.grados_rotacion = grados_rotacion
+        self.altura = altura
+        self.horizontal = horizontal
+        self.pixels_por_mm = pixels_por_mm
+        
+        # Si tenemos un procesador de imágenes, actualizarlo también
+        if hasattr(self, 'procesador_imagenes') and self.procesador_imagenes:
+            self.procesador_imagenes.update_parameters(
+                grados_rotacion=grados_rotacion,
+                pixels_por_mm=pixels_por_mm,
+                altura=altura,
+                horizontal=horizontal
+            )

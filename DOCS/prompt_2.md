@@ -1,30 +1,48 @@
+### 🔍 **Análisis y Priorización de Mejoras en el Proyecto**
+**Objetivo:** Identificar todas las tareas derivadas del análisis previo, evaluarlas según costo de implementación e impacto en el proyecto y proporcionar una estrategia de implementación segura y gradual.
 
-A partir de la información anterior proporciona
-## 📌 Instrucciones:
-1. **Prioriza las mejoras** considerando los siguientes factores:
-   - **Facilidad de implementación**  
-   - **Impacto en el proyecto**  
+---
 
-2. **Para cada mejora identificada**, proporciona la siguiente información:
+## 📌 **Instrucciones**
+### **1️⃣ Identificación y Evaluación de Mejoras**
+- **Identifica todas las tareas derivadas del análisis previo** y agrúpalas en mejoras específicas.
+- **Evalúa cada mejora en función de:**
+  - 📉 **Costo de Implementación** → Tiempo, recursos y esfuerzo necesario.
+  - 📈 **Impacto en el Proyecto** → Beneficio directo, estabilidad y mejora en la producción.
 
-   ### 📌 **Tarea Principal**  
-   - **Título**  
-   - **Dependencias**  
+### **2️⃣ Priorización de Mejoras**
+- **Ordena las mejoras según la siguiente matriz de prioridad:**
+  - 🔹 **Alta prioridad** → Bajo costo, alto impacto.
+  - 🔹 **Media prioridad** → Relación equilibrada entre costo e impacto.
+  - 🔹 **Baja prioridad** → Alto costo, bajo impacto.
+- **Si hay dependencias entre mejoras, asegúrate de que el orden refleje estas relaciones.**
 
-   #### 🔹 **Subtareas**  
+### **3️⃣ Plan de Implementación Segura**
+Para la mejora prioritaria, desarrolla un plan detallado de implementación gradual asegurando que **no se rompa producción**:
+#### 📌 **Tarea Principal**
+   - **Título**
+   - **Descripción**
+   - **Dependencias**
+   - **Beneficio esperado**
+   
+#### 🔹 **Subtareas**
    Para cada subtarea de la mejora, incluye:
-   - **Título de la subtarea**  
-   - **Archivos involucrados** → Path relativo y nombre del archivo.  
-   - **Acción a realizar** → Modificar, eliminar o crear.  
-   - **Justificación detallada** → Explicación del motivo y su relevancia.  
-   - **Archivos de referencia** → Archivos útiles para comprender la mejora.  
+   - **Título de la subtarea**
+   - **Orden de ejecución** (para garantizar estabilidad en producción)
+   - **Archivos involucrados** → Path relativo y nombre del archivo.
+   - **Acción a realizar** → Modificar, eliminar o crear.
+   - **Justificación detallada** → Explicación del motivo y su relevancia.
+   - **Archivos de referencia** → Archivos útiles para comprender la mejora.
 
-3. **Estructura la respuesta como una lista priorizada**, ordenando las mejoras de acuerdo con:  
-   - **Mayor facilidad de implementación y alto impacto** → Primero.  
-   - **Menor facilidad de implementación y bajo impacto** → Después.  
-   - **Si hay dependencias entre mejoras, el orden debe reflejar estas relaciones.**  
+### **4️⃣ Opciones y Alternativas**
+Si existen **varias formas de abordar una mejora**, menciona:
+- **Alternativas viables**
+- **Ventajas y desventajas** de cada opción.
+- **Recomendación** sobre la mejor solución con su justificación.
 
-## ⚠️ Restricciones:
-- **No proporciones código.**  
-- **No hagas suposiciones sin fundamento en el análisis previo.**  
-- **Si hay varias formas de abordar una mejora, menciona brevemente las opciones y sus pros/contras.**  
+---
+
+## ⚠️ **Restricciones**
+- **No proporciones código.**
+- **No hagas suposiciones sin fundamento en el análisis previo.**
+- **Si el análisis previo es insuficiente, solicita aclaraciones antes de continuar.**

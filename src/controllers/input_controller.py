@@ -1,10 +1,11 @@
 """
+Path: src/controllers/input_controller.py
 Controlador especializado en la recolección y validación de parámetros de entrada.
 Implementa el patrón Mediator para coordinar la recolección de múltiples parámetros.
 """
 
 import logging
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict
 from src.views.console_view import ConsoleView
 from src.services.user_input_service import UserInputService
 from src.config_manager import ConfigManager
@@ -92,7 +93,7 @@ class InputController:
         except ValueError as e:
             self.console_view.mostrar_error(f"Error al procesar valor: {str(e)}")
             return None
-        except Exception as e:
+        except (KeyError, TypeError) as e:
             self.logger.error(f"Error inesperado recolectando parámetros: {e}")
             return None
 

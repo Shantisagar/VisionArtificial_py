@@ -10,140 +10,91 @@ from typing import Dict, Any, Optional
 from utils.logging.logger_configurator import get_logger
 
 class ConfigManager:
-    """
-    Gestor de configuración que permite trabajar con múltiples fuentes
-    y provee una interfaz unificada para acceder a la configuración.
-    """
+    """Clase responsable de cargar y gestionar la configuración desde un archivo JSON."""
 
-    def __init__(self, config_data: Optional[Dict[str, Any]] = None,
-                 config_path: Optional[str] = None,
-                 logger: Optional[logging.Logger] = None):
+    def __init__(self, config: Dict[str, Any], config_file: str = None, logger=None):
         """
-        Inicializa el gestor de configuración con datos o ruta especificados.
+        Inicializa el gestor de configuración con un diccionario de configuración 
+        y opcionalmente un archivo para persistencia.
         
         Args:
-            config_data: Diccionario de configuración predefinido o None
-            config_path: Ruta al archivo de configuración o None
-            logger: Logger a utilizar (inyección de dependencia) o None para usar el global
+            config: Diccionario con la configuración
+            config_file: Ruta al archivo de configuración para operaciones de guardado
+            logger: Logger configurado para registro de eventos (opcional)
         """
-        self.logger = logger or get_logger()
-        self.config_path = config_path
-        self._config = config_data or {}
-
-        # Cargar configuración desde archivo si se proporciona una ruta
-        if config_path and not config_data:
-            self._load_config()
+        self.config = config
+        self.config_file = config_file
+        self.logger = logger or logging.getLogger(__name__)
 
     @classmethod
-    def from_file(cls, file_path: str,
-                 logger: Optional[logging.Logger] = None) -> 'ConfigManager':
+    def from_file(cls, file_path: str, logger=None):
         """
-        Crea un ConfigManager con una fuente de archivo.
+        Crea una instancia del gestor cargando la configuración desde un archivo.
         
         Args:
-            file_path: Ruta al archivo de configuración
-            logger: Logger a utilizar (opcional)
+            file_path: Ruta al archivo de configuración JSON
+            logger: Logger configurado para registro de eventos (opcional)
             
         Returns:
-            Una instancia de ConfigManager configurada
+            Instancia de ConfigManager con la configuración cargada
+            
+        Raises:
+            FileNotFoundError: Si el archivo no existe
+            json.JSONDecodeError: Si el archivo no contiene JSON válido
         """
-        return cls(config_path=file_path, logger=logger)
-
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any],
-                 logger: Optional[logging.Logger] = None) -> 'ConfigManager':
-        """
-        Crea un ConfigManager con un diccionario predefinido.
+        local_logger = logger or logging.getLogger(__name__)
         
-        Args:
-            config_dict: Diccionario de configuración
-            logger: Logger a utilizar (opcional)
-            
-        Returns:
-            Una instancia de ConfigManager configurada
-        """
-        return cls(config_data=config_dict, logger=logger)
-
-    @classmethod
-    def from_env_vars(cls, prefix: str = "APP_",
-                     logger: Optional[logging.Logger] = None) -> 'ConfigManager':
-        """
-        Crea un ConfigManager a partir de variables de entorno.
-        
-        Args:
-            prefix: Prefijo para filtrar las variables de entorno
-            logger: Logger a utilizar (opcional)
-            
-        Returns:
-            Una instancia de ConfigManager configurada
-        """
-        config = {
-            key[len(prefix):].lower(): value
-            for key, value in os.environ.items()
-            if key.startswith(prefix)
-        }
-        return cls(config_data=config, logger=logger)
-
-    def _load_config(self) -> None:
-        """Carga la configuración desde el archivo."""
         try:
-            if os.path.exists(self.config_path):
-                with open(self.config_path, 'r', encoding='utf-8') as file:
-                    self._config = json.load(file)
-            else:
-                self.logger.warning(f"Archivo de configuración no encontrado: {self.config_path}")
+            with open(file_path, 'r', encoding='utf-8') as file:
+                config = json.load(file)
+            local_logger.info(f"Configuración cargada desde {file_path}")
+            return cls(config, file_path, local_logger)
         except FileNotFoundError:
-            self.logger.warning(f"Archivo de configuración no encontrado: {self.config_path}")
+            local_logger.error(f"Archivo de configuración no encontrado: {file_path}")
+            raise
         except json.JSONDecodeError as e:
-            self.logger.error(f"Error al decodificar JSON desde archivo: {e}")
-        except OSError as e:
-            self.logger.error(f"Error de OS al cargar configuración desde archivo: {e}")
+            local_logger.error(f"Error al parsear el archivo de configuración {file_path}: {e}")
+            raise
+        except Exception as e:
+            local_logger.error(f"Error inesperado cargando configuración: {e}")
+            raise
 
     def get_config(self) -> Dict[str, Any]:
         """
-        Devuelve la configuración completa.
+        Obtiene el diccionario de configuración.
         
         Returns:
             Diccionario con la configuración actual
         """
-        return self._config.copy()
+        return self.config.copy()  # Devolver una copia para evitar modificación externa accidental
 
-    def get_value(self, key: str, default: Any = None) -> Any:
+    def update_config(self, new_config: Dict[str, Any]) -> bool:
         """
-        Obtiene un valor específico de la configuración.
+        Actualiza la configuración con nuevos valores y guarda los cambios si hay un archivo configurado.
         
         Args:
-            key: Clave de la configuración a recuperar
-            default: Valor por defecto si la clave no existe
+            new_config: Diccionario con los nuevos valores de configuración a actualizar
             
         Returns:
-            El valor de la configuración o el valor por defecto
+            True si se actualizó y guardó correctamente, False en caso contrario
         """
-        return self._config.get(key, default)
-
-    def update_config(self, new_config: Dict[str, Any]) -> None:
-        """
-        Actualiza la configuración y la persiste en el archivo si hay uno configurado.
-        
-        Args:
-            new_config: Diccionario con los valores a actualizar
-        """
-        # Actualizar la configuración en memoria
-        self._config.update(new_config)
-
-        # Persistir en el archivo si hay uno configurado
-        if self.config_path:
-            self._save_config()
-
-    def _save_config(self) -> None:
-        """Guarda la configuración en el archivo configurado."""
         try:
-            # Asegurar que el directorio existe
-            os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
-
-        except OSError as e:
-            self.logger.error(f"Error de OS al guardar configuración en archivo: {e}")
-        except TypeError as e:
-            self.logger.error(f"Error al codificar JSON para guardar en archivo: {e}")
-        except json.JSONDecodeError as e:
-            self.logger.error(f"Error al decodificar JSON desde archivo: {e}")
+            # Actualizar solo las claves proporcionadas
+            for key, value in new_config.items():
+                self.config[key] = value
+                
+            # Guardar los cambios si hay un archivo de configuración definido
+            if self.config_file:
+                with open(self.config_file, 'w', encoding='utf-8') as file:
+                    json.dump(self.config, file, indent=4)
+                self.logger.info(f"Configuración actualizada y guardada en {self.config_file}")
+            else:
+                self.logger.info("Configuración actualizada (sin persistencia)")
+                
+            return True
+        except (IOError, OSError) as e:
+            self.logger.error(f"Error al guardar la configuración: {e}")
+            return False
+        except Exception as e:
+            self.logger.error(f"Error inesperado actualizando configuración: {e}")
+            return False

@@ -1,11 +1,12 @@
 """
+Path: src/views/console_view.py
 Vista para manejar interacciones de consola con el usuario.
 Implementa la capa de presentación del patrón MVC.
 """
 
 import logging
 from typing import Dict, Any, Optional, List
-from src.views.notifier import Notifier, ConsoleNotifier
+from src.views.notifier import ConsoleNotifier
 
 class ConsoleView:
     """Clase responsable de la interacción con el usuario vía consola."""

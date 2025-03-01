@@ -1,111 +1,90 @@
-### 1. Tarea Principal: Refactorizar la separación de responsabilidades en main.py  
-- **Dependencias:**  
-  - Archivo principal de entrada (main.py).  
-  - Módulo de configuración (src/config_manager.py).  
-  - Módulo de logging (utils/logging/logger_configurator.py).  
+### 🔍 **Análisis y Priorización de Mejoras en el Proyecto**
 
-#### 🔹 Subtareas:
-- **Subtarea 1:** Extraer la lógica de recolección de parámetros y opciones de video a módulos o servicios independientes.  
-  - **Archivos involucrados:**  
-    - main.py  
-  - **Acción a realizar:** Modificar (reubicar) el código.  
-  - **Justificación:** Aislar las tareas de entrada de datos y selección de opciones mejora la adherencia al patrón MVC y facilita la prueba y mantenimiento de cada componente por separado.  
-  - **Archivos de referencia:**  
-    - El propio main.py con funciones como `obtener_opcion_video` y `recoger_parametros_usuario`.
+## 📌 **Identificación y Evaluación de Mejoras**
 
-- **Subtarea 2:** Crear un controlador central que orqueste la inicialización de la configuración, la recogida de datos y la activación de la UI.  
-  - **Archivos involucrados:**  
-    - main.py  
-  - **Acción a realizar:** Modificar la estructura del flujo principal para delegar responsabilidades.  
-  - **Justificación:** Facilita futuras extensiones (por ejemplo, integración con Deep Learning) y permite una evolución clara de cada capa.  
-  - **Archivos de referencia:**  
-    - Diseño MVC y documentación relacionada en el proyecto.
+### **1️⃣ Identificación y Evaluación de Mejoras**
 
----
+#### Mejora 1: Eliminar la Recolección de Parámetros desde la Consola
+- **Costo de Implementación**: Medio
+- **Impacto en el Proyecto**: Alto
+- **Descripción**: Eliminar la dependencia de la consola para la actualización de parámetros y permitir que estos se actualicen desde la GUI.
+- **Beneficio**: Mejora la experiencia del usuario y mantiene la coherencia en la interfaz de usuario.
 
-### 2. Tarea Principal: Aplicar principios SOLID mediante inyección de dependencias  
-- **Dependencias:**  
-  - Todos los módulos que actualmente usan dependencias globales (por ejemplo, Logger y ConfigManager).  
+#### Mejora 2: Actualizar la Interfaz Gráfica para Recolección de Parámetros
+- **Costo de Implementación**: Medio
+- **Impacto en el Proyecto**: Alto
+- **Descripción**: Añadir campos de entrada en la GUI para que el usuario pueda actualizar los parámetros directamente desde la interfaz gráfica.
+- **Beneficio**: Facilita la interacción del usuario y elimina la necesidad de utilizar la consola.
 
-#### 🔹 Subtareas:
-- **Subtarea 1:** Refactorizar el Logger, permitiendo que se inyecte la dependencia en lugar de instanciarlo directamente.  
-  - **Archivos involucrados:**  
-    - logger_configurator.py  
-    - main.py  
-  - **Acción a realizar:** Modificar el manejo del logger para aceptarlo desde un contenedor o pasarlo como parámetro.  
-  - **Justificación:** Aumenta la flexibilidad para pruebas unitarias y reduce el acoplamiento en el código.  
-  - **Archivos de referencia:**  
-    - El módulo Logger actual y patrones de inyección de dependencias.
+#### Mejora 3: Refactorizar el Controlador de Entrada
+- **Costo de Implementación**: Medio
+- **Impacto en el Proyecto**: Alto
+- **Descripción**: Refactorizar el `InputController` para que recoja los parámetros desde la GUI en lugar de la consola.
+- **Beneficio**: Mantiene la separación de responsabilidades y mejora la mantenibilidad del código.
 
-- **Subtarea 2:** Ajustar el ConfigManager para recibir parámetros de configuración mediante inyección, facilitando la extensión (por ejemplo, integrar otros orígenes de configuración).  
-  - **Archivos involucrados:**  
-    - config_manager.py  
-    - main.py  
-  - **Acción a realizar:** Modificar la inicialización y el uso de la configuración.  
-  - **Justificación:** Permite cumplir con el DIP y mejora la capacidad de modificar o extender la fuente de configuración sin tocar el código base de entrada.  
-  - **Archivos de referencia:**  
-    - Configuración actual y documentación sobre inyección de dependencias.
+#### Mejora 4: Actualizar la Vista de la GUI
+- **Costo de Implementación**: Medio
+- **Impacto en el Proyecto**: Alto
+- **Descripción**: Actualizar la clase `GUIView` para incluir métodos que permitan la recolección y validación de parámetros desde la interfaz gráfica.
+- **Beneficio**: Mejora la cohesión y la experiencia del usuario.
 
----
+### **2️⃣ Priorización de Mejoras**
 
-### 3. Tarea Principal: Desacoplar la lógica de selección de modo de video  
-- **Dependencias:**  
-  - main.py y módulos relacionados con el procesamiento de video (src/video_stream.py).  
+#### Alta Prioridad
+1. **Mejora 1: Eliminar la Recolección de Parámetros desde la Consola**
+2. **Mejora 2: Actualizar la Interfaz Gráfica para Recolección de Parámetros**
+3. **Mejora 3: Refactorizar el Controlador de Entrada**
+4. **Mejora 4: Actualizar la Vista de la GUI**
 
-#### 🔹 Subtareas:
-- **Subtarea 1:** Extraer la función `obtener_opcion_video` de main.py y moverla a un módulo controlador específico.  
-  - **Archivos involucrados:**  
-    - main.py  
-    - Crear o modificar: `/src/controllers/video_option_controller.py` (nuevo)  
-  - **Acción a realizar:** Modificar (reubicar) la lógica en un módulo dedicado.  
-  - **Justificación:** Se mejora la separación entre la UI y la lógica de negocio, permitiendo la reutilización y una mayor claridad en el flujo de datos.  
-  - **Archivos de referencia:**  
-    - El contenido actual de `obtener_opcion_video` en main.py.
+### **3️⃣ Plan de Implementación Segura**
 
-- **Subtarea 2:** Definir un contrato (por ejemplo, mediante una interfaz conceptual) que permita extender modos de video sin modificar el controlador.  
-  - **Archivos involucrados:**  
-    - `/src/controllers/video_option_controller.py`  
-  - **Acción a realizar:** Modificar y documentar la intención de extensión.  
-  - **Justificación:** Facilitar el cumplimiento del OCP y permitir la integración de nuevos métodos de entrada (Deep Learning, GPU, etc.).  
-  - **Archivos de referencia:**  
-    - Diseño actual y posibles futuros módulos de entrada.
+#### 📌 **Tarea Principal**
+- **Título**: Eliminar la Recolección de Parámetros desde la Consola y Actualizar la GUI
+- **Descripción**: Refactorizar el sistema de recolección de parámetros para que se realice desde la GUI en lugar de la consola.
+- **Dependencias**: Ninguna
+- **Beneficio esperado**: Mejora la experiencia del usuario y mantiene la coherencia en la interfaz de usuario.
 
----
+#### 🔹 **Subtareas**
 
-### 4. Tarea Principal: Reestructurar la recolección de parámetros de entrada del usuario  
-- **Dependencias:**  
-  - main.py, junto con la interfaz de entrada en consola.  
+1. **Título de la subtarea**: Eliminar Métodos de Recolección de Parámetros desde la Consola
+   - **Orden de ejecución**: 1
+   - **Archivos involucrados**: console_view.py
+   - **Acción a realizar**: Modificar
+   - **Justificación detallada**: Eliminar los métodos de recolección de parámetros en `ConsoleView` para evitar la dependencia de la consola.
+   - **Archivos de referencia**: console_view.py
 
-#### 🔹 Subtareas:
-- **Subtarea 1:** Dividir la función `recoger_parametros_usuario` en funciones más específicas o incluso en una clase dedicada a la validación y procesamiento de entradas.  
-  - **Archivos involucrados:**  
-    - main.py  
-    - Opcional: crear `/src/controllers/input_controller.py`  
-  - **Acción a realizar:** Modificar (dividir) la función en componentes más pequeños para manejar cada parámetro por separado.  
-  - **Justificación:** Mejorar la claridad y reducir la complejidad de la función, facilitando su mantenimiento y futuras validaciones.  
-  - **Archivos de referencia:**  
-    - La función original `recoger_parametros_usuario` en main.py.
+2. **Título de la subtarea**: Añadir Campos de Entrada en la GUI
+   - **Orden de ejecución**: 2
+   - **Archivos involucrados**: gui_view.py
+   - **Acción a realizar**: Modificar
+   - **Justificación detallada**: Añadir campos de entrada en la interfaz gráfica para que el usuario pueda actualizar los parámetros.
+   - **Archivos de referencia**: gui_view.py
 
-- **Subtarea 2:** Documentar la validación y los valores por defecto de cada parámetro para asegurar la consistencia en futuras modificaciones.  
-  - **Archivos involucrados:**  
-    - main.py o nuevo módulo de documentación / validación.  
-  - **Acción a realizar:** Modificar la documentación interna.  
-  - **Justificación:** Al documentar, se facilita la extensión del código y la comprensión por parte de nuevos desarrolladores.  
-  - **Archivos de referencia:**  
-    - Comentarios y docstrings existentes en main.py.
+3. **Título de la subtarea**: Refactorizar el `InputController`
+   - **Orden de ejecución**: 3
+   - **Archivos involucrados**: input_controller.py
+   - **Acción a realizar**: Modificar
+   - **Justificación detallada**: Refactorizar `InputController` para que recoja los parámetros desde la GUI.
+   - **Archivos de referencia**: input_controller.py
 
----
+4. **Título de la subtarea**: Actualizar `GUIView` para Manejar Parámetros
+   - **Orden de ejecución**: 4
+   - **Archivos involucrados**: gui_view.py
+   - **Acción a realizar**: Modificar
+   - **Justificación detallada**: Añadir métodos en `GUIView` para manejar la recolección y validación de parámetros desde la interfaz gráfica.
+   - **Archivos de referencia**: gui_view.py
 
-### 5. Tarea Principal: Centralizar el manejo de excepciones y logging  
-- **Dependencias:**  
-  - main.py y todos los módulos que actualmente realizan manejo de excepciones de forma individual.  
+### **4️⃣ Opciones y Alternativas**
 
-#### 🔹 Subtareas:
-- **Subtarea 1:** Crear un sistema centralizado o patrón de manejo de errores para capturar y registrar las excepciones, evitando duplicación de código en cada función.  
-  - **Archivos involucrados:**  
-    - main.py  
-    - Módulo Logger y posiblemente un nuevo middleware para manejo de errores.  
-  - **Acción a realizar:** Modificar la estructura de try/except y centralizar la lógica.  
-  - **Justificación:** Garantiza una consistencia en la captación de errores y facilita la localización y solución de problemas.  
-  - **Archivos de referencia:**  
-    - El manejo actual de excepciones en main.py y la configuración del logger.
+#### Alternativa 1: Mantener la Recolección de Parámetros desde la Consola
+- **Ventajas**: Menor costo de implementación.
+- **Desventajas**: Peor experiencia de usuario, inconsistencia en la interfaz.
+- **Recomendación**: No recomendado debido a la mala experiencia del usuario.
+
+#### Alternativa 2: Implementar un Sistema Híbrido
+- **Ventajas**: Flexibilidad para el usuario.
+- **Desventajas**: Mayor complejidad en el código, posible inconsistencia.
+- **Recomendación**: No recomendado debido a la complejidad y posible inconsistencia.
+
+#### Recomendación Final
+- **Implementar la recolección de parámetros exclusivamente desde la GUI** para mejorar la experiencia del usuario y mantener la coherencia en la interfaz de usuario.

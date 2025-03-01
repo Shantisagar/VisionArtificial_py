@@ -304,3 +304,39 @@ class VideoStreamApp:
             'fps_average': round(self.fps_stats['average'], 1),
             'processing_time': round(time.time() - self.fps_stats['start_time'], 1)
         }
+
+    def update_parameters(self, parameters: dict) -> None:
+        """
+        Actualiza los parámetros de procesamiento en tiempo real.
+        
+        Args:
+            parameters: Diccionario con los nuevos valores de los parámetros
+        """
+        try:
+            if 'grados_rotacion' in parameters:
+                self.grados_rotacion = -1 * parameters['grados_rotacion']  # Invertir como en el constructor
+            
+            if 'altura' in parameters:
+                self.altura = parameters['altura']
+                
+            if 'horizontal' in parameters:
+                self.horizontal = parameters['horizontal']
+                
+            if 'pixels_por_mm' in parameters:
+                self.pixels_por_mm = parameters['pixels_por_mm']
+                
+            # Actualizar controlador para que afecte al procesamiento en tiempo real
+            if hasattr(self, 'controller') and self.controller:
+                self.controller.update_parameters(
+                    self.grados_rotacion,
+                    self.altura,
+                    self.horizontal,
+                    self.pixels_por_mm
+                )
+                    
+            self.logger.info(f"Parámetros de procesamiento actualizados: {parameters}")
+        except Exception as e:
+            self.logger.error(f"Error al actualizar parámetros: {str(e)}")
+            # Notificar al usuario a través del notifier si está disponible
+            if hasattr(self, 'notifier') and self.notifier:
+                self.notifier.notify_error("Error al actualizar parámetros", e)

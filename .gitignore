@@ -10,3 +10,4 @@ docs/todo.md
 .pylintrc
 utils/logging/sistema.log
 logs/*.log
+src/docs/00-Prompt-for-ProjectAnalysis.md

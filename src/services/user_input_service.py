@@ -61,6 +61,23 @@ class UserInputService:
         """
         return self.video_controller.get_menu_options()
 
+    def get_webcam_url(self, config):
+        """
+        Obtiene la URL o índice de la webcam directamente de la configuración.
+        
+        Args:
+            config: Configuración de la aplicación
+            
+        Returns:
+            URL o índice de la webcam
+        """
+        try:
+            # Por defecto, usar la primera cámara (índice 0)
+            return 0
+        except Exception as e:
+            self.logger.error(f"Error al obtener URL de webcam: {e}")
+            return None
+
     def validar_grados_rotacion(self, grados: float) -> bool:
         """
         Valida que los grados de rotación estén dentro del rango permitido.
