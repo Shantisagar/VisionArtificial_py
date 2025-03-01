@@ -18,7 +18,8 @@ def rotar_imagen(frame, grados):
     
     Parámetros:
     - frame (np.ndarray): Imagen a rotar.
-    - grados (float): Número de grados para rotar la imagen. Los valores positivos rotan en sentido antihorario.
+    - grados (float): Número de grados para rotar la imagen.
+    Los valores positivos rotan en sentido antihorario.
     
     Retorna:
     - np.ndarray: La imagen rotada.

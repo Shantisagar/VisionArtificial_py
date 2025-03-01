@@ -102,14 +102,14 @@ class ErrorHandler:
         for callback in self.error_callbacks.get(exception_type, []):
             try:
                 callback(exception, severity, context)
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 self.logger.error(f"Error en callback de manejo de excepción: {e}")
 
         # Ejecutar callbacks por defecto
         for callback in self.default_callbacks:
             try:
                 callback(exception, severity, context)
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 self.logger.error(f"Error en callback por defecto: {e}")
 
     def register_callback(self,

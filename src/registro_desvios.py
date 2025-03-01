@@ -1,6 +1,18 @@
 """
 Path: src/registro_desvios.py
 Este módulo se encarga de registrar los desvíos de papel en la base de datos.
+
+Estrategia de Logging y Notificaciones:
+--------------------------------------
+Este módulo implementa el enfoque dual de registro/notificación:
+1. Logging técnico: Todos los eventos relevantes para depuración y monitoreo
+   se registran mediante el sistema centralizado de logging.
+2. Notificaciones: Los eventos significativos para el usuario se canalizan 
+   a través del sistema de notificaciones (Notifier).
+
+La separación de estas responsabilidades permite que la información técnica
+detallada se registre sin abrumar al usuario final, mientras que los mensajes
+importantes se presentan de manera clara y consistente en la interfaz.
 """
 from datetime import datetime
 import mysql.connector
@@ -18,9 +30,15 @@ default_notifier = ConsoleNotifier(logger)
 def inicializar_bd():
     """
     Crea la base de datos y la tabla si no existen.
+    
+    Esta función registra todas las operaciones importantes en el logger
+    para facilitar la depuración y el seguimiento de problemas de conexión.
     """
+    conn = None
+    cursor = None
     try:
         # Conectar al servidor MySQL sin especificar una base de datos
+        logger.info("Intentando conexión al servidor MySQL para inicializar la BD...")
         conn = mysql.connector.connect(
             host="localhost",
             user="root",
@@ -51,15 +69,40 @@ def inicializar_bd():
 
     except mysql.connector.Error as err:
         logger.error(f"Error al inicializar la base de datos: {err}")
+        # Clasificar y registrar errores específicos de MySQL
+        error_msg = str(err).lower()
+        if "can't connect" in error_msg:
+            logger.error("No se pudo establecer conexión con el servidor MySQL.")
+        elif "access denied" in error_msg:
+            logger.error("Acceso denegado. Verificar credenciales de la base de datos.")
+
+    except Exception as e:
+        logger.error(f"Error inesperado durante la inicialización de la BD: {e}")
 
     finally:
-        if 'conn' in locals() and conn.is_connected():
-            cursor.close()
-            conn.close()
+        # Cerrar el cursor de manera segura
+        if cursor:
+            try:
+                cursor.close()
+            except Exception as e:
+                logger.error(f"Error al cerrar el cursor de la BD: {e}")
+
+        # Cerrar la conexión de manera segura
+        if conn:
+            try:
+                if hasattr(conn, 'is_connected') and conn.is_connected():
+                    conn.close()
+                    logger.debug("Conexión a la BD cerrada correctamente.")
+            except Exception as e:
+                logger.error(f"Error al cerrar la conexión de BD: {e}")
 
 def registrar_desvio(desvio_mm, TOLERANCIA, notifier: Optional[Notifier] = None) -> str:
     """
     Registra el desvío en la base de datos y notifica según corresponda.
+    
+    Esta función ejemplifica la separación de responsabilidades:
+    1. Notificación al usuario: A través del objeto Notifier
+    2. Registro en la BD: Operación técnica que se registra en el logger
     
     Args:
         desvio_mm: Valor del desvío en milímetros
@@ -71,20 +114,35 @@ def registrar_desvio(desvio_mm, TOLERANCIA, notifier: Optional[Notifier] = None)
     """
     # Usar el notificador proporcionado o el predeterminado
     notifier = notifier or default_notifier
-    
+
+    # Registrar en el logger que se está procesando un desvío
+    logger.debug(f"Procesando desvío de {desvio_mm}mm (tolerancia: {TOLERANCIA}mm)")
+
     # Generar la notificación del desvío
     mensaje = notifier.notify_desvio(desvio_mm, TOLERANCIA)
-    
+
     # Registrar en la base de datos (separado de la notificación)
     enviar_datos(desvio_mm)
-    
+
     return mensaje
 
 def enviar_datos(desvio_mm):
-    " Guarda los datos en la base de datos."
+    """
+    Guarda los datos del desvío en la base de datos.
+
+    Toda operación con la BD genera entradas apropiadas en el log,
+    pero no necesariamente notificaciones al usuario final.
+
+    Args:
+        desvio_mm: Valor del desvío en milímetros
+    """
+    conn = None
+    cursor = None
     try:
         # Convertir float64 de NumPy a float nativo de Python
         desvio_mm_float = float(desvio_mm)
+
+        logger.debug(f"Intentando guardar desvío de {desvio_mm_float}mm en la BD...")
 
         # Conectar a la base de datos
         conn = mysql.connector.connect(
@@ -116,16 +174,42 @@ def enviar_datos(desvio_mm):
 
         # Confirmar la transacción
         conn.commit()
+        #logger.info(f"Datos de desvío {desvio_mm_float}mm guardados correctamente en la BD.")
 
     except mysql.connector.Error as err:
-        logger.error(f"Error al conectar a la base de datos: {err}")
+        logger.error(f"Error de MySQL al guardar datos: {err}")
+        # Clasificar y registrar errores específicos de MySQL para facilitar el diagnóstico
+        error_msg = str(err).lower()
+        if "can't connect" in error_msg:
+            logger.error("No se pudo establecer conexión con el servidor MySQL.")
+        elif "access denied" in error_msg:
+            logger.error("Acceso denegado. Verificar credenciales de la base de datos.")
+        elif "unknown database" in error_msg:
+            logger.error("La base de datos especificada no existe.")
+
+    except ValueError as e:
+        logger.error(f"Error al convertir el valor de desvío a float: {e}")
+
     except Exception as e:
-        logger.error(f"Error inesperado al guardar datos: {e}")
+        logger.error(f"Error inesperado al guardar datos en la BD: {e}")
+
     finally:
-        # Cerrar la conexión
-        if 'conn' in locals() and conn.is_connected():
-            cursor.close()
-            conn.close()
+        # Cerrar el cursor de manera segura
+        if cursor:
+            try:
+                cursor.close()
+                logger.debug("Cursor de la base de datos cerrado correctamente.")
+            except Exception as e:
+                logger.error(f"Error al cerrar el cursor de la BD: {e}")
+
+        # Cerrar la conexión de manera segura
+        if conn:
+            try:
+                if hasattr(conn, 'is_connected') and conn.is_connected():
+                    conn.close()
+                    logger.debug("Conexión a la base de datos cerrada correctamente.")
+            except Exception as e:
+                logger.error(f"Error al cerrar la conexión de BD: {e}")
 
 # Inicializar la base de datos cuando se importa el módulo
 inicializar_bd()

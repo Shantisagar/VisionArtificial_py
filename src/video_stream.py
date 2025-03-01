@@ -16,7 +16,7 @@ import numpy as np
 import cv2
 from src.image_processing import ProcessingController
 from utils.logging.logger_configurator import get_logger
-from src.views.notifier import Notifier, ConsoleNotifier
+from src.views.notifier import ConsoleNotifier
 
 class VideoStreamApp:
     "Esta clase se encarga de la transmisión de video y la actualización de la interfaz gráfica."
@@ -205,7 +205,7 @@ class VideoStreamApp:
                 self.logger.error("No se pudo escalar el frame.")
                 if self.notifier:
                     self.notifier.notify_error("No se pudo escalar el frame")
-        except Exception as e:
+        except (cv2.error.CvError, ValueError, TypeError) as e:
             self.logger.error(f"Error de procesamiento de imagen: {e}")
             if self.notifier:
                 self.notifier.notify_error("Error de procesamiento de imagen", e)

@@ -6,7 +6,7 @@ Permite la categorización de errores y un manejo más específico.
 # Base exception for all application exceptions
 class AppException(Exception):
     """Excepción base para todas las excepciones de la aplicación."""
-    
+
     def __init__(self, message: str, *args):
         """
         Inicializa la excepción con un mensaje descriptivo.
@@ -27,7 +27,7 @@ class ConfigurationError(AppException):
 
 class ConfigFileNotFoundError(ConfigurationError):
     """El archivo de configuración no fue encontrado."""
-    
+
     def __init__(self, file_path: str, *args):
         """
         Inicializa la excepción con la ruta del archivo.
@@ -59,7 +59,7 @@ class VideoConnectionError(VideoSourceError):
 
 class InvalidVideoOptionError(VideoSourceError):
     """Opción de video no válida."""
-    
+
     def __init__(self, option: str, *args):
         """
         Inicializa la excepción con la opción inválida.
@@ -81,7 +81,7 @@ class InputValidationError(AppException):
 
 class NumericRangeError(InputValidationError):
     """Valor numérico fuera del rango permitido."""
-    
+
     def __init__(self, param_name: str, value: float, min_val: float, max_val: float, *args):
         """
         Inicializa la excepción con detalles del rango válido.
@@ -93,7 +93,10 @@ class NumericRangeError(InputValidationError):
             max_val: Valor máximo permitido
             args: Argumentos adicionales
         """
-        message = f"El valor {value} para '{param_name}' está fuera del rango permitido: [{min_val}, {max_val}]"
+        message = (
+            f"El valor {value} para '{param_name}' está fuera del rango permitido: "
+            f"[{min_val}, {max_val}]"
+        )
         self.param_name = param_name
         self.value = value
         self.min_val = min_val
@@ -103,7 +106,7 @@ class NumericRangeError(InputValidationError):
 
 class RequiredParameterError(InputValidationError):
     """Falta un parámetro requerido."""
-    
+
     def __init__(self, param_name: str, *args):
         """
         Inicializa la excepción con el nombre del parámetro.

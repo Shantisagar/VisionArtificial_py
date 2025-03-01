@@ -10,9 +10,10 @@ from typing import Optional, Dict, Any
 from src.video_stream import VideoStreamApp
 from src.views.notifier import Notifier
 
+# ...existing code...
 class GUINotifier(Notifier):
     """Implementación del notificador para la interfaz gráfica."""
-    
+
     def __init__(self, logger, status_label=None):
         """
         Inicializa el notificador GUI.
@@ -24,7 +25,7 @@ class GUINotifier(Notifier):
         self.logger = logger
         self.status_label = status_label
         self.notifications = []  # Almacena las últimas notificaciones
-    
+
     def notify_desvio(self, desvio_mm: float, tolerancia: float) -> str:
         """
         Genera una notificación sobre un desvío detectado.
@@ -37,30 +38,24 @@ class GUINotifier(Notifier):
             Mensaje descriptivo del desvío
         """
         if desvio_mm > tolerancia:
-            mensaje = f"Desvio: {desvio_mm} mm ENG"
+            mensaje = f"Desvío a la derecha: {desvio_mm} mm"
         elif desvio_mm < -tolerancia:
-            mensaje = f"Desvio: {desvio_mm} mm OP"
+            mensaje = f"Desvío a la izquierda: {desvio_mm} mm"
         else:
-            if desvio_mm > 0:
-                mensaje = f"Desvio: {desvio_mm} mm - Centrado ENG"
-            elif desvio_mm < 0:
-                mensaje = f"Desvio: {desvio_mm} mm - Centrado OP"
-            else:
-                mensaje = f"Desvio: {desvio_mm} mm - Centrado"
-        
-        self.logger.info(f"Desvío registrado: {mensaje}")
-        
-        # Si hay un label de estado, actualizar la información
+            mensaje = f"Desvío dentro de la tolerancia: {desvio_mm} mm"
+
+        # Se elimina el log que mostraba "Desvío registrado" en la consola.
+        # En su lugar, si hay un label definido en la UI, se actualiza el texto:
         if self.status_label:
             self.status_label.config(text=mensaje)
-            
+
         # Almacenar la notificación para posible consulta posterior
         self.notifications.append(mensaje)
         if len(self.notifications) > 10:
-            self.notifications.pop(0)  # Mantener solo las 10 últimas
-            
+            self.notifications.pop(0)
+
         return mensaje
-    
+
     def notify_error(self, message: str, error: Optional[Exception] = None) -> None:
         """
         Muestra una notificación de error en la UI.
@@ -72,12 +67,12 @@ class GUINotifier(Notifier):
         error_msg = f"ERROR: {message}"
         if error:
             error_msg += f" - {str(error)}"
-            
+
         self.logger.error(error_msg)
-        
+
         if self.status_label:
             self.status_label.config(text=error_msg, fg="red")
-    
+
     def notify_info(self, message: str, data: Optional[Dict[str, Any]] = None) -> None:
         """
         Muestra una notificación informativa en la UI.
@@ -87,9 +82,9 @@ class GUINotifier(Notifier):
             data: Datos adicionales asociados a la notificación (opcional)
         """
         info_msg = f"INFO: {message}"
-            
+
         self.logger.info(info_msg)
-        
+
         if self.status_label:
             self.status_label.config(text=info_msg, fg="blue")
 
@@ -136,12 +131,12 @@ class GUIView:
             self.stats_label = tk.Label(self.root, text="Iniciando procesamiento...",
                                        font=('Helvetica', 10))
             self.stats_label.pack(padx=5, pady=5)
-            
+
             # Crear etiqueta para mostrar notificaciones de estado
             self.status_label = tk.Label(self.root, text="",
                                         font=('Helvetica', 11), fg="blue")
             self.status_label.pack(padx=5, pady=5)
-            
+
             # Inicializar el notificador GUI con la etiqueta de estado
             self.notifier = GUINotifier(self.logger, self.status_label)
 
@@ -161,7 +156,7 @@ class GUIView:
 
             self.logger.info("Interfaz gráfica inicializada correctamente.")
             self.notifier.notify_info("Interfaz gráfica iniciada")
-        except Exception as e:
+        except (KeyError, AttributeError, TypeError) as e:
             self.logger.error(f"Error al inicializar la interfaz gráfica: {e}")
             raise
 
@@ -174,7 +169,7 @@ class GUIView:
                 # Iniciamos mainloop en el hilo principal
                 self.root.mainloop()
                 self.logger.info("Interfaz gráfica finalizada.")
-            except Exception as e:
+            except (KeyError, AttributeError, TypeError) as e:
                 self.logger.error(f"Error durante la ejecución de la interfaz gráfica: {e}")
                 self.is_running = False
                 raise
@@ -205,7 +200,7 @@ class GUIView:
                              f"FPS promedio: {stats['fps_average']} | "
                              f"Tiempo: {stats['processing_time']}s")
                 self.stats_label.config(text=stats_text)
-            except Exception as e:
+            except (KeyError, AttributeError, TypeError) as e:
                 self.logger.error(f"Error al actualizar estadísticas: {e}")
 
         # Programar próxima actualización si aún está en ejecución

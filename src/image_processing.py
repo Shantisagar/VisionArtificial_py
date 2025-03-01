@@ -98,10 +98,10 @@ class ProcessingController:
             now = datetime.datetime.now()
             fecha_hora = now.strftime("%d-%m-%Y %H:%M:%S")
             texto0 = fecha_hora
-            
+
             # Usar el notificador para registrar el desvío
             texto1 = registrar_desvio(desvio_mm, TOLERANCIA, self.notifier)
-            
+
             # Ejemplo de otros textos informativos
             texto2 = "Ancho de bobina: 790mm"
             texto3 = "Formato bolsa: 260x120x360"
