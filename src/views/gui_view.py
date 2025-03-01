@@ -7,136 +7,10 @@ Implementa la capa de presentación del patrón MVC.
 import tkinter as tk
 from tkinter import ttk
 import logging
-from typing import Optional, Dict, Any, Callable
+from typing import Dict, Callable
 from src.video_stream import VideoStreamApp
-from src.views.notifier import Notifier
-
-class ToolTip:
-    """
-    Crea un tooltip para un widget dado.
-    """
-    def __init__(self, widget, text=None, delay=500):
-        self.widget = widget
-        self.text = text
-        self.delay = delay
-        self.tipwindow = None
-        self.id = None
-        self.x = self.y = 0
-        self.widget.bind("<Enter>", self.enter)
-        self.widget.bind("<Leave>", self.leave)
-        self.widget.bind("<ButtonPress>", self.leave)
-
-    def enter(self, event=None):
-        self.schedule()
-
-    def leave(self, event=None):
-        self.unschedule()
-        self.hidetip()
-
-    def schedule(self):
-        self.unschedule()
-        self.id = self.widget.after(self.delay, self.showtip)
-
-    def unschedule(self):
-        if self.id:
-            self.widget.after_cancel(self.id)
-            self.id = None
-
-    def showtip(self):
-        if self.tipwindow or not self.text:
-            return
-        x, y, _, _ = self.widget.bbox("insert")
-        x += self.widget.winfo_rootx() + 25
-        y += self.widget.winfo_rooty() + 25
-        self.tipwindow = tw = tk.Toplevel(self.widget)
-        tw.wm_overrideredirect(True)
-        tw.wm_geometry(f"+{x}+{y}")
-        label = tk.Label(tw, text=self.text, justify=tk.LEFT,
-                         background="#ffffe0", relief=tk.SOLID, borderwidth=1,
-                         font=("tahoma", "8", "normal"), wraplength=250)
-        label.pack(padx=3, pady=3)
-
-    def hidetip(self):
-        if self.tipwindow:
-            self.tipwindow.destroy()
-            self.tipwindow = None
-
-class GUINotifier(Notifier):
-    """Implementación del notificador para la interfaz gráfica."""
-
-    def __init__(self, logger, status_label=None):
-        """
-        Inicializa el notificador GUI.
-        
-        Args:
-            logger: Logger configurado para registrar eventos
-            status_label: Label de Tkinter donde se mostrarán las notificaciones (opcional)
-        """
-        self.logger = logger
-        self.status_label = status_label
-        self.notifications = []  # Almacena las últimas notificaciones
-
-    def notify_desvio(self, desvio_mm: float, tolerancia: float) -> str:
-        """
-        Genera una notificación sobre un desvío detectado.
-        
-        Args:
-            desvio_mm: Valor del desvío en milímetros
-            tolerancia: Valor de tolerancia para determinar si el desvío es significativo
-            
-        Returns:
-            Mensaje descriptivo del desvío
-        """
-        if desvio_mm > tolerancia:
-            mensaje = f"Desvío a la derecha: {desvio_mm} mm"
-        elif desvio_mm < -tolerancia:
-            mensaje = f"Desvío a la izquierda: {desvio_mm} mm"
-        else:
-            mensaje = f"Desvío dentro de la tolerancia: {desvio_mm} mm"
-
-        # Se elimina el log que mostraba "Desvío registrado" en la consola.
-        # En su lugar, si hay un label definido en la UI, se actualiza el texto:
-        if self.status_label:
-            self.status_label.config(text=mensaje)
-
-        # Almacenar la notificación para posible consulta posterior
-        self.notifications.append(mensaje)
-        if len(self.notifications) > 10:
-            self.notifications.pop(0)
-
-        return mensaje
-
-    def notify_error(self, message: str, error: Optional[Exception] = None) -> None:
-        """
-        Muestra una notificación de error en la UI.
-        
-        Args:
-            message: Mensaje descriptivo del error
-            error: Excepción asociada al error (opcional)
-        """
-        error_msg = f"ERROR: {message}"
-        if error:
-            error_msg += f" - {str(error)}"
-
-        self.logger.error(error_msg)
-
-        if self.status_label:
-            self.status_label.config(text=error_msg, fg="red")
-
-    def notify_info(self, message: str, data: Optional[Dict[str, Any]] = None) -> None:
-        """
-        Muestra una notificación informativa en la UI.
-        
-        Args:
-            message: Mensaje informativo
-            data: Datos adicionales asociados a la notificación (opcional)
-        """
-        info_msg = f"INFO: {message}"
-
-        self.logger.info(info_msg)
-
-        if self.status_label:
-            self.status_label.config(text=info_msg, fg="blue")
+from src.views.tool_tip import ToolTip
+from src.views.gui_notifier import GUINotifier
 
 class GUIView:
     """Clase responsable de la gestión de la interfaz gráfica."""
@@ -157,16 +31,16 @@ class GUIView:
         self.status_label = None
         self.update_interval = 500  # Actualizar estadísticas cada 500ms
         self.notifier = None
-        
+
         # Campos para los parámetros de configuración
         self.grados_rotacion_var = None
         self.pixels_por_mm_var = None
         self.altura_var = None
         self.horizontal_var = None
-        
+
         # Callback para cuando se actualicen los parámetros
         self.on_parameters_update = None
-        
+
         # Rangos para los sliders
         self.slider_ranges = {
             'grados_rotacion': (-180, 180),
@@ -174,22 +48,26 @@ class GUIView:
             'altura': (-500, 500),
             'horizontal': (-500, 500)
         }
-        
+
         # Variables para controlar si el cambio viene del slider o del campo de texto
         self.updating_from_slider = False
         self.updating_from_entry = False
-        
+
         # Descripciones de ayuda para los parámetros
         self.parameter_help = {
-            'grados_rotacion': "Ajusta la rotación de la imagen en grados. Valores positivos rotan en sentido horario, negativos en sentido antihorario.",
-            'pixels_por_mm': "Define la escala de conversión de píxeles a milímetros. A mayor valor, mayor precisión en la medición de distancias.",
-            'altura': "Ajusta la posición vertical de la línea de referencia en la imagen. Valores positivos mueven hacia abajo, negativos hacia arriba.",
-            'horizontal': "Ajusta la posición horizontal de la línea de referencia en la imagen. Valores positivos mueven hacia la derecha, negativos hacia la izquierda."
+            'grados_rotacion':
+            "Ajusta la rotación de la imagen en grados. Valores positivos rotan en sentido horario, negativos en sentido antihorario.",
+            'pixels_por_mm':
+            "Define la escala de conversión de píxeles a milímetros. A mayor valor, mayor precisión en la medición de distancias.",
+            'altura':
+            "Ajusta la posición vertical de la línea de referencia en la imagen. Valores positivos mueven hacia abajo, negativos hacia arriba.",
+            'horizontal': 
+            "Ajusta la posición horizontal de la línea de referencia en la imagen. Valores positivos mueven hacia la derecha, negativos hacia la izquierda."
         }
-        
+
         # Lista para almacenar referencias a tooltips
         self.tooltips = []
-        
+
     def set_parameters_update_callback(self, callback: Callable[[Dict[str, float]], None]) -> None:
         """
         Establece el callback que se llamará cuando los parámetros se actualicen desde la GUI.
@@ -214,7 +92,7 @@ class GUIView:
             self.root = tk.Tk()
             self.root.title("Control de Visión Artificial")
             self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-            
+
             # Crear una ventana de tamaño adecuado
             window_width = 1000
             window_height = 800
@@ -227,11 +105,11 @@ class GUIView:
             # Crear frame principal con dos columnas
             main_frame = tk.Frame(self.root)
             main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-            
+
             # Columna izquierda para el video
             video_column = tk.Frame(main_frame)
             video_column.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-            
+
             # Columna derecha para controles
             control_column = tk.Frame(main_frame)
             control_column.pack(side=tk.RIGHT, fill=tk.Y, padx=10)
@@ -243,20 +121,20 @@ class GUIView:
             # Crear panel de control para los parámetros
             control_frame = tk.LabelFrame(control_column, text="Parámetros de configuración")
             control_frame.pack(fill="x", padx=5, pady=5)
-            
+
             # Inicializar variables para los campos de entrada
             self.grados_rotacion_var = tk.StringVar(value=str(grados_rotacion))
             self.pixels_por_mm_var = tk.StringVar(value=str(pixels_por_mm))
             self.altura_var = tk.StringVar(value=str(altura))
             self.horizontal_var = tk.StringVar(value=str(horizontal))
-            
+
             # Crear campos de entrada y sliders para cada parámetro
             self._create_parameter_inputs(control_frame)
 
             # Crear etiqueta para estadísticas
             stats_frame = tk.LabelFrame(control_column, text="Estadísticas")
             stats_frame.pack(fill="x", padx=5, pady=5)
-            
+
             self.stats_label = tk.Label(stats_frame, text="Iniciando procesamiento...",
                                        font=('Helvetica', 10))
             self.stats_label.pack(padx=5, pady=5)
@@ -264,7 +142,7 @@ class GUIView:
             # Crear etiqueta para mostrar notificaciones de estado
             status_frame = tk.LabelFrame(control_column, text="Estado")
             status_frame.pack(fill="x", padx=5, pady=5)
-            
+
             self.status_label = tk.Label(status_frame, text="",
                                         font=('Helvetica', 11), fg="blue", wraplength=250)
             self.status_label.pack(padx=5, pady=5, fill="x")
@@ -291,7 +169,69 @@ class GUIView:
         except (KeyError, AttributeError, TypeError) as e:
             self.logger.error(f"Error al inicializar la interfaz gráfica: {e}")
             raise
+
+    def _create_parameter_row(self, parent_frame, param_name, label_text, slider_callback):
+        """
+        Crea una fila de controles para un parámetro (label, entry, slider, help button).
+        
+        Args:
+            parent_frame: Frame padre donde se crearán los controles
+            param_name: Nombre del parámetro (ej: 'grados_rotacion')
+            label_text: Texto para la etiqueta del parámetro
+            slider_callback: Función callback para el slider
             
+        Returns:
+            tuple: (frame, slider) - El frame contenedor y el slider creado
+        """
+        # Crear frame contenedor
+        frame = tk.Frame(parent_frame)
+        frame.pack(fill="x", padx=10, pady=5)
+        
+        # Crear etiqueta
+        label = tk.Label(frame, text=label_text)
+        label.grid(row=0, column=0, sticky="w", pady=2)
+        self.tooltips.append(ToolTip(label, self.parameter_help[param_name]))
+        
+        # Obtener la variable StringVar correspondiente
+        var = getattr(self, f"{param_name}_var")
+        
+        # Crear entry
+        entry = tk.Entry(frame, textvariable=var, width=10)
+        entry.grid(row=0, column=1, padx=5, pady=2)
+        tooltip_text = f"Ingrese un valor entre {self.slider_ranges[param_name][0]} y {self.slider_ranges[param_name][1]}"
+        self.tooltips.append(ToolTip(entry, tooltip_text))
+        
+        # Crear slider
+        slider_args = {
+            'from_': self.slider_ranges[param_name][0],
+            'to': self.slider_ranges[param_name][1],
+            'orient': tk.HORIZONTAL,
+            'length': 200,
+            'command': slider_callback
+        }
+        
+        # Añadir parámetro 'resolution' solo si es para pixels_por_mm
+        if param_name == 'pixels_por_mm':
+            slider_args['resolution'] = 0.1
+            
+        slider = tk.Scale(frame, **slider_args)
+        slider.set(float(var.get()))
+        slider.grid(row=0, column=2, padx=5, pady=2, sticky="w")
+        
+        # Añadir tooltip al slider
+        slider_tooltip_text = f"Deslice para ajustar {label_text.lower().rstrip(':')}"
+        self.tooltips.append(ToolTip(slider, slider_tooltip_text))
+        
+        # Crear botón de ayuda
+        help_icon = self._create_help_button(frame, self.parameter_help[param_name])
+        help_icon.grid(row=0, column=3, padx=5, pady=2)
+        
+        # Configurar validaciones para el entry
+        entry.bind('<FocusOut>', lambda e, pn=param_name: self._validate_and_update_from_entry(pn))
+        entry.bind('<Return>', lambda e, pn=param_name: self._validate_and_update_from_entry(pn))
+        
+        return frame, slider
+    
     def _create_parameter_inputs(self, parent_frame):
         """
         Crea los campos de entrada y sliders para los parámetros en el frame especificado.
@@ -302,150 +242,49 @@ class GUIView:
         # Frame para instrucciones
         help_frame = tk.Frame(parent_frame)
         help_frame.pack(fill="x", padx=10, pady=5)
-        
+
         help_text = "Ajuste los parámetros usando los controles deslizantes o ingresando valores directamente. " + \
                     "Pase el cursor sobre cada elemento para ver más información."
-        help_label = tk.Label(help_frame, text=help_text, justify=tk.LEFT, wraplength=400, 
+        help_label = tk.Label(help_frame, text=help_text, justify=tk.LEFT, wraplength=400,
                               font=('Helvetica', 9, 'italic'))
         help_label.pack(pady=5, anchor=tk.W)
 
         # Sección para Grados de rotación
-        rotation_frame = tk.Frame(parent_frame)
-        rotation_frame.pack(fill="x", padx=10, pady=5)
-        
-        rotation_label = tk.Label(rotation_frame, text="Grados de rotación:")
-        rotation_label.grid(row=0, column=0, sticky="w", pady=2)
-        self.tooltips.append(ToolTip(rotation_label, self.parameter_help['grados_rotacion']))
-        
-        rotation_entry = tk.Entry(rotation_frame, textvariable=self.grados_rotacion_var, width=10)
-        rotation_entry.grid(row=0, column=1, padx=5, pady=2)
-        self.tooltips.append(ToolTip(rotation_entry, "Ingrese un valor entre -180 y 180 grados"))
-        
-        # Slider para grados de rotación
-        rotation_slider = tk.Scale(
-            rotation_frame, 
-            from_=self.slider_ranges['grados_rotacion'][0], 
-            to=self.slider_ranges['grados_rotacion'][1],
-            orient=tk.HORIZONTAL,
-            length=200,
-            command=self._on_rotation_slider_change
+        _, rotation_slider = self._create_parameter_row(
+            parent_frame, 
+            'grados_rotacion', 
+            'Grados de rotación:', 
+            self._on_rotation_slider_change
         )
-        rotation_slider.set(float(self.grados_rotacion_var.get()))
-        rotation_slider.grid(row=0, column=2, padx=5, pady=2, sticky="w")
         self.rotation_slider = rotation_slider
-        self.tooltips.append(ToolTip(rotation_slider, "Deslice para ajustar la rotación de la imagen"))
-        
-        # Icono de ayuda para grados de rotación
-        help_icon = self._create_help_button(rotation_frame, self.parameter_help['grados_rotacion'])
-        help_icon.grid(row=0, column=3, padx=5, pady=2)
-        
-        # Validación y actualización para el campo de entrada
-        rotation_entry.bind('<FocusOut>', lambda e: self._validate_and_update_from_entry('grados_rotacion'))
-        rotation_entry.bind('<Return>', lambda e: self._validate_and_update_from_entry('grados_rotacion'))
-        
+
         # Sección para Píxeles por mm
-        pixels_frame = tk.Frame(parent_frame)
-        pixels_frame.pack(fill="x", padx=10, pady=5)
-        
-        pixels_label = tk.Label(pixels_frame, text="Píxeles por mm:")
-        pixels_label.grid(row=0, column=0, sticky="w", pady=2)
-        self.tooltips.append(ToolTip(pixels_label, self.parameter_help['pixels_por_mm']))
-        
-        pixels_entry = tk.Entry(pixels_frame, textvariable=self.pixels_por_mm_var, width=10)
-        pixels_entry.grid(row=0, column=1, padx=5, pady=2)
-        self.tooltips.append(ToolTip(pixels_entry, "Ingrese un valor positivo mayor a 0.1"))
-        
-        # Slider para píxeles por mm
-        pixels_slider = tk.Scale(
-            pixels_frame, 
-            from_=self.slider_ranges['pixels_por_mm'][0], 
-            to=self.slider_ranges['pixels_por_mm'][1],
-            orient=tk.HORIZONTAL,
-            length=200,
-            resolution=0.1,
-            command=self._on_pixels_slider_change
+        _, pixels_slider = self._create_parameter_row(
+            parent_frame, 
+            'pixels_por_mm', 
+            'Píxeles por mm:', 
+            self._on_pixels_slider_change
         )
-        pixels_slider.set(float(self.pixels_por_mm_var.get()))
-        pixels_slider.grid(row=0, column=2, padx=5, pady=2, sticky="w")
         self.pixels_slider = pixels_slider
-        self.tooltips.append(ToolTip(pixels_slider, "Deslice para ajustar la escala de medición"))
-        
-        # Icono de ayuda para píxeles por mm
-        help_icon = self._create_help_button(pixels_frame, self.parameter_help['pixels_por_mm'])
-        help_icon.grid(row=0, column=3, padx=5, pady=2)
-        
-        # Validación y actualización para el campo de entrada
-        pixels_entry.bind('<FocusOut>', lambda e: self._validate_and_update_from_entry('pixels_por_mm'))
-        pixels_entry.bind('<Return>', lambda e: self._validate_and_update_from_entry('pixels_por_mm'))
-        
+
         # Sección para Altura (ajuste vertical)
-        altura_frame = tk.Frame(parent_frame)
-        altura_frame.pack(fill="x", padx=10, pady=5)
-        
-        altura_label = tk.Label(altura_frame, text="Altura (ajuste vertical):")
-        altura_label.grid(row=0, column=0, sticky="w", pady=2)
-        self.tooltips.append(ToolTip(altura_label, self.parameter_help['altura']))
-        
-        altura_entry = tk.Entry(altura_frame, textvariable=self.altura_var, width=10)
-        altura_entry.grid(row=0, column=1, padx=5, pady=2)
-        self.tooltips.append(ToolTip(altura_entry, "Ingrese un valor entre -500 y 500"))
-        
-        # Slider para altura
-        altura_slider = tk.Scale(
-            altura_frame, 
-            from_=self.slider_ranges['altura'][0], 
-            to=self.slider_ranges['altura'][1],
-            orient=tk.HORIZONTAL,
-            length=200,
-            command=self._on_altura_slider_change
+        _, altura_slider = self._create_parameter_row(
+            parent_frame, 
+            'altura', 
+            'Altura (ajuste vertical):', 
+            self._on_altura_slider_change
         )
-        altura_slider.set(float(self.altura_var.get()))
-        altura_slider.grid(row=0, column=2, padx=5, pady=2, sticky="w")
         self.altura_slider = altura_slider
-        self.tooltips.append(ToolTip(altura_slider, "Deslice para ajustar la posición vertical de la línea de referencia"))
-        
-        # Icono de ayuda para altura
-        help_icon = self._create_help_button(altura_frame, self.parameter_help['altura'])
-        help_icon.grid(row=0, column=3, padx=5, pady=2)
-        
-        # Validación y actualización para el campo de entrada
-        altura_entry.bind('<FocusOut>', lambda e: self._validate_and_update_from_entry('altura'))
-        altura_entry.bind('<Return>', lambda e: self._validate_and_update_from_entry('altura'))
-        
+
         # Sección para desplazamiento horizontal
-        horizontal_frame = tk.Frame(parent_frame)
-        horizontal_frame.pack(fill="x", padx=10, pady=5)
-        
-        horizontal_label = tk.Label(horizontal_frame, text="Ajuste horizontal:")
-        horizontal_label.grid(row=0, column=0, sticky="w", pady=2)
-        self.tooltips.append(ToolTip(horizontal_label, self.parameter_help['horizontal']))
-        
-        horizontal_entry = tk.Entry(horizontal_frame, textvariable=self.horizontal_var, width=10)
-        horizontal_entry.grid(row=0, column=1, padx=5, pady=2)
-        self.tooltips.append(ToolTip(horizontal_entry, "Ingrese un valor entre -500 y 500"))
-        
-        # Slider para horizontal
-        horizontal_slider = tk.Scale(
-            horizontal_frame, 
-            from_=self.slider_ranges['horizontal'][0], 
-            to=self.slider_ranges['horizontal'][1],
-            orient=tk.HORIZONTAL,
-            length=200,
-            command=self._on_horizontal_slider_change
+        _, horizontal_slider = self._create_parameter_row(
+            parent_frame, 
+            'horizontal', 
+            'Ajuste horizontal:', 
+            self._on_horizontal_slider_change
         )
-        horizontal_slider.set(float(self.horizontal_var.get()))
-        horizontal_slider.grid(row=0, column=2, padx=5, pady=2, sticky="w")
         self.horizontal_slider = horizontal_slider
-        self.tooltips.append(ToolTip(horizontal_slider, "Deslice para ajustar la posición horizontal de la línea de referencia"))
-        
-        # Icono de ayuda para horizontal
-        help_icon = self._create_help_button(horizontal_frame, self.parameter_help['horizontal'])
-        help_icon.grid(row=0, column=3, padx=5, pady=2)
-        
-        # Validación y actualización para el campo de entrada
-        horizontal_entry.bind('<FocusOut>', lambda e: self._validate_and_update_from_entry('horizontal'))
-        horizontal_entry.bind('<Return>', lambda e: self._validate_and_update_from_entry('horizontal'))
-        
+
         # Frame para botones de acción
         buttons_frame = tk.Frame(parent_frame)
         buttons_frame.pack(fill="x", padx=10, pady=10)
@@ -549,38 +388,104 @@ class GUIView:
         except Exception as e:
             self.notifier.notify_error(f"Error al restaurar valores predeterminados: {str(e)}")
 
+    def _on_slider_change(self, param_name, value):
+        """
+        Método centralizado para manejar cambios en cualquier slider.
+        
+        Args:
+            param_name: Nombre del parámetro asociado al slider
+            value: Nuevo valor del slider
+        """
+        if self.updating_from_entry:
+            return
+            
+        try:
+            self.updating_from_slider = True
+            
+            # Actualizar la variable StringVar correspondiente
+            if param_name == 'grados_rotacion':
+                self.grados_rotacion_var.set(value)
+            elif param_name == 'pixels_por_mm':
+                self.pixels_por_mm_var.set(value)
+            elif param_name == 'altura':
+                self.altura_var.set(value)
+            elif param_name == 'horizontal':
+                self.horizontal_var.set(value)
+                
+            self.updating_from_slider = False
+            
+            # Actualizar el parámetro en el modelo y procesamiento
+            self._update_parameter(param_name, float(value))
+            
+        except Exception as e:
+            self.logger.error(f"Error al actualizar desde slider {param_name}: {e}")
+            self.updating_from_slider = False
+    
     def _on_rotation_slider_change(self, value):
         """Maneja el cambio en el slider de rotación"""
-        if not self.updating_from_entry:
-            self.updating_from_slider = True
-            self.grados_rotacion_var.set(value)
-            self.updating_from_slider = False
-            self._update_parameter('grados_rotacion', float(value))
+        self._on_slider_change('grados_rotacion', value)
             
     def _on_pixels_slider_change(self, value):
         """Maneja el cambio en el slider de píxeles por mm"""
-        if not self.updating_from_entry:
-            self.updating_from_slider = True
-            self.pixels_por_mm_var.set(value)
-            self.updating_from_slider = False
-            self._update_parameter('pixels_por_mm', float(value))
+        self._on_slider_change('pixels_por_mm', value)
             
     def _on_altura_slider_change(self, value):
         """Maneja el cambio en el slider de altura"""
-        if not self.updating_from_entry:
-            self.updating_from_slider = True
-            self.altura_var.set(value)
-            self.updating_from_slider = False
-            self._update_parameter('altura', float(value))
+        self._on_slider_change('altura', value)
             
     def _on_horizontal_slider_change(self, value):
         """Maneja el cambio en el slider de ajuste horizontal"""
-        if not self.updating_from_entry:
-            self.updating_from_slider = True
-            self.horizontal_var.set(value)
-            self.updating_from_slider = False
-            self._update_parameter('horizontal', float(value))
+        self._on_slider_change('horizontal', value)
             
+    def _validate_parameter(self, param_name, value):
+        """
+        Valida un parámetro según sus rangos permitidos.
+        
+        Args:
+            param_name: Nombre del parámetro a validar
+            value: Valor a validar
+            
+        Returns:
+            tuple: (es_válido, mensaje_error)
+        """
+        try:
+            # Convertir a float para validación numérica
+            float_value = float(value)
+            
+            # Validar según el tipo de parámetro y su rango
+            if param_name in self.slider_ranges:
+                min_val, max_val = self.slider_ranges[param_name]
+                
+                if min_val <= float_value <= max_val:
+                    return True, None
+                else:
+                    return False, f"Valor fuera de rango ({min_val} a {max_val})"
+            else:
+                return False, f"Parámetro '{param_name}' no reconocido"
+                
+        except ValueError:
+            return False, "Valor no válido. Debe ser un número."
+    
+    def _update_slider_from_entry(self, param_name, value):
+        """
+        Actualiza el slider correspondiente con el valor de entrada validado.
+        
+        Args:
+            param_name: Nombre del parámetro
+            value: Valor validado a establecer en el slider
+        """
+        try:
+            if param_name == 'grados_rotacion' and hasattr(self, 'rotation_slider'):
+                self.rotation_slider.set(value)
+            elif param_name == 'pixels_por_mm' and hasattr(self, 'pixels_slider'):
+                self.pixels_slider.set(value)
+            elif param_name == 'altura' and hasattr(self, 'altura_slider'):
+                self.altura_slider.set(value)
+            elif param_name == 'horizontal' and hasattr(self, 'horizontal_slider'):
+                self.horizontal_slider.set(value)
+        except Exception as e:
+            self.logger.error(f"Error al actualizar slider {param_name}: {e}")
+    
     def _validate_and_update_from_entry(self, param_name):
         """
         Valida el valor introducido en un campo de entrada y actualiza el slider correspondiente.
@@ -594,60 +499,48 @@ class GUIView:
         try:
             self.updating_from_entry = True
             
+            # Obtener el valor según el parámetro
             if param_name == 'grados_rotacion':
-                value = float(self.grados_rotacion_var.get())
-                min_val, max_val = self.slider_ranges['grados_rotacion']
-                if min_val <= value <= max_val:
-                    self.rotation_slider.set(value)
-                    self._update_parameter('grados_rotacion', value)
-                    # Asegurarse de que los cambios se aplican al procesamiento de video
-                    if self.app:
-                        self.app.update_parameters({'grados_rotacion': value})
-                else:
-                    # Valor fuera de rango, restauramos
-                    self.grados_rotacion_var.set(str(self.rotation_slider.get()))
-                    self.notifier.notify_error(f"Valor fuera de rango ({min_val} a {max_val})")
-                    
+                value = self.grados_rotacion_var.get()
             elif param_name == 'pixels_por_mm':
-                value = float(self.pixels_por_mm_var.get())
-                min_val, max_val = self.slider_ranges['pixels_por_mm']
-                if min_val <= value <= max_val:
-                    self.pixels_slider.set(value)
-                    self._update_parameter('pixels_por_mm', value)
-                    # Asegurarse de que los cambios se aplican al procesamiento de video
-                    if self.app:
-                        self.app.update_parameters({'pixels_por_mm': value})
-                else:
-                    self.pixels_por_mm_var.set(str(self.pixels_slider.get()))
-                    self.notifier.notify_error(f"Valor fuera de rango ({min_val} a {max_val})")
-                    
+                value = self.pixels_por_mm_var.get()
             elif param_name == 'altura':
-                value = float(self.altura_var.get())
-                min_val, max_val = self.slider_ranges['altura']
-                if min_val <= value <= max_val:
-                    self.altura_slider.set(value)
-                    self._update_parameter('altura', value)
-                    # Asegurarse de que los cambios se aplican al procesamiento de video
-                    if self.app:
-                        self.app.update_parameters({'altura': value})
-                else:
-                    self.altura_var.set(str(self.altura_slider.get()))
-                    self.notifier.notify_error(f"Valor fuera de rango ({min_val} a {max_val})")
-                    
+                value = self.altura_var.get()
             elif param_name == 'horizontal':
-                value = float(self.horizontal_var.get())
-                min_val, max_val = self.slider_ranges['horizontal']
-                if min_val <= value <= max_val:
-                    self.horizontal_slider.set(value)
-                    self._update_parameter('horizontal', value)
-                    # Asegurarse de que los cambios se aplican al procesamiento de video
-                    if self.app:
-                        self.app.update_parameters({'horizontal': value})
-                else:
+                value = self.horizontal_var.get()
+            else:
+                self.updating_from_entry = False
+                return
+            
+            # Validar el valor
+            is_valid, error_msg = self._validate_parameter(param_name, value)
+            
+            if is_valid:
+                # Convertir a float para las operaciones
+                float_value = float(value)
+                
+                # Actualizar el slider correspondiente
+                self._update_slider_from_entry(param_name, float_value)
+                self._update_parameter(param_name, float_value)
+                
+                # Asegurarse de que los cambios se aplican al procesamiento de video
+                if self.app:
+                    self.app.update_parameters({param_name: float_value})
+            else:
+                # Restaurar valor anterior y mostrar error
+                if param_name == 'grados_rotacion':
+                    self.grados_rotacion_var.set(str(self.rotation_slider.get()))
+                elif param_name == 'pixels_por_mm':
+                    self.pixels_por_mm_var.set(str(self.pixels_slider.get()))
+                elif param_name == 'altura':
+                    self.altura_var.set(str(self.altura_slider.get()))
+                elif param_name == 'horizontal':
                     self.horizontal_var.set(str(self.horizontal_slider.get()))
-                    self.notifier.notify_error(f"Valor fuera de rango ({min_val} a {max_val})")
-                    
-        except ValueError:
+                
+                self.notifier.notify_error(error_msg)
+                
+        except Exception as e:
+            self.logger.error(f"Error al validar parámetro {param_name}: {e}")
             # Si hay un error de formato, restaurar el valor anterior
             if param_name == 'grados_rotacion':
                 self.grados_rotacion_var.set(str(self.rotation_slider.get()))
@@ -657,8 +550,8 @@ class GUIView:
                 self.altura_var.set(str(self.altura_slider.get()))
             elif param_name == 'horizontal':
                 self.horizontal_var.set(str(self.horizontal_slider.get()))
-                
-            self.notifier.notify_error("Valor no válido. Debe ser un número.")
+            
+            self.notifier.notify_error(f"Error al validar: {str(e)}")
             
         finally:
             self.updating_from_entry = False

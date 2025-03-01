@@ -11,10 +11,11 @@ import threading
 import queue
 import time
 from PIL import Image, ImageTk
-import requests
 import numpy as np
 import cv2
-from src.image_processing import ProcessingController
+from src.controllers.video_processor import VideoProcessor
+from src.capture.video_capture_factory import VideoCaptureFactory
+from src.capture.video_capture_interface import VideoCapture
 from utils.logging.logger_configurator import get_logger
 from src.views.notifier import ConsoleNotifier
 
@@ -44,18 +45,24 @@ class VideoStreamApp:
         self.pixels_por_mm = pixels_por_mm
         self.logger = logger or get_logger()
         self.notifier = notifier or ConsoleNotifier(self.logger)
-        self.controller = ProcessingController(notifier=self.notifier)
+        
+        # Inicializar el procesador de video (separación de responsabilidades)
+        self.video_processor = VideoProcessor(
+            grados_rotacion=self.grados_rotacion,
+            altura=self.altura,
+            horizontal=self.horizontal,
+            pixels_por_mm=self.pixels_por_mm,
+            notifier=self.notifier,
+            logger=self.logger
+        )
+        
         self.frame_queue = queue.Queue(maxsize=10)
         self.running = True
-        self.cap = None
-        self.threads = []  # Lista para mantener referencia a todos los hilos activos
+        self.video_capture = None  # Instancia de VideoCapture
         self.capture_lock = threading.Lock()  # Lock para proteger operaciones de captura
-        self.frames_processed = 0  # Contador de frames procesados
-        self.last_frame_time = time.time()  # Tiempo del último frame procesado
-        self.fps_stats = {'current': 0, 'average': 0, 'total_frames': 0, 'start_time': time.time()}
 
         self.setup_ui()
-        self.start_worker_thread()
+        self.start_video_capture()
 
     def setup_ui(self):
         """
@@ -65,150 +72,68 @@ class VideoStreamApp:
         self.panel.pack(padx=10, pady=10)
         self.root.after(50, self.update_frame_from_queue)
 
-    def start_worker_thread(self):
+    def start_video_capture(self):
         """
-        Crea y lanza el hilo dedicado a la captura y procesamiento de video.
-        Se distingue entre fuentes HTTP y locales.
+        Inicializa y arranca la captura de video usando la fábrica.
         """
         try:
-            if isinstance(self.default_video_url, str) and \
-               self.default_video_url.startswith('http'):
-                capture_thread = threading.Thread(target=self.http_capture_loop, daemon=True)
-                capture_thread.start()
-                self.threads.append(capture_thread)
-            else:
-                with self.capture_lock:
-                    self.cap = cv2.VideoCapture(self.default_video_url)
-                    if not self.cap.isOpened():
-                        self.logger.error("No se pudo abrir el flujo de video.")
-                        return
-                capture_thread = threading.Thread(target=self.video_capture_loop, daemon=True)
-                capture_thread.start()
-                self.threads.append(capture_thread)
-            self.logger.info("Hilo de captura de video iniciado correctamente")
-        except (cv2.error.CvError, ValueError) as e:
-            self.logger.error(f"Error al configurar la fuente de video: {e}")
-        except (threading.ThreadError, RuntimeError) as e:
-            self.logger.error(f"Error al iniciar hilo de captura: {e}")
-        except OSError as e:
-            self.logger.error(f"Error de sistema al acceder al dispositivo de video: {e}")
-
-    def video_capture_loop(self):
-        """
-        Bucle para captura y procesamiento continuo en fuentes de video locales.
-        """
-        while self.running:
-            ret, frame = self.cap.read()
-            if not ret:
-                self.logger.warning("Frame no recibido. Reintentando captura...")
-                time.sleep(0.1)
-                continue
-            self.process_and_enqueue(frame)
-            time.sleep(0.03)
-
-    def http_capture_loop(self):
-        """
-        Bucle para captura y procesamiento de imágenes recibidas vía HTTP.
-        Implementa un backoff progresivo en caso de errores de conexión,
-        para evitar saturar la petición en situaciones de red inestable.
-        """
-        error_count = 0
-        while self.running:
-            try:
-                response = requests.get(self.default_video_url, timeout=5)
-                if response.status_code == 200:
-                    image_bytes = np.asarray(bytearray(response.content), dtype=np.uint8)
-                    frame = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
-                    if frame is not None:
-                        self.process_and_enqueue(frame)
-                        error_count = 0  # Reiniciar el contador tras una conexión exitosa
-                    else:
-                        self.logger.error("No se pudo decodificar la imagen HTTP.")
-                else:
-                    self.logger.error(
-                        f"Fallo al cargar la imagen desde HTTP: Estado {response.status_code}"
-                    )
-                # Espera fija para HTTP tras una petición exitosa o fallida sin excepción
-                time.sleep(2.5)
-            except requests.exceptions.RequestException as e:
-                error_count += 1
-                wait_time = min(2.5 * error_count, 10)
-                self.logger.error(
-                    f"Error en http_capture_loop: {e} (Intento {error_count}). "
-                    f"Esperando {wait_time} s."
+            # Crear la instancia adecuada de captura usando la fábrica
+            with self.capture_lock:
+                self.video_capture = VideoCaptureFactory.create_capture(
+                    source=self.default_video_url,
+                    fps_limit=30,  # Limitar a 30 fps para fuentes locales
+                    logger=self.logger
                 )
-                time.sleep(wait_time)
-            except (ValueError, TypeError) as e:
-                error_count += 1
-                wait_time = min(2.5 * error_count, 10)
-                self.logger.error(
-                    f"Error de datos en http_capture_loop: {e} (Intento {error_count}). "
-                    f"Esperando {wait_time} s."
-                )
-                time.sleep(wait_time)
-            except cv2.error.CvError as e:
-                error_count += 1
-                wait_time = min(2.5 * error_count, 10)
-                self.logger.error(
-                    f"Error de OpenCV en http_capture_loop: {e} (Intento {error_count}). "
-                    f"Esperando {wait_time} s."
-                )
-                time.sleep(wait_time)
-            except (IOError, OSError) as e:
-                error_count += 1
-                wait_time = min(2.5 * error_count, 10)
-                self.logger.error(
-                    f"Error de E/S en http_capture_loop: {e} (Intento {error_count}). "
-                    f"Esperando {wait_time} s."
-                )
-                time.sleep(wait_time)
+                
+                # Establecer callback para procesar frames
+                self.video_capture.set_frame_callback(self.process_and_enqueue)
+                
+                # Iniciar la captura
+                if not self.video_capture.start():
+                    self.logger.error("No se pudo iniciar la captura de video.")
+                    self.notifier.notify_error("No se pudo iniciar la captura de video")
+                    return
+                    
+            self.logger.info("Captura de video iniciada correctamente")
+            self.notifier.notify_info("Captura de video iniciada")
+            
+        except Exception as e:
+            self.logger.error(f"Error al iniciar la captura de video: {e}")
+            self.notifier.notify_error("Error al iniciar la captura de video", e)
 
     def process_and_enqueue(self, frame):
         """
         Procesa el frame y lo coloca en la cola sincronizada.
-        Se vacía la cola previamente para asegurar que solo se muestra el frame más reciente.
+        Este método es llamado desde el hilo de captura.
+        
+        Args:
+            frame: Frame capturado a procesar
         """
         try:
+            if not self.running:
+                return
+                
             monitor_width = self.root.winfo_screenwidth()
             monitor_height = self.root.winfo_screenheight()
-            frame_scaled = self.scale_frame_to_monitor(frame, monitor_width, monitor_height)
+            
+            # Escalar el frame usando el procesador de video
+            frame_scaled = self.video_processor.scale_frame_to_size(frame, monitor_width, monitor_height)
+            
             if frame_scaled is not None:
-                processed_frame = self.controller.process(
-                    frame_scaled,
-                    self.grados_rotacion,
-                    self.altura,
-                    self.horizontal,
-                    self.pixels_por_mm
-                )
-                # Actualizar estadísticas
-                current_time = time.time()
-                self.frames_processed += 1
-                self.fps_stats['total_frames'] += 1
-
-                # Calcular FPS actual (basado en el tiempo entre este frame y el anterior)
-                time_diff = current_time - self.last_frame_time
-                if time_diff > 0:
-                    self.fps_stats['current'] = 1.0 / time_diff
-
-                # Calcular FPS promedio (basado en todos los frames desde el inicio)
-                total_time = current_time - self.fps_stats['start_time']
-                if total_time > 0:
-                    self.fps_stats['average'] = self.fps_stats['total_frames'] / total_time
-
-                self.last_frame_time = current_time
-
-                # Vaciar la cola para descartar frames viejos
-                with self.frame_queue.mutex:
-                    self.frame_queue.queue.clear()
-                self.frame_queue.put(processed_frame)
+                # Usar el procesador de video para procesar el frame
+                processed_frame = self.video_processor.process_frame(frame_scaled)
+                
+                if processed_frame is not None:
+                    # Vaciar la cola para descartar frames viejos
+                    with self.frame_queue.mutex:
+                        self.frame_queue.queue.clear()
+                    self.frame_queue.put(processed_frame)
+                else:
+                    self.logger.error("Error al procesar el frame.")
             else:
                 self.logger.error("No se pudo escalar el frame.")
-                if self.notifier:
-                    self.notifier.notify_error("No se pudo escalar el frame")
-        except (cv2.error.CvError, ValueError, TypeError) as e:
+        except Exception as e:
             self.logger.error(f"Error de procesamiento de imagen: {e}")
-            if self.notifier:
-                self.notifier.notify_error("Error de procesamiento de imagen", e)
 
     def update_frame_from_queue(self):
         """
@@ -229,35 +154,13 @@ class VideoStreamApp:
             self.logger.error(f"Error de interfaz Tkinter: {e}")
         except (ValueError, TypeError) as e:
             self.logger.error(f"Error en conversión de datos de imagen: {e}")
-        except queue.Empty as e:
-            self.logger.warning(f"Cola de frames vacía al intentar actualizar: {e}")
-        except AttributeError as e:
-            self.logger.error(f"Error de atributo al actualizar frame: {e}")
-        except RuntimeError as e:
-            self.logger.error(f"Error de runtime al actualizar UI: {e}")
+        except queue.Empty:
+            pass  # Cola vacía, no es un error crítico
+        except Exception as e:
+            self.logger.error(f"Error al actualizar frame: {e}")
         finally:
             if self.running:
                 self.root.after(50, self.update_frame_from_queue)
-
-    def scale_frame_to_monitor(self, frame, monitor_width, monitor_height):
-        """
-        Ajusta la imagen para que se adapte al tamaño del monitor.
-        """
-        try:
-            image_height, image_width = frame.shape[:2]
-            scale_width = monitor_width / image_width
-            scale_height = monitor_height / image_height
-            scale = min(scale_width, scale_height)
-            new_width = int(image_width * scale)
-            new_height = int(image_height * scale)
-            resized_frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
-            return cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
-        except cv2.error.CvError as e:
-            self.logger.error("Error de OpenCV al escalar la imagen: %s", e)
-            return None
-        except (ValueError, TypeError) as e:
-            self.logger.error("Error al escalar la imagen: %s", e)
-            return None
 
     def stop(self):
         """
@@ -266,15 +169,10 @@ class VideoStreamApp:
         self.logger.info("Deteniendo streaming de video...")
         self.running = False
 
-        # Esperar a que los hilos terminen (con timeout)
-        for thread in self.threads:
-            if thread.is_alive():
-                thread.join(timeout=1.0)
-
-        # Liberar recursos de captura
+        # Detener la captura de video
         with self.capture_lock:
-            if self.cap and hasattr(self.cap, 'release'):
-                self.cap.release()
+            if self.video_capture:
+                self.video_capture.stop()
 
         self.logger.info("Streaming de video detenido correctamente")
 
@@ -298,12 +196,19 @@ class VideoStreamApp:
         Returns:
             dict: Diccionario con estadísticas (frames procesados, FPS actual, FPS promedio)
         """
-        return {
-            'frames_processed': self.frames_processed,
-            'fps_current': round(self.fps_stats['current'], 1),
-            'fps_average': round(self.fps_stats['average'], 1),
-            'processing_time': round(time.time() - self.fps_stats['start_time'], 1)
-        }
+        # Delegar la obtención de estadísticas al procesador de video
+        stats = self.video_processor.get_processing_stats()
+        
+        # Añadir información de la fuente de video si está disponible
+        if self.video_capture and self.video_capture.is_running():
+            source_info = self.video_capture.source_info
+            stats['source_type'] = source_info.get('type', 'unknown')
+            
+            if 'width' in source_info and 'height' in source_info:
+                if source_info['width'] and source_info['height']:
+                    stats['resolution'] = f"{source_info['width']}x{source_info['height']}"
+        
+        return stats
 
     def update_parameters(self, parameters: dict) -> None:
         """
@@ -313,6 +218,7 @@ class VideoStreamApp:
             parameters: Diccionario con los nuevos valores de los parámetros
         """
         try:
+            # Actualizar los parámetros internos
             if 'grados_rotacion' in parameters:
                 self.grados_rotacion = -1 * parameters['grados_rotacion']  # Invertir como en el constructor
             
@@ -324,19 +230,13 @@ class VideoStreamApp:
                 
             if 'pixels_por_mm' in parameters:
                 self.pixels_por_mm = parameters['pixels_por_mm']
-                
-            # Actualizar controlador para que afecte al procesamiento en tiempo real
-            if hasattr(self, 'controller') and self.controller:
-                self.controller.update_parameters(
-                    self.grados_rotacion,
-                    self.altura,
-                    self.horizontal,
-                    self.pixels_por_mm
-                )
-                    
+            
+            # Delegar la actualización de parámetros al procesador de video
+            self.video_processor.update_parameters(parameters)
+            
             self.logger.info(f"Parámetros de procesamiento actualizados: {parameters}")
         except Exception as e:
             self.logger.error(f"Error al actualizar parámetros: {str(e)}")
             # Notificar al usuario a través del notifier si está disponible
-            if hasattr(self, 'notifier') and self.notifier:
+            if self.notifier:
                 self.notifier.notify_error("Error al actualizar parámetros", e)
