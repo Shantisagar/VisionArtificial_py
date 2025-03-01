@@ -7,7 +7,7 @@ Extrae la responsabilidad de gestión de parámetros de GUIView.
 import tkinter as tk
 from tkinter import ttk
 import logging
-from typing import Dict, Callable, Tuple, Any, List, Optional
+from typing import Dict, Callable, Tuple, List, Optional
 
 from src.views.tool_tip import ToolTip
 
@@ -24,22 +24,22 @@ class GUIParameterPanel:
         """
         self.parent_frame = parent_frame
         self.logger = logger
-        
+
         # Callback para cuando se actualicen los parámetros
         self.on_parameters_update: Optional[Callable[[Dict[str, float]], None]] = None
-        
+
         # Campos para los parámetros de configuración
         self.grados_rotacion_var = tk.StringVar()
         self.pixels_por_mm_var = tk.StringVar()
         self.altura_var = tk.StringVar()
         self.horizontal_var = tk.StringVar()
-        
+
         # Referencias a los sliders
         self.rotation_slider = None
         self.pixels_slider = None
         self.altura_slider = None
         self.horizontal_slider = None
-        
+
         # Rangos para los sliders
         self.slider_ranges = {
             'grados_rotacion': (-180, 180),
@@ -47,11 +47,11 @@ class GUIParameterPanel:
             'altura': (-500, 500),
             'horizontal': (-500, 500)
         }
-        
+
         # Variables para controlar si el cambio viene del slider o del campo de texto
         self.updating_from_slider = False
         self.updating_from_entry = False
-        
+
         # Descripciones de ayuda para los parámetros
         self.parameter_help = {
             'grados_rotacion':
@@ -63,10 +63,10 @@ class GUIParameterPanel:
             'horizontal': 
             "Ajusta la posición horizontal de la línea de referencia en la imagen. Valores positivos mueven hacia la derecha, negativos hacia la izquierda."
         }
-        
+
         # Lista para almacenar referencias a tooltips
         self.tooltips: List[ToolTip] = []
-        
+
         # Notificador para mensajes de error/información (se establecerá desde fuera)
         self.notifier = None
 
@@ -103,12 +103,12 @@ class GUIParameterPanel:
         self.pixels_por_mm_var.set(str(pixels_por_mm))
         self.altura_var.set(str(altura))
         self.horizontal_var.set(str(horizontal))
-        
+
         # Crear los controles en la interfaz
         self._create_parameter_inputs()
-        
+
         self.logger.info("Panel de parámetros inicializado correctamente")
-        
+
     def _create_parameter_inputs(self) -> None:
         """Crea los campos de entrada y sliders para los parámetros en el frame especificado."""
         # Frame para instrucciones
@@ -156,7 +156,7 @@ class GUIParameterPanel:
         # Frame para botones de acción
         buttons_frame = tk.Frame(self.parent_frame)
         buttons_frame.pack(fill="x", padx=10, pady=10)
-        
+
         # Botón para actualizar todos los parámetros
         update_button = ttk.Button(
             buttons_frame, 
@@ -166,7 +166,7 @@ class GUIParameterPanel:
         )
         update_button.pack(side=tk.LEFT, padx=5, pady=5, fill="x", expand=True)
         self.tooltips.append(ToolTip(update_button, "Aplica todos los cambios de parámetros al procesamiento de video"))
-        
+
         # Botón para restaurar valores predeterminados
         reset_button = ttk.Button(
             buttons_frame,
@@ -176,11 +176,11 @@ class GUIParameterPanel:
         )
         reset_button.pack(side=tk.LEFT, padx=5, pady=5, fill="x", expand=True)
         self.tooltips.append(ToolTip(reset_button, "Restaura los valores originales de los parámetros"))
-        
+
         # Segundo frame para botones adicionales
         buttons_frame2 = tk.Frame(self.parent_frame)
         buttons_frame2.pack(fill="x", padx=10, pady=(0,10))
-        
+
         # Botón para guardar como valores predeterminados
         save_default_button = ttk.Button(
             buttons_frame2,
@@ -191,7 +191,7 @@ class GUIParameterPanel:
         save_default_button.pack(padx=5, pady=5, fill="x")
         self.tooltips.append(ToolTip(save_default_button, 
                                    "Guarda los valores actuales como nuevos valores predeterminados para futuras sesiones"))
-        
+
     def _create_parameter_row(self, param_name: str, label_text: str, slider_callback: Callable) -> Tuple[tk.Frame, tk.Scale]:
         """
         Crea una fila de controles para un parámetro (label, entry, slider, help button).
@@ -207,21 +207,21 @@ class GUIParameterPanel:
         # Crear frame contenedor
         frame = tk.Frame(self.parent_frame)
         frame.pack(fill="x", padx=10, pady=5)
-        
+
         # Crear etiqueta
         label = tk.Label(frame, text=label_text)
         label.grid(row=0, column=0, sticky="w", pady=2)
         self.tooltips.append(ToolTip(label, self.parameter_help[param_name]))
-        
+
         # Obtener la variable StringVar correspondiente
         var = getattr(self, f"{param_name}_var")
-        
+
         # Crear entry
         entry = tk.Entry(frame, textvariable=var, width=10)
         entry.grid(row=0, column=1, padx=5, pady=2)
         tooltip_text = f"Ingrese un valor entre {self.slider_ranges[param_name][0]} y {self.slider_ranges[param_name][1]}"
         self.tooltips.append(ToolTip(entry, tooltip_text))
-        
+
         # Crear slider
         slider_args = {
             'from_': self.slider_ranges[param_name][0],
@@ -230,29 +230,29 @@ class GUIParameterPanel:
             'length': 200,
             'command': slider_callback
         }
-        
+
         # Añadir parámetro 'resolution' solo si es para pixels_por_mm
         if param_name == 'pixels_por_mm':
             slider_args['resolution'] = 0.1
-            
+
         slider = tk.Scale(frame, **slider_args)
         slider.set(float(var.get()))
         slider.grid(row=0, column=2, padx=5, pady=2, sticky="w")
-        
+
         # Añadir tooltip al slider
         slider_tooltip_text = f"Deslice para ajustar {label_text.lower().rstrip(':')}"
         self.tooltips.append(ToolTip(slider, slider_tooltip_text))
-        
+
         # Crear botón de ayuda
         help_icon = self._create_help_button(frame, self.parameter_help[param_name])
         help_icon.grid(row=0, column=3, padx=5, pady=2)
-        
+
         # Configurar validaciones para el entry
         entry.bind('<FocusOut>', lambda e, pn=param_name: self._validate_and_update_from_entry(pn))
         entry.bind('<Return>', lambda e, pn=param_name: self._validate_and_update_from_entry(pn))
-        
+
         return frame, slider
-    
+
     def _create_help_button(self, parent: tk.Widget, help_text: str) -> tk.Label:
         """
         Crea un botón de ayuda que muestra información al hacer clic.
@@ -266,15 +266,15 @@ class GUIParameterPanel:
         """
         help_button = tk.Label(parent, text="?", font=("Arial", 8, "bold"),
                               width=2, height=1, relief=tk.RAISED, bg="#f0f0f0")
-        
+
         # Crear tooltip para el botón de ayuda
         self.tooltips.append(ToolTip(help_button, "Haga clic para ver información de ayuda"))
-        
+
         # Configurar el comportamiento del botón
         help_button.bind("<Button-1>", lambda e: self._show_help_window(help_text))
-        
+
         return help_button
-        
+
     def _show_help_window(self, help_text: str) -> None:
         """
         Muestra una ventana emergente con información de ayuda.
@@ -284,22 +284,22 @@ class GUIParameterPanel:
         """
         # Encontrar la ventana raíz para que la ventana emergente sea modal
         root = self.parent_frame.winfo_toplevel()
-        
+
         help_window = tk.Toplevel(root)
         help_window.title("Ayuda")
         help_window.geometry("300x150")
         help_window.resizable(False, False)
         help_window.transient(root)
         help_window.grab_set()
-        
+
         # Texto de ayuda
         help_label = tk.Label(help_window, text=help_text, wraplength=280, justify=tk.LEFT, padx=10, pady=10)
         help_label.pack(fill=tk.BOTH, expand=True)
-        
+
         # Botón para cerrar
         close_button = ttk.Button(help_window, text="Cerrar", command=help_window.destroy)
         close_button.pack(pady=10)
-        
+
     def _on_slider_change(self, param_name: str, value: str) -> None:
         """
         Método centralizado para manejar cambios en cualquier slider.
@@ -310,10 +310,10 @@ class GUIParameterPanel:
         """
         if self.updating_from_entry:
             return
-            
+
         try:
             self.updating_from_slider = True
-            
+
             # Actualizar la variable StringVar correspondiente
             if param_name == 'grados_rotacion':
                 self.grados_rotacion_var.set(value)
@@ -323,14 +323,17 @@ class GUIParameterPanel:
                 self.altura_var.set(value)
             elif param_name == 'horizontal':
                 self.horizontal_var.set(value)
-                
+
             self.updating_from_slider = False
-            
+
             # Actualizar el parámetro en el modelo y procesamiento
             self._update_parameter(param_name, float(value))
-            
-        except Exception as e:
-            self.logger.error(f"Error al actualizar desde slider {param_name}: {e}")
+
+        except ValueError as e:
+            self.logger.error(f"Error de valor al actualizar desde slider {param_name}: {e}")
+            self.updating_from_slider = False
+        except TypeError as e:
+            self.logger.error(f"Error de tipo al actualizar desde slider {param_name}: {e}")
             self.updating_from_slider = False
     
     def _on_rotation_slider_change(self, value: str) -> None:
@@ -421,7 +424,7 @@ class GUIParameterPanel:
                 if self.notifier:
                     self.notifier.notify_error(error_msg)
                 
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             self.logger.error(f"Error al validar parámetro {param_name}: {e}")
             # Si hay un error de formato, restaurar el valor anterior
             self._restore_previous_value(param_name)
@@ -465,7 +468,7 @@ class GUIParameterPanel:
                 self.altura_slider.set(value)
             elif param_name == 'horizontal' and hasattr(self, 'horizontal_slider'):
                 self.horizontal_slider.set(value)
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             self.logger.error(f"Error al actualizar slider {param_name}: {e}")
     
     def _update_parameter(self, param_name: str, value: float) -> None:
@@ -518,7 +521,7 @@ class GUIParameterPanel:
             if self.on_parameters_update:
                 self.on_parameters_update({'reset': True})
                 
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             if self.notifier:
                 self.notifier.notify_error(f"Error al restaurar valores predeterminados: {str(e)}")
                 

@@ -14,29 +14,29 @@ def configure_logging():
     """Configura el sistema de logging"""
     log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
     os.makedirs(log_dir, exist_ok=True)
-    
+
     log_file = os.path.join(log_dir, "vision_artificial.log")
-    
+
     logger = logging.getLogger("vision_artificial")
     logger.setLevel(logging.INFO)
-    
+
     # Handler para archivo
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(logging.INFO)
-    
+
     # Handler para consola
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
-    
+
     # Formato
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
-    
+
     # Agregar handlers
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
-    
+
     return logger
 
 def main():
@@ -45,23 +45,23 @@ def main():
         # Configurar logging
         logger = configure_logging()
         logger.info("Iniciando aplicación de Visión Artificial...")
-        
+
         # Crear controlador
         controller = AppController(logger)
-        
+
         # Crear vista y configurarla
         view = GUIView(logger)
-        
+
         # Este es el paso clave: el controlador configura la vista y establece los callbacks
         controller.setup_view(view)
-        
+
         # Ejecutar la aplicación
         controller.run()
-        
+
         logger.info("Aplicación finalizada correctamente")
         return 0
-        
-    except Exception as e:
+
+    except (OSError, RuntimeError) as e:
         if 'logger' in locals():
             logger.exception(f"Error al iniciar la aplicación: {e}")
         else:

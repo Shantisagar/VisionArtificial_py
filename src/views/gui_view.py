@@ -215,3 +215,97 @@ class GUIView:
             self.notifier.notify_info("Parámetros aplicados al procesamiento de video")
         else:
             self.logger.warning("No se pudo actualizar VideoStreamApp - no está inicializado")
+
+    def refresh_parameters(self):
+        """Actualiza los controles con los valores actuales del procesador."""
+        if hasattr(self, 'parameter_panel') and self.parameter_panel:
+            parameters = {
+                'grados_rotacion': self.video_processor.get_rotation(),
+                'pixels_por_mm': self.video_processor.get_pixels_per_mm(),
+                'altura': self.video_processor.get_height_adjustment(),
+                'horizontal': self.video_processor.get_horizontal_adjustment()
+            }
+            self.parameter_panel.update_parameters(parameters)
+
+    def _create_parameter_controls(self):
+        """Crea los controles para ajustar parámetros de procesamiento."""
+        # Frame principal para parámetros de configuración
+        self.parameter_frame = ttk.LabelFrame(self.main_frame, text="Parámetros de configuración")
+        self.parameter_frame.pack(fill="both", expand=False, padx=10, pady=5)
+        
+        # Crear el panel de parámetros y configurarlo
+        self.parameter_panel = GUIParameterPanel(self.parameter_frame, self.logger)
+        self.parameter_panel.set_notifier(self)
+        self.parameter_panel.set_parameters_update_callback(self._on_parameters_update)
+        
+        # Inicializar con los valores actuales del modelo
+        self.parameter_panel.initialize(
+            grados_rotacion=self.video_processor.get_rotation(),
+            pixels_por_mm=self.video_processor.get_pixels_per_mm(),
+            altura=self.video_processor.get_height_adjustment(),
+            horizontal=self.video_processor.get_horizontal_adjustment()
+        )
+
+    def _on_parameters_update(self, parameters: dict):
+        """
+        Callback que se invoca cuando se actualizan los parámetros desde GUIParameterPanel.
+        """
+        try:
+            # Verificar si es una solicitud de reset
+            if 'reset' in parameters:
+                # Restaurar valores predeterminados del procesador
+                default_params = self.video_processor.get_default_parameters()
+                
+                # Actualizar la UI con esos valores
+                if self.parameter_panel:
+                    self.parameter_panel.update_parameters(default_params)
+                
+                # Actualizar el procesador
+                self._update_processor_parameters(default_params)
+                return
+                
+            # Verificar si es una solicitud para guardar como predeterminados
+            if 'save_as_default' in parameters:
+                # Eliminar la flag especial
+                params_to_save = parameters.copy()
+                params_to_save.pop('save_as_default')
+                
+                # Guardar como predeterminados
+                success = self.video_processor.save_as_default_parameters(params_to_save)
+                
+                if success:
+                    self.notify_info("Parámetros guardados como predeterminados")
+                else:
+                    self.notify_error("Error al guardar parámetros predeterminados")
+                
+                return
+            
+            # Actualizar los parámetros en el procesador
+            self._update_processor_parameters(parameters)
+            
+        except Exception as e:
+            self.logger.error(f"Error al actualizar parámetros: {str(e)}")
+            self.notify_error(f"Error al actualizar parámetros: {str(e)}")
+
+    def _update_processor_parameters(self, parameters):
+        """Actualiza los parámetros en el procesador de video."""
+        try:
+            if 'grados_rotacion' in parameters:
+                self.video_processor.set_rotation(parameters['grados_rotacion'])
+            
+            if 'pixels_por_mm' in parameters:  
+                self.video_processor.set_pixels_per_mm(parameters['pixels_por_mm'])
+                
+            if 'altura' in parameters:
+                self.video_processor.set_height_adjustment(parameters['altura'])
+                
+            if 'horizontal' in parameters:
+                self.video_processor.set_horizontal_adjustment(parameters['horizontal'])
+                
+            # Actualizar el procesamiento si el video está activo
+            if self.video_processor.is_processing():
+                self.video_processor.refresh_processing()
+                
+        except Exception as e:
+            self.logger.error(f"Error al actualizar parámetros en el procesador: {str(e)}")
+            raise
