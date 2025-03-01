@@ -18,7 +18,8 @@ from utils.logging.logger_configurator import get_logger
 
 class VideoStreamApp:
     "Esta clase se encarga de la transmisión de video y la actualización de la interfaz gráfica."
-    def __init__(self, root, default_video_url, grados_rotacion, altura, horizontal, pixels_por_mm, logger=None):
+    def __init__(self, root, default_video_url, grados_rotacion, altura, 
+                 horizontal, pixels_por_mm, logger=None):
         """
         Inicializa la aplicación de transmisión de video.
         Se inyectan las dependencias y se separan la captura y actualización de UI.
@@ -164,19 +165,19 @@ class VideoStreamApp:
                 current_time = time.time()
                 self.frames_processed += 1
                 self.fps_stats['total_frames'] += 1
-                
+
                 # Calcular FPS actual (basado en el tiempo entre este frame y el anterior)
                 time_diff = current_time - self.last_frame_time
                 if time_diff > 0:
                     self.fps_stats['current'] = 1.0 / time_diff
-                    
+
                 # Calcular FPS promedio (basado en todos los frames desde el inicio)
                 total_time = current_time - self.fps_stats['start_time']
                 if total_time > 0:
                     self.fps_stats['average'] = self.fps_stats['total_frames'] / total_time
-                    
+
                 self.last_frame_time = current_time
-                
+
                 # Vaciar la cola para descartar frames viejos
                 with self.frame_queue.mutex:
                     self.frame_queue.queue.clear()

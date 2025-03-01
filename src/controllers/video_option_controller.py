@@ -1,16 +1,17 @@
 """
+Path: src/controllers/video_option_controller.py
 Controlador para la selección y configuración de fuentes de video.
-Implementa el patrón Strategy para permitir extensión sin modificar el controlador.
+Simplificado para usar solo la cámara web como fuente.
 """
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Type
+from typing import Dict, Any, Optional, List
 
 
 class VideoSource(ABC):
     """Interfaz para fuentes de video que define el contrato para todas las implementaciones."""
-    
+
     @abstractmethod
     def get_source_url(self, config: Dict[str, Any]) -> Any:
         """
@@ -23,7 +24,7 @@ class VideoSource(ABC):
             URL, path o identificador para la fuente de video
         """
         pass
-    
+
     @abstractmethod
     def get_description(self) -> str:
         """
@@ -33,7 +34,7 @@ class VideoSource(ABC):
             Descripción legible para el usuario
         """
         pass
-    
+
     @abstractmethod
     def get_option_key(self) -> str:
         """
@@ -45,142 +46,63 @@ class VideoSource(ABC):
         pass
 
 
-class TestingSource(VideoSource):
-    """Fuente de video para pruebas usando una imagen estática."""
-    
-    def get_source_url(self, config: Dict[str, Any]) -> str:
-        """Devuelve la ruta a la imagen de prueba."""
-        return config["ubicacion_default"]
-    
-    def get_description(self) -> str:
-        """Devuelve la descripción de la fuente de prueba."""
-        return "Testing (imagen estática)"
-    
-    def get_option_key(self) -> str:
-        """Devuelve la clave de opción para pruebas."""
-        return "0"
-
-
-class RTSPSource(VideoSource):
-    """Fuente de video RTSP para transmisión en tiempo real."""
-    
-    def get_source_url(self, config: Dict[str, Any]) -> str:
-        """Construye y devuelve la URL RTSP."""
-        return f"rtsp://{config['url_default']}:8080/h264.sdp"
-    
-    def get_description(self) -> str:
-        """Devuelve la descripción de la fuente RTSP."""
-        return "RTSP (cámara IP)"
-    
-    def get_option_key(self) -> str:
-        """Devuelve la clave de opción para RTSP."""
-        return "1"
-
-
-class HTTPSource(VideoSource):
-    """Fuente de video HTTP para captura de imágenes."""
-    
-    def get_source_url(self, config: Dict[str, Any]) -> str:
-        """Construye y devuelve la URL HTTP."""
-        return f"http://{config['url_default']}:8080/photo.jpg"
-    
-    def get_description(self) -> str:
-        """Devuelve la descripción de la fuente HTTP."""
-        return "HTTP (cámara IP)"
-    
-    def get_option_key(self) -> str:
-        """Devuelve la clave de opción para HTTP."""
-        return "2"
-
-
 class WebcamSource(VideoSource):
     """Fuente de video para cámara web local."""
-    
+
     def get_source_url(self, config: Dict[str, Any]) -> int:
         """Devuelve el índice de la cámara web."""
         return 0  # Índice para cámara web por defecto
-    
+
     def get_description(self) -> str:
         """Devuelve la descripción de la fuente de cámara web."""
         return "Cámara web"
-    
+
     def get_option_key(self) -> str:
         """Devuelve la clave de opción para cámara web."""
-        return "3"
+        return "1"  # Cambiado de "3" a "1" para ser la opción principal
 
 
 class VideoOptionController:
     """
-    Controlador para la selección de fuentes de video.
-    Permite agregar nuevas fuentes sin modificar el código existente.
+    Controlador simplificado para la selección de fuentes de video.
+    Ahora solo trabaja con la fuente WebcamSource.
     """
-    
+
     def __init__(self, logger: Optional[logging.Logger] = None):
         """
-        Inicializa el controlador con las fuentes disponibles.
+        Inicializa el controlador con la fuente de cámara web.
         
         Args:
             logger: Logger para registrar eventos
         """
         self.logger = logger
-        self._sources: Dict[str, VideoSource] = {}
+        self._source = WebcamSource()
         
-        # Registrar las fuentes por defecto
-        self.register_source(TestingSource())
-        self.register_source(RTSPSource())
-        self.register_source(HTTPSource())
-        self.register_source(WebcamSource())
-    
-    def register_source(self, source: VideoSource) -> None:
-        """
-        Registra una nueva fuente de video en el controlador.
-        
-        Args:
-            source: Implementación de VideoSource a registrar
-        """
-        key = source.get_option_key()
-        self._sources[key] = source
         if self.logger:
-            self.logger.debug(f"Registrada fuente de video: {source.get_description()}")
-    
-    def get_available_sources(self) -> List[VideoSource]:
-        """
-        Obtiene una lista de todas las fuentes de video disponibles.
-        
-        Returns:
-            Lista de fuentes de video registradas
-        """
-        return list(self._sources.values())
-    
+            self.logger.debug(f"Inicializado controlador de video con fuente: {self._source.get_description()}")
+
     def get_menu_options(self) -> List[str]:
         """
         Genera las opciones de menú para mostrar al usuario.
         
         Returns:
-            Lista de strings con las opciones formateadas
+            Lista con la opción de cámara web
         """
-        options = []
-        for source in self._sources.values():
-            options.append(f"{source.get_option_key()} - {source.get_description()}")
-        return options
-    
-    def get_source_url(self, option_key: str, config: Dict[str, Any]) -> Optional[Any]:
+        return [f"{self._source.get_option_key()} - {self._source.get_description()}"]
+
+    def get_source_url(self, option_key: str, config: Dict[str, Any]) -> Any:
         """
-        Obtiene la URL de la fuente de video seleccionada.
+        Obtiene la URL de la cámara web. Ignora el parámetro option_key ya que
+        solo hay una fuente disponible.
         
         Args:
-            option_key: Clave de la opción seleccionada
+            option_key: Ignorado, se mantiene por compatibilidad con interfaz existente
             config: Configuración necesaria para construir la URL
             
         Returns:
-            URL o identificador de la fuente, o None si la opción no existe
+            Índice de la cámara web (0)
         """
-        if option_key in self._sources:
-            source = self._sources[option_key]
-            if self.logger:
-                self.logger.info(f"Seleccionada fuente de video: {source.get_description()}")
-            return source.get_source_url(config)
-        
         if self.logger:
-            self.logger.error(f"Opción de video no válida: {option_key}")
-        return None
+            self.logger.info(f"Usando fuente de video: {self._source.get_description()}")
+        
+        return self._source.get_source_url(config)

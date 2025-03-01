@@ -39,13 +39,13 @@ class GUIView:
         try:
             self.root = tk.Tk()
             self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-            
+
             # Crear frame para el video
             video_frame = tk.Frame(self.root)
             video_frame.pack(padx=10, pady=10)
-            
+
             # Crear etiqueta para estadísticas
-            self.stats_label = tk.Label(self.root, text="Iniciando procesamiento...", 
+            self.stats_label = tk.Label(self.root, text="Iniciando procesamiento...",
                                        font=('Helvetica', 10))
             self.stats_label.pack(padx=5, pady=5)
 
@@ -58,10 +58,10 @@ class GUIView:
                 pixels_por_mm,
                 self.logger
             )
-            
+
             # Iniciar actualización periódica de estadísticas
             self.update_stats()
-            
+
             self.logger.info("Interfaz gráfica inicializada correctamente.")
         except Exception as e:
             self.logger.error(f"Error al inicializar la interfaz gráfica: {e}")
@@ -109,7 +109,7 @@ class GUIView:
                 self.stats_label.config(text=stats_text)
             except Exception as e:
                 self.logger.error(f"Error al actualizar estadísticas: {e}")
-        
+
         # Programar próxima actualización si aún está en ejecución
         if self.is_running:
             self.root.after(self.update_interval, self.update_stats)

@@ -33,28 +33,31 @@ class UserInputService:
 
     def procesar_opcion_video(self, opcion: str, config: Dict[str, Any]) -> Any:
         """
-        Procesa la opción de video seleccionada por el usuario utilizando el controlador.
+        Procesa la opción de video para la cámara web.
+        El parámetro opcion se mantiene por compatibilidad, pero solo se usa la cámara web.
         
         Args:
-            opcion: Opción seleccionada por el usuario
+            opcion: Ignorado (mantenido por compatibilidad)
             config: Diccionario con la configuración
             
         Returns:
-            URL o ruta de la imagen seleccionada
+            Índice de la cámara web (0)
         """
         try:
-            # Delegamos la responsabilidad al controlador especializado
-            return self.video_controller.get_source_url(opcion, config)
+            # Siempre usamos la cámara web como fuente única de video
+            self.logger.info("Configurando cámara web como fuente de video")
+            return self.video_controller.get_source_url("1", config)
         except Exception as e:
-            self.logger.error(f"Error al procesar la opción de video: {e}")
+            self.logger.error(f"Error al inicializar la cámara web: {e}")
             raise
 
     def get_video_menu_options(self) -> list[str]:
         """
-        Obtiene las opciones de menú para las fuentes de video.
+        Obtiene la opción de menú para la cámara web.
+        Método mantenido por compatibilidad.
         
         Returns:
-            Lista de opciones formateadas para mostrar al usuario
+            Lista con la única opción disponible (cámara web)
         """
         return self.video_controller.get_menu_options()
 
@@ -77,7 +80,10 @@ class UserInputService:
             return False
 
         if grados < self.GRADOS_ROTACION_MIN or grados > self.GRADOS_ROTACION_MAX:
-            self.logger.error(f"Grados de rotación fuera de rango ({self.GRADOS_ROTACION_MIN} a {self.GRADOS_ROTACION_MAX})")
+            self.logger.error(
+                f"Grados de rotación fuera de rango "
+                f"({self.GRADOS_ROTACION_MIN} a {self.GRADOS_ROTACION_MAX})"
+            )
             return False
 
         return True
@@ -150,7 +156,10 @@ class UserInputService:
             return False
 
         if horizontal < self.HORIZONTAL_MIN or horizontal > self.HORIZONTAL_MAX:
-            self.logger.error(f"Desplazamiento horizontal fuera de rango ({self.HORIZONTAL_MIN} a {self.HORIZONTAL_MAX})")
+            self.logger.error(
+                f"Desplazamiento horizontal fuera de rango "
+                f"({self.HORIZONTAL_MIN} a {self.HORIZONTAL_MAX})"
+            )
             return False
 
         return True
@@ -195,11 +204,13 @@ class UserInputService:
             # relaciones entre múltiples parámetros
 
             return True
-        except Exception as e:
+        except (KeyError, TypeError, ValueError) as e:
             self.logger.error(f"Error al validar parámetros: {e}")
             return False
 
-    def convertir_a_tupla_parametros(self, parametros: Dict[str, float]) -> Tuple[float, float, float, float]:
+    def convertir_a_tupla_parametros(
+        self, parametros: Dict[str, float]
+    ) -> Tuple[float, float, float, float]:
         """
         Convierte un diccionario de parámetros a una tupla ordenada.
         

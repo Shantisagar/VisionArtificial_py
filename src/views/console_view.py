@@ -4,11 +4,11 @@ Implementa la capa de presentación del patrón MVC.
 """
 
 import logging
-from typing import Dict, Any, Tuple, Optional, List
+from typing import Dict, Any, Optional, List
 
 class ConsoleView:
     """Clase responsable de la interacción con el usuario vía consola."""
-    
+
     def __init__(self, logger: logging.Logger):
         """
         Inicializa la vista de consola.
@@ -17,37 +17,22 @@ class ConsoleView:
             logger: Logger configurado para registrar eventos
         """
         self.logger = logger
-    
+
     def mostrar_menu_fuente_video(self, options: Optional[List[str]] = None) -> str:
         """
-        Muestra el menú de opciones de fuente de video y captura la elección del usuario.
+        Informa al usuario que se utilizará la cámara web como fuente de video.
+        El parámetro options se mantiene por compatibilidad, pero ya no se utiliza.
         
         Args:
-            options: Lista de opciones a mostrar (opcional)
+            options: Lista de opciones (ignorado, mantenido por compatibilidad)
             
         Returns:
-            La opción seleccionada por el usuario
+            Siempre devuelve "1" (opción para cámara web)
         """
-        menu_text = "Seleccione una opción:\n"
-        
-        # Si no se proporcionan opciones, usar las predeterminadas
-        if options is None:
-            options = [
-                "0 - Testing",
-                "1 - RTSP",
-                "2 - HTTP",
-                "3 - Cámara web"
-            ]
-        
-        # Construir el menú
-        for option in options:
-            menu_text += f"{option}\n"
-        
-        menu_text += "Opción: "
-        
-        # Solicitar y retornar la opción
-        return input(menu_text) or "3"  # Por defecto, cámara web
-    
+        print("Se utilizará la cámara web como fuente de video.")
+        self.logger.info("Seleccionada automáticamente la opción de cámara web")
+        return "1"  # Devuelve directamente la opción de cámara web
+
     def solicitar_parametros_usuario(self, config: Dict[str, Any]) -> Dict[str, float]:
         """
         Solicita y recoge todos los parámetros del usuario vía consola.
@@ -63,7 +48,7 @@ class ConsoleView:
             pixels_por_mm = self.solicitar_pixels_por_mm(config["pixels_por_mm_default"])
             altura = self.solicitar_altura(config["altura_default"])
             horizontal = self.solicitar_horizontal(config["horizontal_default"])
-            
+
             return {
                 'grados_rotacion': grados_rotacion,
                 'pixels_por_mm': pixels_por_mm,
@@ -73,7 +58,7 @@ class ConsoleView:
         except ValueError as e:
             self.mostrar_error(f"Error al procesar un valor: {e}")
             raise
-    
+
     def solicitar_grados_rotacion(self, valor_default: float) -> float:
         """
         Solicita los grados de rotación al usuario.
@@ -92,7 +77,7 @@ class ConsoleView:
             return float(valor)
         except ValueError:
             raise ValueError("El valor de grados de rotación debe ser un número.")
-    
+
     def solicitar_pixels_por_mm(self, valor_default: float) -> float:
         """
         Solicita los píxeles por milímetro al usuario.
@@ -111,7 +96,7 @@ class ConsoleView:
             return float(valor)
         except ValueError:
             raise ValueError("El valor de píxeles por mm debe ser un número positivo.")
-    
+
     def solicitar_altura(self, valor_default: float) -> float:
         """
         Solicita el valor de altura para corrección del eje vertical.
@@ -130,7 +115,7 @@ class ConsoleView:
             return float(valor)
         except ValueError:
             raise ValueError("El valor de altura debe ser un número.")
-    
+
     def solicitar_horizontal(self, valor_default: float) -> float:
         """
         Solicita el desplazamiento horizontal al usuario.
@@ -149,7 +134,7 @@ class ConsoleView:
             return float(valor)
         except ValueError:
             raise ValueError("El valor de desplazamiento horizontal debe ser un número.")
-    
+
     def mostrar_error(self, mensaje: str) -> None:
         """
         Muestra un mensaje de error al usuario.
@@ -159,7 +144,7 @@ class ConsoleView:
         """
         print(f"ERROR: {mensaje}")
         self.logger.error(mensaje)
-    
+
     def mostrar_info(self, mensaje: str) -> None:
         """
         Muestra un mensaje informativo al usuario.
