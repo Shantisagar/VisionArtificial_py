@@ -19,12 +19,22 @@ class ToolTip:
         self.widget.bind("<Leave>", self.leave)
         self.widget.bind("<ButtonPress>", self.leave)
 
-    def enter(self, event=None):
-        " muestra el tooltip "
+    def enter(self, _=None):
+        """
+        Muestra el tooltip
+        
+        Args:
+            _: Parámetro de evento que recibe del binding (no utilizado)
+        """
         self.schedule()
 
-    def leave(self, event=None):
-        " oculta el tooltip "
+    def leave(self, _=None):
+        """
+        Oculta el tooltip
+        
+        Args:
+            _: Parámetro de evento que recibe del binding (no utilizado)
+        """
         self.unschedule()
         self.hidetip()
 
