@@ -4,46 +4,17 @@ Punto de entrada principal de la aplicación
 Configura la aplicación e inicia la interfaz gráfica
 """
 
-import logging
 import sys
 import os
 from src.views.gui_view import GUIView
 from src.controllers.app_controller import AppController
-
-def configure_logging():
-    """Configura el sistema de logging"""
-    log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
-    os.makedirs(log_dir, exist_ok=True)
-
-    log_file = os.path.join(log_dir, "vision_artificial.log")
-
-    logger = logging.getLogger("vision_artificial")
-    logger.setLevel(logging.INFO)
-
-    # Handler para archivo
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.INFO)
-
-    # Handler para consola
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
-
-    # Formato
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-
-    # Agregar handlers
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-
-    return logger
+from utils.logging.dependency_injection import get_logger
 
 def main():
     """Función principal que inicia la aplicación"""
     try:
-        # Configurar logging
-        logger = configure_logging()
+        # Obtener logger centralizado
+        logger = get_logger()
         logger.info("Iniciando aplicación de Visión Artificial...")
 
         # Crear controlador
@@ -62,8 +33,14 @@ def main():
         return 0
 
     except (OSError, RuntimeError) as e:
-        if 'logger' in locals():
+        # Intentar usar el logger si está disponible
+        try:
+            logger = get_logger()
             logger.exception(f"Error al iniciar la aplicación: {e}")
-        else:
+        except:
+            # Fallback a print si no se pudo obtener el logger
             print(f"Error crítico: {e}")
         return 1
+
+if __name__ == "__main__":
+    sys.exit(main())

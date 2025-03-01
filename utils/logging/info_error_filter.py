@@ -1,16 +1,25 @@
 """
-Path: app/logs/info_error_filter.py
-Filter module for allowing only INFO and ERROR logs.
+Path: utils/logging/info_error_filter.py
+Filtro para permitir registros INFO y ERROR, filtrando otros niveles.
 """
 
 import logging
 
 class InfoErrorFilter(logging.Filter):
-    """Permite solo registros con nivel INFO o ERROR."""
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        return record.levelno in (logging.INFO, logging.ERROR)
-
-    def another_method(self):
-        """Another public method to satisfy pylint."""
-        print("Another method")
+    """
+    Filtro que permite solo registros con nivel INFO y ERROR.
+    Útil para separar logs informativos y errores críticos.
+    """
+    
+    def filter(self, record):
+        """
+        Filtra registros basados en su nivel.
+        
+        Args:
+            record: Registro de log a evaluar
+            
+        Returns:
+            True si el registro debe ser incluido, False en caso contrario
+        """
+        # Permitir INFO (20) y ERROR (40)
+        return record.levelno == logging.INFO or record.levelno == logging.ERROR

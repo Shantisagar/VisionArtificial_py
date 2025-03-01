@@ -10,24 +10,23 @@ import logging.config
 import logging.handlers
 import os
 from typing import Optional, List, Any, Dict, Union
-
-# Singleton para acceso global al logger
-_APP_LOGGER: Optional[logging.Logger] = None
-
+from utils.logging.logger_factory import LoggerFactory
 
 class LoggerConfigurator:
     """Configurador de logging para la aplicación."""
 
-    def __init__(self, log_path: str = "logs", log_level: int = logging.INFO):
+    def __init__(self, log_path: str = "logs", log_level: int = logging.INFO, logger_name: str = "vision_artificial"):
         """
         Inicializa el configurador de logging.
         
         Args:
             log_path: Ruta donde se almacenarán los logs
             log_level: Nivel de logging predeterminado
+            logger_name: Nombre del logger principal
         """
         self.log_path = log_path
         self.log_level = log_level
+        self.logger_name = logger_name
         self.filters = []
 
         # Crear el directorio de logs si no existe
@@ -65,7 +64,7 @@ class LoggerConfigurator:
             # Ajustar rutas de archivos si es necesario
             if 'handlers' in config:
                 for handler_name, handler_config in config['handlers'].items():
-                    if handler_config.get('class') == 'logging.FileHandler' and 'filename' in handler_config:
+                    if 'filename' in handler_config:
                         # Asegurar que el directorio exista
                         log_dir = os.path.dirname(handler_config['filename'])
                         if log_dir:
@@ -75,10 +74,10 @@ class LoggerConfigurator:
             logging.config.dictConfig(config)
             
             # Obtener logger configurado
-            logger = logging.getLogger('vision_artificial')
+            logger = logging.getLogger(self.logger_name)
             
-            # Guardar referencia global
-            _set_app_logger(logger)
+            # Registrar en LoggerFactory para acceso global
+            LoggerFactory.set_default_logger(logger)
             
             return logger
             
@@ -98,11 +97,13 @@ class LoggerConfigurator:
             Logger configurado
         """
         # Crear logger
-        logger = logging.getLogger('vision_artificial')
+        logger = logging.getLogger(self.logger_name)
         logger.setLevel(self.log_level)
 
         # Evitar duplicación de handlers
         if logger.handlers:
+            # Registrar en LoggerFactory para acceso global
+            LoggerFactory.set_default_logger(logger)
             return logger
 
         # Configurar handler para consola
@@ -116,9 +117,17 @@ class LoggerConfigurator:
             backupCount=5
         )
         file_handler.setLevel(self.log_level)
+        
+        # Configurar un handler específico para errores
+        error_file = logging.handlers.RotatingFileHandler(
+            os.path.join(self.log_path, 'error.log'),
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5
+        )
+        error_file.setLevel(logging.ERROR)
 
         # Aplicar filtros si se proporcionan
-        all_filters = self.filters
+        all_filters = list(self.filters)  # Crear una copia
         if filters:
             all_filters.extend(filters)
 
@@ -132,37 +141,28 @@ class LoggerConfigurator:
         )
         console.setFormatter(formatter)
         file_handler.setFormatter(formatter)
+        error_file.setFormatter(formatter)
 
         # Agregar handlers
         logger.addHandler(console)
         logger.addHandler(file_handler)
+        logger.addHandler(error_file)
 
-        # Guardar referencia global sin usar global statement
-        # Use a class-level approach instead
-        _set_app_logger(logger)
+        # Registrar en LoggerFactory para acceso global
+        LoggerFactory.set_default_logger(logger)
 
         return logger
 
 
-def _set_app_logger(logger: logging.Logger) -> None:
+def get_logger(name: str = "vision_artificial") -> logging.Logger:
     """
-    Sets the application logger without using global statement.
+    Retorna un logger configurado.
+    Wrapper simple para usar LoggerFactory.
     
     Args:
-        logger: Logger to set
-    """
-    # Using globals() dictionary to avoid global statement
-    globals()['_APP_LOGGER'] = logger
-
-
-def get_logger() -> logging.Logger:
-    """
-    Retorna el logger global configurado.
-    Si no está configurado, devuelve un logger básico.
-    
+        name: Nombre del logger
+        
     Returns:
         Logger configurado
     """
-    if _APP_LOGGER is None:
-        return logging.getLogger('vision_artificial')
-    return _APP_LOGGER
+    return LoggerFactory.get_logger(name)
