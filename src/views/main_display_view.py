@@ -11,6 +11,7 @@ import logging
 from src.video_stream import VideoStreamApp
 from src.views.gui_notifier import GUINotifier
 from src.views.common_gui import create_main_window
+from src.views.interface_view_helpers import get_centered_geometry  # nuevo import
 
 class MainDisplayView:
     """Clase responsable de la gestión de la ventana principal y visualización de video."""
@@ -69,14 +70,8 @@ class MainDisplayView:
             if self.parent is None:
                 self.root = create_main_window(self.on_closing)
 
-                # Crear una ventana de tamaño adecuado
-                window_width = 1000
-                window_height = 800
-                screen_width = self.root.winfo_screenwidth()
-                screen_height = self.root.winfo_screenheight()
-                x_position = (screen_width - window_width) // 2
-                y_position = (screen_height - window_height) // 2
-                self.root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+                # Usar helper para centrar la ventana
+                self.root.geometry(get_centered_geometry(self.root, 1000, 800))
 
                 self.main_frame = tk.Frame(self.root)
                 self.main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)

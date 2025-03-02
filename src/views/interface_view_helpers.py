@@ -1,4 +1,5 @@
 """
+Path: src/views/interface_view_helpers.py
 Helper functions for common UI operations.
 """
 
@@ -18,3 +19,8 @@ def get_slider_ranges():
         'altura': (-500, 500),
         'horizontal': (-500, 500)
     }
+
+def create_color_selector(parent, variable, options=("Blanco", "Marrón")):
+    """Crea y retorna un OptionMenu para la selección del color de papel."""
+    import tkinter as tk
+    return tk.OptionMenu(parent, variable, *options)

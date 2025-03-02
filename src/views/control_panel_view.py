@@ -11,6 +11,7 @@ import logging
 from typing import Dict, Callable
 from src.views.gui_parameter_panel import GUIParameterPanel
 from src.views.gui_notifier import GUINotifier
+from src.views.interface_view_helpers import create_color_selector  # nuevo import
 
 class ControlPanelView:
     """Clase responsable de la gestión del panel de control de la aplicación."""
@@ -118,14 +119,9 @@ class ControlPanelView:
             tk.Label(self.control_frame, text="Zoom").pack()
             self.zoom_scale = None
 
-            # Selector de color de papel
+            # Selector de color de papel usando helper
             tk.Label(self.control_frame, text="Color de Papel").pack()
-            self.paper_color_menu = tk.OptionMenu(
-                self.control_frame,
-                self.paper_color_var,
-                "Blanco", 
-                "Marrón"
-            )
+            self.paper_color_menu = create_color_selector(self.control_frame, self.paper_color_var)
             self.paper_color_menu.pack()
 
             self.apply_button = tk.Button(
@@ -133,7 +129,6 @@ class ControlPanelView:
                 text="Aplicar Cambios",
                 command=self.apply_changes
             )
-            self.apply_button.pack()
             self.apply_button.pack()
 
             # Crear etiqueta para estadísticas

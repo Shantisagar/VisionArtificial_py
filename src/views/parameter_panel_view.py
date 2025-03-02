@@ -1,5 +1,5 @@
 """
-Path: src/views/gui_parameter_panel_view.py
+Path: src/views/parameter_panel_view.py
 Vista para el panel de parámetros de configuración en la interfaz gráfica.
 Se encarga exclusivamente de la creación y gestión de componentes visuales.
 """

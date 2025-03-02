@@ -12,6 +12,7 @@ from typing import Dict, Callable
 from src.views.gui_notifier import GUINotifier
 from src.views.main_display_view import MainDisplayView
 from src.views.control_panel_view import ControlPanelView
+from src.views.interface_view_helpers import get_centered_geometry
 
 class GUIView:
     """Clase responsable de la coordinación de componentes de la interfaz gráfica."""
@@ -68,14 +69,9 @@ class GUIView:
             self.root.title("Control de Visión Artificial")
             self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-            # Crear una ventana de tamaño adecuado
-            window_width = 1000
-            window_height = 800
-            screen_width = self.root.winfo_screenwidth()
-            screen_height = self.root.winfo_screenheight()
-            x_position = (screen_width - window_width) // 2
-            y_position = (screen_height - window_height) // 2
-            self.root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+            # Usar helper para calcular la geometría centrada
+            geometry = get_centered_geometry(self.root, 1000, 800)
+            self.root.geometry(geometry)
 
             # Crear frame principal con dos columnas
             main_frame = tk.Frame(self.root)

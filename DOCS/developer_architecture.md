@@ -49,7 +49,7 @@ src/
         control_panel_view.py                     6.22kB - 116 líneas de código
         gui_notifier.py                           7.17kB - 133 líneas de código
         gui_parameter_panel.py                    4.84kB - 094 líneas de código
-        gui_parameter_panel_view.py               10.90kB - 198 líneas de código
+        parameter_panel_view.py               10.90kB - 198 líneas de código
         gui_view.py                               7.49kB - 129 líneas de código
         main_display_view.py                      6.25kB - 134 líneas de código
         notifier.py                               5.70kB - 129 líneas de código
@@ -96,7 +96,7 @@ src/
   Consulta app_controller.py.
 
 - **gui_parameter_panel_controller.py**  
-  Controlador específico para la gestión de parámetros en la interfaz; interactúa con el `gui_parameter_panel_view.py`.  
+  Controlador específico para la gestión de parámetros en la interfaz; interactúa con el `parameter_panel_view.py`.  
   Consulta gui_parameter_panel_controller.py.
 
 - **video_processor.py**  
@@ -112,9 +112,9 @@ src/
   Muestra los controles de configuración y estadísticas (como FPS y posiblemente futuros indicadores de rendimiento).  
   Consulta control_panel_view.py.
 
-- **gui_parameter_panel.py y gui_parameter_panel_view.py**  
+- **gui_parameter_panel.py y parameter_panel_view.py**  
   Manejan la visualización y edición de parámetros (por ejemplo, `altura`, `grados_rotacion`, etc.) en la UI.  
-  Consulta gui_parameter_panel.py y gui_parameter_panel_view.py.
+  Consulta gui_parameter_panel.py y parameter_panel_view.py.
 
 - **main_display_view.py**  
   Se encarga de mostrar el video procesado y aplicar las transformaciones en tiempo real.  

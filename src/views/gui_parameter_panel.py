@@ -7,7 +7,7 @@ import tkinter as tk
 import logging
 from typing import Dict, Callable, Optional, Any
 
-from src.views.gui_parameter_panel_view import GUIParameterPanelView
+from src.views.parameter_panel_view import GUIParameterPanelView
 from src.controllers.gui_parameter_panel_controller import GUIParameterPanelController
 
 

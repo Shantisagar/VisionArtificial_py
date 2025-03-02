@@ -1,61 +1,148 @@
-
-## Áreas para Mejoras Identificadas
-
-### Función "Ajustar Altura" en el GUI
-
-- **Contexto:**  
-  Se ha identificado que la funcionalidad de ajustar la altura del botón en la interfaz (`"ajustar altura"`) no se comporta como se espera.  
-- **Posible Ubicación:**  
-  Revisa la implementación en `gui_parameter_panel_view.py` y el manejo del parámetro `altura` dentro de las variables asociadas (`altura_var`).  
-- **Acción:**  
-  Verificar callbacks y lógica de actualización en la interacción con `gui_parameter_panel_controller.py`.
-
-### Botones [ - ] y [ + ] al lado de la barra horizontal
-
-- **Contexto:**  
-  Se requiere agregar botones para incrementar o decrementar el parámetro seleccionado en 1 unidad.  
-- **Posible Ubicación:**  
-  La gestión de la disposición de controles se realiza en `parameter_panel_layout.py`, mientras que la creación de cada fila de parámetro se define en `parameter_row_factory.py`.  
-- **Acción:**  
-  Investigar la generación de controles en estos archivos para implementar o modificar los botones de decremento ([ - ]) y incremento ([ + ]).
-
-### Visualización de FPS y Métricas de CPU
-
-- **Visualización de FPS:**  
-  - **Contexto:** Se desea mostrar los FPS actuales en la interfaz.  
-  - **Posible Ubicación:** La vista principal del video en `main_display_view.py` o incluso dentro del `control_panel_view.py` donde se muestran estadísticas.  
-  - **Acción:** Agregar una función para calcular y visualizar los FPS.
-
-- **Rendimiento de CPU (con openhardwaremonitor-v0.9.6):**  
-  - **Contexto:** Se planea integrar la monitorización de la CPU usando la herramienta `openhardwaremonitor-v0.9.6`.  
-  - **Posible Ubicación:** Dado que actualmente no se muestra, puedes crear una nueva función o módulo que reciba la información de rendimiento y actualice la interfaz en `control_panel_view.py`.  
-  - **Acción:** Determinar la lógica de conexión con OpenHardwareMonitor y ubicar el panel de estadísticas donde se mostrará esta información.
-
-### Incorporar una barra horizontal de "zoom"
-
-- **Contexto:**  
-  Se requiere agregar una barra horizontal para ajustar el nivel de zoom en la visualización del video.
-- **Posible Ubicación:**  
-  La barra de zoom debe ubicarse en el panel de control, posiblemente debajo de los controles de parámetros.
-- **Acción:**  
-  Investigar la implementación de la barra de zoom en `control_panel_view.py` y `main_display_view.py`. Asegurarse de que el valor de zoom se aplique correctamente a la visualización del video.
-
-### Selector de color de papel
-
-- **Contexto:**  
-  Se necesita un selector para elegir entre diferentes colores de papel (Blanco, Marrón). Dependiendo del color seleccionado, se aplicará un filtro de contraste específico.
-- **Posible Ubicación:**  
-  El selector de color de papel debe ubicarse en el panel de control, junto a otros controles de parámetros.
-- **Acción:**  
-  Implementar el selector en `control_panel_view.py` y `gui_parameter_panel_view.py`. Definir los filtros de contraste en `video_processor.py` para aplicar los cambios en la visualización del video según el color de papel seleccionado.
-
-### Maximizar la ventana de la GUI después de 2 segundos
-
-- **Contexto:**  
-  Se requiere que la ventana de la GUI se maximice automáticamente 2 segundos después de inicializarla.
-- **Posible Ubicación:**  
-  La lógica para maximizar la ventana debe implementarse en `gui_view.py`.
-- **Acción:**  
-  Programar la maximización de la ventana utilizando `self.root.after(2000, self.maximizar_ventana)` en el método `inicializar_ui` de `gui_view.py`.
+A continuación se detalla una lista de tareas (To Do List) con subtareas específicas para dividir progresivamente la clase GUIParameterPanelView en partes claras (layout y lógica de interacción) sin romper producción. Cada paso especifica qué archivo se deberá crear o modificar y brinda referencias para asegurar una transformación segura.
 
 ---
+
+### 1. Análisis y Documentación Preliminar
+
+- **Tarea 1.1: Revisar y Documentar la Clase Actual**  
+  - **Descripción:** Revisar el archivo parameter_panel_view.py para identificar y documentar cada método y atributo.  
+  - **Acciones:**  
+    - Listar los métodos que se encargan de crear y organizar widgets (layout).  
+    - Identificar métodos que gestionan eventos, validaciones y actualizaciones de datos.  
+    - Anotar dependencias y vínculos con otros módulos (por ejemplo, `ParameterPanelLayout`, `interface_view_helpers`, y `GUIParameterPanelController`).
+  - **Archivos de Referencia:**  
+    - parameter_panel_view.py  
+    - parameter_panel_layout.py  
+    - interface_view_helpers.py
+
+- **Tarea 1.2: Elaborar un Esquema de Responsabilidades**  
+  - **Descripción:** Crear un diagrama o lista que agrupe los métodos en dos categorías:  
+    - Métodos de creación y organización del layout (vista pura).  
+    - Métodos de lógica de interacción y gestión de eventos.  
+  - **Acciones:**  
+    - Elaborar un documento de requisitos o esquema que sirva como referencia para la división.  
+  - **Archivos de Referencia:**  
+    - Documentación interna del proyecto (si existe)  
+    - Código del archivo parameter_panel_view.py
+
+---
+
+### 2. Creación de la Nueva Clase de Layout
+
+- **Tarea 2.1: Crear el Archivo para la Clase de Layout**  
+  - **Descripción:** Crear un nuevo archivo llamado, por ejemplo, `gui_parameter_panel_layout.py` en la carpeta views.  
+  - **Acción a Realizar:**  
+    - Definir la clase `GUIParameterPanelLayout` con responsabilidad exclusiva de construir y organizar los widgets.  
+    - Copiar o mover los métodos identificados en la Tarea 1.1 que están relacionados con la creación del layout.
+  - **Archivos a Modificar/Crear:**  
+    - **Crear:** `/src/views/gui_parameter_panel_layout.py`  
+  - **Archivos de Referencia:**  
+    - parameter_panel_view.py (para extraer métodos)  
+    - parameter_panel_layout.py y interface_view_helpers.py (para referencias a helpers usados en la construcción)
+
+- **Tarea 2.2: Mover los Métodos de Layout a la Nueva Clase**  
+  - **Descripción:** Extraer progresivamente los métodos para la creación y configuración de widgets desde `GUIParameterPanelView` y trasladarlos a `GUIParameterPanelLayout`.  
+  - **Acciones:**  
+    - Realizar el movimiento de una función/método a la vez, asegurando que la nueva clase se encarga únicamente del layout.  
+    - Actualizar las referencias en el código para que el adaptador o el controlador llame a estos métodos a través de la nueva clase.  
+  - **Archivos a Modificar:**  
+    - parameter_panel_view.py (mover fragmentos de código)  
+    - `/src/views/gui_parameter_panel_layout.py` (nuevo código)
+  - **Archivos de Referencia:**  
+    - parameter_panel_view.py (versión inicial antes del cambio)
+
+---
+
+### 3. Refactorización de la Lógica de Interacción en GUIParameterPanelView
+
+- **Tarea 3.1: Limpiar y Depurar GUIParameterPanelView**  
+  - **Descripción:** En el mismo archivo parameter_panel_view.py, eliminar o comentar temporalmente las partes que se trasladaron y dejar únicamente la lógica de interacción y manejo de eventos.  
+  - **Acciones:**  
+    - Conservar los métodos que se encargan de procesar entradas de usuario, validaciones, y ejecución de callbacks.  
+    - Asegurarse de que la clase siga cumpliendo su rol de conexión con el controlador.  
+  - **Archivos de Modificar:**  
+    - parameter_panel_view.py
+  - **Archivos de Referencia:**  
+    - Esquema elaborado en la Tarea 1.2
+
+- **Tarea 3.2: Definir la Interfaz de Comunicación entre las Dos Clases**  
+  - **Descripción:** Documentar y establecer cómo interactuarán `GUIParameterPanelView` (lógica) y `GUIParameterPanelLayout` (presentación).  
+  - **Acciones:**  
+    - Crear métodos de “setter”, “getter” o eventos de callback que permitan informar a la lógica sobre interacciones en la vista.  
+    - Documentar este contrato en el código (comentarios y documentación interna).  
+  - **Archivos de Referencia:**  
+    - parameter_panel_view.py  
+    - `/src/views/gui_parameter_panel_layout.py`
+
+---
+
+### 4. Actualización del Adaptador y Controladores
+
+- **Tarea 4.1: Revisar el Adaptador GUIParameterPanel**  
+  - **Descripción:** Modificar el archivo gui_parameter_panel.py para asegurarse de que utiliza la nueva arquitectura.  
+  - **Acciones:**  
+    - Actualizar las instancias para crear o inyectar tanto la lógica (GUIParameterPanelView) como la presentación (GUIParameterPanelLayout).  
+    - Verificar que los puntos de integración con `GUIParameterPanelController` sigan funcionando.  
+  - **Archivos a Modificar:**  
+    - gui_parameter_panel.py  
+  - **Archivos de Referencia:**  
+    - parameter_panel_view.py (versión anterior a la refactorización)
+
+- **Tarea 4.2: Revisar la Integración con el Controlador**  
+  - **Descripción:** Asegurarse de que `GUIParameterPanelController` (y cualquier parte dependiente) se comunica correctamente con la nueva estructura.  
+  - **Acciones:**  
+    - Revisar las referencias, validaciones y callbacks, actualizando la lógica donde sea necesario.  
+  - **Archivos a Modificar:**  
+    - gui_parameter_panel_controller.py (si se requiere alguna actualización)  
+  - **Archivos de Referencia:**  
+    - gui_parameter_panel.py  
+    - Código antiguo en parameter_panel_view.py
+
+---
+
+### 5. Pruebas de Integración y Validación
+
+- **Tarea 5.1: Pruebas Unitarias y Funcionales de la Nueva Estructura**  
+  - **Descripción:** Diseñar un conjunto de pruebas para cada una de las nuevas clases.  
+  - **Acciones:**  
+    - Ejecutar pruebas unitarias para `GUIParameterPanelLayout` asegurándose de que los widgets se crean y se organizan correctamente.  
+    - Verificar que `GUIParameterPanelView` responde correctamente a eventos (utilizando callbacks o simulaciones de interacciones).  
+  - **Archivos a Modificar:**  
+    - Crear o actualizar pruebas unitarias en el directorio de tests (p.ej., `/tests/test_gui_parameter_panel.py`).
+  - **Archivos de Referencia:**  
+    - Logs de pruebas y resultados anteriores.
+
+- **Tarea 5.2: Pruebas en Entorno de Staging**  
+  - **Descripción:** Realizar pruebas integradas en un entorno de staging antes de pasar a producción.  
+  - **Acciones:**  
+    - Validar la integración con el controlador general de la interfaz en `GUIView` y otras vistas relacionadas (por ejemplo, en ControlPanelView).  
+    - Verificar que la interacción del usuario con el panel de parámetros no presenta errores ni interrupciones en el flujo.
+  - **Archivos de Referencia:**  
+    - main.py  
+    - gui_view.py  
+    - Logs y reportes de pruebas de staging
+
+---
+
+### 6. Documentación y Revisión Final
+
+- **Tarea 6.1: Actualizar la Documentación del Proyecto**  
+  - **Descripción:** Documentar la nueva arquitectura, especificando las responsabilidades de cada clase y el contrato de interacción entre ellas.  
+  - **Acciones:**  
+    - Actualizar los comentarios en el código y cualquier documentación interna o manual de desarrollo.  
+  - **Archivos a Modificar:**  
+    - Archivos de documentación interna (p.ej., README, archivos de especificaciones).
+  - **Archivos de Referencia:**  
+    - Documentación previa en parameter_panel_view.py  
+    - Documentación técnica del proyecto
+
+- **Tarea 6.2: Revisión por Pares**  
+  - **Descripción:** Someter la refactorización a revisión de código con compañeros para asegurar alta calidad y detectar posibles errores.  
+  - **Acciones:**  
+    - Organizar una sesión de revisión de código y aplicar comentarios para ajustes finales.
+  - **Archivos de Referencia:**  
+    - Todos los archivos modificados en esta refactorización
+
+---
+
+Esta lista de tareas permite una implementación progresiva y modular, asegurando la estabilidad en cada etapa y facilitando la integración sin romper producción. Cada subtarea se debe implementar y validar individualmente para que, al final, la separación de responsabilidades en `GUIParameterPanelView` mejore la mantenibilidad y robustez del sistema.

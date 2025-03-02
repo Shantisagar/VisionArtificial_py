@@ -4,7 +4,6 @@ Punto de entrada principal de la aplicación
 Configura la aplicación e inicia la interfaz gráfica
 """
 
-import sys
 from src.views.gui_view import GUIView
 from src.controllers.app_controller import AppController
 from utils.logging.dependency_injection import get_logger
@@ -39,6 +38,3 @@ def main():
         except Exception:  # pylint: disable=broad-exception-caught
             print(f"Error crítico: {e}")
         return 1
-
-if __name__ == "__main__":
-    sys.exit(main())
