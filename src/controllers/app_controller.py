@@ -38,12 +38,13 @@ class AppController:
         Args:
             view: Instancia de GUIView a configurar
         """
-        self.logger.debug("Configurando vista")
+        self.logger.debug(f"Configurando vista: {view.__class__.__name__}")
         self.view = view
 
         # Este es el paso clave - conectar el callback para actualizar parámetros
         self.logger.debug("Conectando callback para actualización de parámetros")
         self.view.set_parameters_update_callback(self.on_parameters_update)
+        self.logger.debug("Callback conectado correctamente")
 
         # Inicializar la interfaz con los valores de configuración
         video_source = self.config.get("video_source", 0)
@@ -59,6 +60,7 @@ class AppController:
             f"píxeles/mm={pixels_por_mm}, altura={altura}, horizontal={horizontal}"
         )
         
+        self.logger.debug("Llamando a inicializar_ui en la vista")
         self.view.inicializar_ui(
             video_source,
             grados_rotacion,
@@ -66,6 +68,7 @@ class AppController:
             horizontal,
             pixels_por_mm
         )
+        self.logger.debug("Vista inicializada correctamente")
 
         self.logger.info("Vista configurada correctamente")
         self.logger.debug("Proceso de setup_view completado")
@@ -91,6 +94,7 @@ class AppController:
             if self.view:
                 self.logger.debug("Actualizando vista con valores predeterminados")
                 self.view.update_parameters(params)
+                self.logger.debug("Vista actualizada con valores predeterminados")
             return
 
         # Comprobar si es una solicitud para guardar como predeterminados
@@ -104,11 +108,16 @@ class AppController:
             self.logger.debug(f"Parámetros limpios para guardar: {clean_params}")
 
             # Actualizar la configuración utilizando el modelo
+            old_params = self.config.get("parameters", {})
             self.config["parameters"] = clean_params
-            self.logger.debug(f"Configuración actualizada: {self.config}")
+            self.logger.debug(f"Configuración actualizada: {old_params} -> {clean_params}")
             
             save_success = self.config_model.save_config(self.config)
             self.logger.debug(f"Resultado de guardar configuración: {'éxito' if save_success else 'fallo'}")
+            if save_success:
+                self.logger.info("Configuración guardada correctamente como predeterminada")
+            else:
+                self.logger.warning("No se pudo guardar la configuración como predeterminada")
             return
 
         # Actualizar la vista y el procesamiento con los nuevos valores
@@ -116,8 +125,10 @@ class AppController:
         if self.view:
             self.logger.debug(f"Actualizando vista con nuevos parámetros: {parameters}")
             self.view.update_parameters(parameters)
+            self.logger.debug("Vista actualizada con nuevos parámetros")
         else:
             self.logger.error("No se puede actualizar la vista - no está inicializada")
+            self.logger.debug("Error: intento de actualizar parámetros en vista no inicializada")
 
     def run(self) -> None:
         """Inicia la ejecución de la aplicación."""
@@ -128,3 +139,4 @@ class AppController:
             self.logger.debug("La vista ha terminado de ejecutarse")
         else:
             self.logger.error("No se puede ejecutar la aplicación sin una vista configurada")
+            self.logger.debug("Error crítico: intento de ejecutar sin vista configurada")

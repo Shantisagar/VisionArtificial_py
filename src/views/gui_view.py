@@ -55,6 +55,8 @@ class GUIView:
         if self.control_panel:
             self.logger.debug("Propagando callback al panel de control")
             self.control_panel.set_parameters_update_callback(callback)
+        else:
+            self.logger.debug("Control panel no inicializado aún, el callback se propagará durante la inicialización")
 
     def inicializar_ui(self, video_url, grados_rotacion, altura, horizontal, pixels_por_mm):
         """
@@ -87,10 +89,12 @@ class GUIView:
             main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
             # Columna izquierda para el video
+            self.logger.debug("Creando columna para video")
             video_column = tk.Frame(main_frame)
             video_column.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
             # Columna derecha para controles
+            self.logger.debug("Creando columna para controles")
             control_column = tk.Frame(main_frame)
             control_column.pack(side=tk.RIGHT, fill=tk.Y, padx=10)
 
