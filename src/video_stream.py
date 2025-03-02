@@ -1,3 +1,4 @@
+# pylint: disable=broad-exception-caught, wrong-import-order, too-many-instance-attributes, too-many-arguments, too-many-positional-arguments
 """
 Path: src/video_stream.py
 Módulo de transmisión de video que separa la captura y el procesamiento
@@ -6,18 +7,19 @@ de calidad de frames mediante una cola, y se agrega una gestión robusta de
 errores y backoff en la captura HTTP.
 """
 
+# Standard library imports
 import tkinter as tk
 import threading
 import queue
-import time
+
+# Third-party imports
 from PIL import Image, ImageTk
-import numpy as np
-import cv2
+
+# Local application imports
 from src.controllers.video_processor import VideoProcessor
 from src.capture.video_capture_factory import VideoCaptureFactory
-from src.capture.video_capture_interface import VideoCapture
-from utils.logging.logger_configurator import get_logger
 from src.views.notifier import ConsoleNotifier
+from utils.logging.logger_configurator import get_logger
 
 class VideoStreamApp:
     "Esta clase se encarga de la transmisión de video y la actualización de la interfaz gráfica."
@@ -45,7 +47,7 @@ class VideoStreamApp:
         self.pixels_por_mm = pixels_por_mm
         self.logger = logger or get_logger()
         self.notifier = notifier or ConsoleNotifier(self.logger)
-        
+
         # Inicializar el procesador de video (separación de responsabilidades)
         self.video_processor = VideoProcessor(
             grados_rotacion=self.grados_rotacion,
@@ -55,7 +57,7 @@ class VideoStreamApp:
             notifier=self.notifier,
             logger=self.logger
         )
-        
+
         self.frame_queue = queue.Queue(maxsize=10)
         self.running = True
         self.video_capture = None  # Instancia de VideoCapture
@@ -84,19 +86,19 @@ class VideoStreamApp:
                     fps_limit=30,  # Limitar a 30 fps para fuentes locales
                     logger=self.logger
                 )
-                
+
                 # Establecer callback para procesar frames
                 self.video_capture.set_frame_callback(self.process_and_enqueue)
-                
+
                 # Iniciar la captura
                 if not self.video_capture.start():
                     self.logger.error("No se pudo iniciar la captura de video.")
                     self.notifier.notify_error("No se pudo iniciar la captura de video")
                     return
-                    
+
             self.logger.info("Captura de video iniciada correctamente")
             self.notifier.notify_info("Captura de video iniciada")
-            
+
         except Exception as e:
             self.logger.error(f"Error al iniciar la captura de video: {e}")
             self.notifier.notify_error("Error al iniciar la captura de video", e)
@@ -112,17 +114,19 @@ class VideoStreamApp:
         try:
             if not self.running:
                 return
-                
+
             monitor_width = self.root.winfo_screenwidth()
             monitor_height = self.root.winfo_screenheight()
-            
+
             # Escalar el frame usando el procesador de video
-            frame_scaled = self.video_processor.scale_frame_to_size(frame, monitor_width, monitor_height)
-            
+            frame_scaled = self.video_processor.scale_frame_to_size(
+                frame, monitor_width, monitor_height
+            )
+
             if frame_scaled is not None:
                 # Usar el procesador de video para procesar el frame
                 processed_frame = self.video_processor.process_frame(frame_scaled)
-                
+
                 if processed_frame is not None:
                     # Vaciar la cola para descartar frames viejos
                     with self.frame_queue.mutex:
@@ -189,6 +193,10 @@ class VideoStreamApp:
         finally:
             self.stop()
 
+    def start(self):
+        """Nuevo método start para iniciar el run()."""
+        self.run()
+
     def get_processing_stats(self):
         """
         Obtiene estadísticas del procesamiento de video.
@@ -198,16 +206,16 @@ class VideoStreamApp:
         """
         # Delegar la obtención de estadísticas al procesador de video
         stats = self.video_processor.get_processing_stats()
-        
+
         # Añadir información de la fuente de video si está disponible
         if self.video_capture and self.video_capture.is_running():
             source_info = self.video_capture.source_info
             stats['source_type'] = source_info.get('type', 'unknown')
-            
+
             if 'width' in source_info and 'height' in source_info:
                 if source_info['width'] and source_info['height']:
                     stats['resolution'] = f"{source_info['width']}x{source_info['height']}"
-        
+
         return stats
 
     def update_parameters(self, parameters: dict) -> None:
@@ -220,20 +228,20 @@ class VideoStreamApp:
         try:
             # Actualizar los parámetros internos
             if 'grados_rotacion' in parameters:
-                self.grados_rotacion = -1 * parameters['grados_rotacion']  # Invertir como en el constructor
-            
+                self.grados_rotacion = -1 * parameters['grados_rotacion']
+
             if 'altura' in parameters:
                 self.altura = parameters['altura']
-                
+
             if 'horizontal' in parameters:
                 self.horizontal = parameters['horizontal']
-                
+
             if 'pixels_por_mm' in parameters:
                 self.pixels_por_mm = parameters['pixels_por_mm']
-            
+
             # Delegar la actualización de parámetros al procesador de video
             self.video_processor.update_parameters(parameters)
-            
+
             self.logger.info(f"Parámetros de procesamiento actualizados: {parameters}")
         except Exception as e:
             self.logger.error(f"Error al actualizar parámetros: {str(e)}")
@@ -258,10 +266,10 @@ class VideoStreamApp:
             return frame
         except Exception as e:
             self.logger.error(f"Error al procesar frame: {str(e)}")
-            
+
             # Verificar si el notificador está disponible y usar el método modificado
             if self.notifier:
                 # Usar correctamente el método con dos argumentos
                 self.notifier.notify_error(f"Error al procesar frame: {str(e)}")
-                
+
             return frame

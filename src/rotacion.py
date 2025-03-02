@@ -10,6 +10,7 @@ from utils.logging.logger_configurator import LoggerConfigurator
 logger = LoggerConfigurator().configure()
 
 def rotar_imagen(frame, grados):
+    # pylint: disable=no-member
     """
     Rota la imagen un número específico de grados en sentido antihorario.
     

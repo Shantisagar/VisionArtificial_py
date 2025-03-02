@@ -4,6 +4,8 @@ Vista para manejar la interfaz gráfica de la aplicación.
 Implementa la capa de presentación del patrón MVC.
 """
 
+# pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-locals, too-many-positional-arguments
+
 import tkinter as tk
 import logging
 from typing import Dict, Callable

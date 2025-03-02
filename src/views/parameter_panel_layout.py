@@ -4,6 +4,8 @@ Clase para manejar la construcción del layout del panel de parámetros.
 Se encarga de la creación y organización de widgets UI.
 """
 
+# pylint: disable=too-many-arguments, too-many-locals, too-many-positional-arguments
+
 import tkinter as tk
 from tkinter import ttk
 import logging

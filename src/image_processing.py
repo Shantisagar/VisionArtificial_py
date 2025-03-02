@@ -4,14 +4,21 @@ Módulo de procesamiento de imágenes que incluye funciones de transformación,
 detección de bordes y anotación gráfica.
 """
 
+# pylint: disable=too-many-positional-arguments, wrong-import-order
+
+# Standard library imports
 import datetime
+
+# Third-party imports
 import cv2
 import numpy as np
-from src.rotacion import rotar_imagen
+
+# Local application imports
 from src.deteccion_bordes import encontrar_borde
-from utils.logging.logger_configurator import LoggerConfigurator
 from src.registro_desvios import registrar_desvio
-from src.views.notifier import Notifier, ConsoleNotifier
+from src.rotacion import rotar_imagen
+from src.views.notifier import ConsoleNotifier
+from utils.logging.logger_configurator import LoggerConfigurator
 
 TOLERANCIA = 2  # Tolerancia en milímetros
 logger = LoggerConfigurator().configure()
@@ -86,6 +93,7 @@ class ProcessingController:
         self.procesador_imagenes = None
 
     def process(self, frame, grados, altura, horizontal, pixels_por_mm):
+        # pylint: disable=too-many-arguments, too-many-locals
         """
         Orquesta el procesamiento en cadena: rotación, desplazamiento, detección de borde,
         anotación gráfica y registro de desviación.

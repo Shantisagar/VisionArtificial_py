@@ -4,6 +4,8 @@ Vista para manejar el panel de control con estadísticas y estado.
 Parte de la separación de responsabilidades del patrón MVC.
 """
 
+# pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments
+
 import tkinter as tk
 import logging
 from typing import Dict, Callable

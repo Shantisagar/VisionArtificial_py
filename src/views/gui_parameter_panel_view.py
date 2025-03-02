@@ -4,6 +4,8 @@ Vista para el panel de parámetros de configuración en la interfaz gráfica.
 Se encarga exclusivamente de la creación y gestión de componentes visuales.
 """
 
+# pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments
+
 import tkinter as tk
 import logging
 from typing import Dict, Callable, Tuple, List, Optional, Any

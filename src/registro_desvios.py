@@ -1,3 +1,4 @@
+# pylint: disable=broad-exception-caught, wrong-import-order
 """
 Path: src/registro_desvios.py
 Este módulo se encarga de registrar los desvíos de papel en la base de datos.
@@ -15,9 +16,9 @@ detallada se registre sin abrumar al usuario final, mientras que los mensajes
 importantes se presentan de manera clara y consistente en la interfaz.
 """
 from datetime import datetime
+from typing import Optional
 import mysql.connector
 from pytz import timezone
-from typing import Optional
 from utils.logging.logger_configurator import LoggerConfigurator
 from src.views.notifier import Notifier, ConsoleNotifier
 
@@ -94,9 +95,9 @@ def inicializar_bd():
                     conn.close()
                     logger.debug("Conexión a la BD cerrada correctamente.")
             except Exception as e:
-                logger.error(f"Error al cerrar la conexión de BD: {e}")
+                logger.error("Error al cerrar la conexión de BD: %s", e)
 
-def registrar_desvio(desvio_mm, TOLERANCIA, notifier: Optional[Notifier] = None) -> str:
+def registrar_desvio(desvio_mm, tolerancia, notifier: Optional[Notifier] = None) -> str:
     """
     Registra el desvío en la base de datos y notifica según corresponda.
     
@@ -106,7 +107,7 @@ def registrar_desvio(desvio_mm, TOLERANCIA, notifier: Optional[Notifier] = None)
     
     Args:
         desvio_mm: Valor del desvío en milímetros
-        TOLERANCIA: Valor de tolerancia para determinar si el desvío es significativo
+        tolerancia: Valor de tolerancia para determinar si el desvío es significativo
         notifier: Instancia de Notifier para manejar las notificaciones (opcional)
         
     Returns:
@@ -116,10 +117,10 @@ def registrar_desvio(desvio_mm, TOLERANCIA, notifier: Optional[Notifier] = None)
     notifier = notifier or default_notifier
 
     # Registrar en el logger que se está procesando un desvío
-    logger.debug(f"Procesando desvío de {desvio_mm}mm (tolerancia: {TOLERANCIA}mm)")
+    logger.debug("Procesando desvío de %s mm (tolerancia: %s mm)", desvio_mm, tolerancia)
 
     # Generar la notificación del desvío
-    mensaje = notifier.notify_desvio(desvio_mm, TOLERANCIA)
+    mensaje = notifier.notify_desvio(desvio_mm, tolerancia)
 
     # Registrar en la base de datos (separado de la notificación)
     enviar_datos(desvio_mm)
@@ -142,7 +143,7 @@ def enviar_datos(desvio_mm):
         # Convertir float64 de NumPy a float nativo de Python
         desvio_mm_float = float(desvio_mm)
 
-        logger.debug(f"Intentando guardar desvío de {desvio_mm_float}mm en la BD...")
+        logger.debug("Intentando guardar desvío de %s mm en la BD...", desvio_mm_float)
 
         # Conectar a la base de datos
         conn = mysql.connector.connect(
@@ -177,7 +178,7 @@ def enviar_datos(desvio_mm):
         #logger.info(f"Datos de desvío {desvio_mm_float}mm guardados correctamente en la BD.")
 
     except mysql.connector.Error as err:
-        logger.error(f"Error de MySQL al guardar datos: {err}")
+        logger.error("Error de MySQL al guardar datos: %s", err)
         # Clasificar y registrar errores específicos de MySQL para facilitar el diagnóstico
         error_msg = str(err).lower()
         if "can't connect" in error_msg:
@@ -188,10 +189,10 @@ def enviar_datos(desvio_mm):
             logger.error("La base de datos especificada no existe.")
 
     except ValueError as e:
-        logger.error(f"Error al convertir el valor de desvío a float: {e}")
+        logger.error("Error al convertir el valor de desvío a float: %s", e)
 
     except Exception as e:
-        logger.error(f"Error inesperado al guardar datos en la BD: {e}")
+        logger.error("Error inesperado al guardar datos en la BD: %s", e)
 
     finally:
         # Cerrar el cursor de manera segura
@@ -200,7 +201,7 @@ def enviar_datos(desvio_mm):
                 cursor.close()
                 logger.debug("Cursor de la base de datos cerrado correctamente.")
             except Exception as e:
-                logger.error(f"Error al cerrar el cursor de la BD: {e}")
+                logger.error("Error al cerrar el cursor de la BD: %s", e)
 
         # Cerrar la conexión de manera segura
         if conn:
@@ -209,7 +210,7 @@ def enviar_datos(desvio_mm):
                     conn.close()
                     logger.debug("Conexión a la base de datos cerrada correctamente.")
             except Exception as e:
-                logger.error(f"Error al cerrar la conexión de BD: {e}")
+                logger.error("Error al cerrar la conexión de BD: %s", e)
 
 # Inicializar la base de datos cuando se importa el módulo
 inicializar_bd()

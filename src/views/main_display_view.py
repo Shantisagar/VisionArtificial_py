@@ -4,10 +4,13 @@ Vista para manejar la pantalla principal y visualización de video.
 Parte de la separación de responsabilidades del patrón MVC.
 """
 
+# pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments
+
 import tkinter as tk
 import logging
 from src.video_stream import VideoStreamApp
 from src.views.gui_notifier import GUINotifier
+from src.views.common_gui import create_main_window
 
 class MainDisplayView:
     """Clase responsable de la gestión de la ventana principal y visualización de video."""
@@ -64,9 +67,7 @@ class MainDisplayView:
         try:
             # Si no tenemos un widget padre, creamos nuestra propia ventana
             if self.parent is None:
-                self.root = tk.Tk()
-                self.root.title("Control de Visión Artificial")
-                self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+                self.root = create_main_window(self.on_closing)
 
                 # Crear una ventana de tamaño adecuado
                 window_width = 1000

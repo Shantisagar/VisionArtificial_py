@@ -10,6 +10,8 @@ from typing import Dict, Callable, Tuple, List
 # Importamos ToolTip con ruta relativa en lugar de absoluta
 from .tool_tip import ToolTip
 
+# pylint: disable=too-many-arguments, too-many-locals, too-many-positional-arguments
+
 class ParameterRowFactory:
     """
     Clase responsable de la creación de filas de parámetros individuales 
