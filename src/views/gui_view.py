@@ -7,9 +7,7 @@ Implementa la capa de presentación del patrón MVC.
 import tkinter as tk
 import logging
 from typing import Dict, Callable
-from src.video_stream import VideoStreamApp
 from src.views.gui_notifier import GUINotifier
-from src.views.gui_parameter_panel import GUIParameterPanel
 from src.views.main_display_view import MainDisplayView
 from src.views.control_panel_view import ControlPanelView
 
@@ -27,14 +25,14 @@ class GUIView:
         self.root = None
         self.is_running = False
         self.update_interval = 500  # Actualizar estadísticas cada 500ms
-        
+
         # Componente para notificaciones compartido entre vistas
         self.notifier = GUINotifier(logger)
-        
+
         # Vistas específicas
         self.main_display = None
         self.control_panel = None
-        
+
         # Callback para cuando se actualicen los parámetros
         self.on_parameters_update = None
 
@@ -91,22 +89,24 @@ class GUIView:
 
             # Inicializar el notificador de la GUI sin etiqueta por ahora
             self.notifier = GUINotifier(self.logger)
-            
+
             # Inicializar el panel de control primero para obtener la etiqueta de estado
             self.control_panel = ControlPanelView(self.logger, control_column)
             self.control_panel.set_notifier(self.notifier)
             self.control_panel.initialize(None, grados_rotacion, pixels_por_mm, altura, horizontal)
-            
+
             # Inicializar la vista de visualización principal
             self.main_display = MainDisplayView(self.logger, video_column)
             self.main_display.set_notifier(self.notifier)
             self.main_display.set_on_closing_callback(self.on_closing)
-            self.main_display.initialize(video_url, grados_rotacion, altura, horizontal, pixels_por_mm)
-            
+            self.main_display.initialize(
+                video_url, grados_rotacion, altura, horizontal, pixels_por_mm
+            )
+
             # Si tenemos un callback de actualización de parámetros, configurarlo
             if self.on_parameters_update:
                 self.control_panel.set_parameters_update_callback(self.on_parameters_update)
-            
+
             # Iniciar actualización periódica de estadísticas
             self.update_stats()
 
@@ -115,7 +115,7 @@ class GUIView:
 
             self.logger.info("Interfaz gráfica inicializada correctamente.")
             self.notifier.notify_info("Interfaz gráfica iniciada")
-        except Exception as e:
+        except (tk.TclError, AttributeError) as e:
             self.logger.error(f"Error al inicializar la interfaz gráfica: {e}")
             raise
 
@@ -132,7 +132,7 @@ class GUIView:
                 # Iniciamos mainloop en el hilo principal
                 self.root.mainloop()
                 self.logger.info("Interfaz gráfica finalizada.")
-            except Exception as e:
+            except (tk.TclError, RuntimeError) as e:
                 self.logger.error(f"Error durante la ejecución de la interfaz gráfica: {e}")
                 self.is_running = False
                 raise
@@ -159,10 +159,8 @@ class GUIView:
             try:
                 stats = self.main_display.get_processing_stats()
                 self.control_panel.update_stats(stats)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 self.logger.error(f"Error al actualizar estadísticas: {e}")
-
-        # Programar próxima actualización si aún está en ejecución
         if self.is_running:
             self.root.after(self.update_interval, self.update_stats)
 
@@ -185,4 +183,6 @@ class GUIView:
             self.logger.info(f"Parámetros enviados a la vista de visualización: {parameters}")
             self.notifier.notify_info("Parámetros aplicados al procesamiento de video")
         else:
-            self.logger.warning("No se pudo actualizar la vista de visualización - no está inicializada")
+            self.logger.warning(
+                "No se pudo actualizar la vista de visualización - no está inicializada"
+            )

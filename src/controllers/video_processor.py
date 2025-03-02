@@ -4,10 +4,11 @@ Controlador que maneja el procesamiento de frames de video.
 Desacopla la lógica de procesamiento del componente de UI y captura.
 """
 
+from typing import Dict, Any, Optional  # Moved standard imports before third party
 import time
-import cv2
-import numpy as np
-from typing import Dict, Tuple, Any, Optional
+
+import cv2  # pylint: disable=no-member
+import numpy as np  # pylint: disable=no-member
 from src.image_processing import ProcessingController
 from src.views.notifier import Notifier, ConsoleNotifier
 from utils.logging.logger_configurator import get_logger
@@ -18,11 +19,11 @@ class VideoProcessor:
     Separa la lógica de procesamiento de la captura y la UI.
     """
 
-    def __init__(self, 
+    def __init__(self,
                  grados_rotacion: float = 0.0,
-                 altura: float = 0.0, 
-                 horizontal: float = 0.0, 
-                 pixels_por_mm: float = 1.0, 
+                 altura: float = 0.0,
+                 horizontal: float = 0.0,
+                 pixels_por_mm: float = 1.0,
                  notifier: Optional[Notifier] = None,
                  logger=None):
         """
@@ -39,7 +40,7 @@ class VideoProcessor:
         self.logger = logger or get_logger()
         self.notifier = notifier or ConsoleNotifier(self.logger)
         self.controller = ProcessingController(notifier=self.notifier)
-        
+
         # Parámetros de procesamiento
         self.grados_rotacion = grados_rotacion
         self.altura = altura
@@ -47,7 +48,7 @@ class VideoProcessor:
         self.pixels_por_mm = pixels_por_mm
         self.zoom = 1.0
         self.paper_color = "Blanco"
-        
+
         # Estadísticas de procesamiento
         self.stats = {
             'frames_processed': 0,
@@ -57,7 +58,7 @@ class VideoProcessor:
             'current_fps': 0.0,
             'average_fps': 0.0
         }
-    
+
     def update_parameters(self, parameters: Dict[str, float]) -> None:
         """
         Actualiza los parámetros de procesamiento.
@@ -68,22 +69,22 @@ class VideoProcessor:
         try:
             if 'grados_rotacion' in parameters:
                 self.grados_rotacion = -1 * parameters['grados_rotacion']  # Mantiene la inversión
-            
+
             if 'altura' in parameters:
                 self.altura = parameters['altura']
-                
+
             if 'horizontal' in parameters:
                 self.horizontal = parameters['horizontal']
-                
+
             if 'pixels_por_mm' in parameters:
                 self.pixels_por_mm = parameters['pixels_por_mm']
-                
+
             if 'zoom' in parameters:
                 self.zoom = parameters['zoom']
-                
+
             if 'paper_color' in parameters:
                 self.paper_color = parameters['paper_color']
-                
+
             # Actualizar el controlador de procesamiento si es necesario
             if hasattr(self, 'controller') and self.controller:
                 self.controller.update_parameters(
@@ -92,9 +93,9 @@ class VideoProcessor:
                     self.horizontal,
                     self.pixels_por_mm
                 )
-                
+
             self.logger.info(f"Parámetros de procesamiento actualizados: {parameters}")
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             self.logger.error(f"Error al actualizar parámetros: {str(e)}")
             self.notifier.notify_error("Error al actualizar parámetros", e)
 
@@ -117,44 +118,47 @@ class VideoProcessor:
                 self.horizontal,
                 self.pixels_por_mm
             )
-            
+
             # Aplicar zoom
             height, width = frame.shape[:2]
             new_width = int(width * self.zoom)
             new_height = int(height * self.zoom)
-            frame = cv2.resize(frame, (new_width, new_height))
+            frame = cv2.resize(frame, (new_width, new_height))  # pylint: disable=no-member
 
             # Aplicar filtro de contraste según el color de papel
             if self.paper_color == "Blanco":
                 frame = self.apply_white_paper_filter(frame)
             elif self.paper_color == "Marrón":
                 frame = self.apply_brown_paper_filter(frame)
-            
+
             # Actualizar estadísticas
             current_time = time.time()
             self.stats['frames_processed'] += 1
             self.stats['total_frames'] += 1
-            
+
             # Calcular FPS actual
             time_diff = current_time - self.stats['last_frame_time']
             if time_diff > 0:
                 self.stats['current_fps'] = 1.0 / time_diff
-            
+
             # Calcular FPS promedio
             total_time = current_time - self.stats['processing_start_time']
             if total_time > 0:
                 self.stats['average_fps'] = self.stats['total_frames'] / total_time
-            
+
             self.stats['last_frame_time'] = current_time
-            
+
             return processed_frame
-        
-        except Exception as e:
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.logger.error(f"Error al procesar frame: {str(e)}")
             self.notifier.notify_error("Error al procesar frame", e)
             return None
-    
-    def scale_frame_to_size(self, frame: np.ndarray, target_width: int, target_height: int) -> Optional[np.ndarray]:
+
+    def scale_frame_to_size(self,
+                            frame: np.ndarray,
+                            target_width: int,
+                            target_height: int) -> Optional[np.ndarray]:
         """
         Escala un frame para ajustarlo a un tamaño objetivo manteniendo la relación de aspecto.
         
@@ -169,25 +173,25 @@ class VideoProcessor:
         try:
             if frame is None:
                 return None
-                
+
             image_height, image_width = frame.shape[:2]
             scale_width = target_width / image_width
             scale_height = target_height / image_height
             scale = min(scale_width, scale_height)
-            
+
             new_width = int(image_width * scale)
             new_height = int(image_height * scale)
-            
-            resized_frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
-            return cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
-            
-        except cv2.error.CvError as e:
+
+            resized_frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)  # pylint: disable=no-member
+            return cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)  # pylint: disable=no-member
+
+        except cv2.error as e:  # pylint: disable=catching-non-exception
             self.logger.error(f"Error de OpenCV al escalar la imagen: {e}")
             return None
         except (ValueError, TypeError) as e:
             self.logger.error(f"Error al escalar la imagen: {e}")
             return None
-    
+
     def get_processing_stats(self) -> Dict[str, Any]:
         """
         Obtiene las estadísticas actuales del procesamiento.
@@ -201,7 +205,7 @@ class VideoProcessor:
             'fps_average': round(self.stats['average_fps'], 1),
             'processing_time': round(time.time() - self.stats['processing_start_time'], 1)
         }
-        
+
     def reset_stats(self) -> None:
         """Reinicia las estadísticas de procesamiento."""
         self.stats = {
@@ -234,26 +238,26 @@ class VideoProcessor:
                     self.pixels_por_mm
                 )
             return image
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.logger.error(f"Error de procesamiento de imagen: {str(e)}")
-            
+
             # Si hay un notificador, usar el método actualizado
             if hasattr(self, 'notifier') and self.notifier:
                 # Usar correctamente el método, con message como único parámetro
                 self.notifier.notify_error(f"Error de procesamiento de imagen: {str(e)}")
-                
+
             return image
 
     def apply_white_paper_filter(self, frame):
-        # Lógica para aplicar filtro de contraste para papel blanco
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        _, binary = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+        " Aplica un filtro de contraste para papel blanco a un frame"
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # pylint: disable=no-member
+        _, binary = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)  # pylint: disable=no-member
         frame[binary == 0] = (0, 0, 0)
         return frame
 
     def apply_brown_paper_filter(self, frame):
-        # Lógica para aplicar filtro de contraste para papel marrón
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        _, binary = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+        " Lógica para aplicar filtro de contraste para papel marrón "
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # pylint: disable=no-member
+        _, binary = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)  # pylint: disable=no-member
         frame[binary == 0] = (255, 0, 0)
         return frame

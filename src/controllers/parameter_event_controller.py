@@ -1,3 +1,8 @@
+"""
+Path: src/controllers/parameter_event_controller.py
+Este módulo contiene la implementación de la clase ParameterEventController.
+"""
+
 class ParameterEventController:
     """
     Clase encargada de gestionar eventos y callbacks de la vista,
@@ -41,4 +46,5 @@ class ParameterEventController:
         self.logger.info("Parámetros actualizados correctamente.")
 
     def set_parameters_update_callback(self, callback):
+        " Establece el callback para actualizar parámetros. "
         self.parameters_update_callback = callback

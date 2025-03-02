@@ -28,7 +28,7 @@ class MainDisplayView:
         self.app = None
         self.is_running = False
         self.on_closing_callback = None
-        
+
         # Referencia a la clase notificadora
         self.notifier = None
 
@@ -76,18 +76,18 @@ class MainDisplayView:
                 x_position = (screen_width - window_width) // 2
                 y_position = (screen_height - window_height) // 2
                 self.root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
-                
+
                 self.main_frame = tk.Frame(self.root)
                 self.main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
             else:
                 # Si tenemos un widget padre, usamos ese en lugar de crear una nueva ventana
                 self.main_frame = tk.Frame(self.parent)
                 self.main_frame.pack(fill=tk.BOTH, expand=True)
-            
+
             # Frame para el video
             self.video_frame = tk.LabelFrame(self.main_frame, text="Vista de cámara")
             self.video_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-            
+
             # Inicializar la aplicación de streaming de video
             self.app = VideoStreamApp(
                 self.video_frame,
@@ -99,7 +99,7 @@ class MainDisplayView:
                 self.logger,
                 self.notifier
             )
-            
+
             self.logger.info("Interfaz de visualización inicializada correctamente.")
             if self.notifier:
                 self.notifier.notify_info("Visualización de cámara iniciada")

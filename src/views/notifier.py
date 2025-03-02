@@ -48,7 +48,6 @@ class Notifier(ABC):
         Nota: Este método debe generar una notificación para el usuario final,
         y opcionalmente registrar el evento en el sistema de logging.
         """
-        pass
 
     @abstractmethod
     def notify_error(self, message: str, error: Optional[Exception] = None) -> None:
@@ -62,7 +61,6 @@ class Notifier(ABC):
         Nota: Los errores críticos siempre deberían registrarse en el sistema de logging,
         independientemente de si se notifican al usuario o no.
         """
-        pass
 
     @abstractmethod
     def notify_info(self, message: str, data: Optional[Dict[str, Any]] = None) -> None:
@@ -76,7 +74,7 @@ class Notifier(ABC):
         Nota: La información contextual o de menor relevancia puede registrarse
         solo en el sistema de logging y no necesariamente notificarse al usuario.
         """
-        pass
+
 
 
 class ConsoleNotifier(Notifier):

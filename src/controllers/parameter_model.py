@@ -1,3 +1,11 @@
+"""
+Path: src/controllers/parameter_model.py
+Esta clase se encarga de almacenar y validar los parámetros,
+separando la lógica de negocio de la gestión de eventos.
+"""
+
+from typing import Tuple  # Added to fix undefined Tuple
+
 class ParameterModel:
     """
     Clase encargada de almacenar y validar los parámetros,
@@ -18,11 +26,12 @@ class ParameterModel:
             'horizontal': (-500, 500)
         }
 
-    def validate_value(self, param_name: str, value: str) -> (bool, str):
+    def validate_value(self, param_name: str, value: str) -> Tuple[bool, str]:
+        "Valida un valor para un parámetro"
         try:
             float_value = float(value)
             min_value, max_value = self.parameter_ranges[param_name]
-            if not (min_value <= float_value <= max_value):
+            if not min_value <= float_value <= max_value:
                 error_msg = f"El valor debe estar entre {min_value} y {max_value}"
                 self.logger.warning(f"Validación fallida para {param_name}: {error_msg}")
                 return False, error_msg
@@ -33,5 +42,6 @@ class ParameterModel:
             return False, error_msg
 
     def update_parameter(self, param_name: str, value: float):
+        " Actualiza un parámetro con un valor"
         self.current_parameters[param_name] = value
         self.logger.debug(f"Parámetro {param_name} actualizado a {value}")

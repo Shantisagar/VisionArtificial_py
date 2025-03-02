@@ -5,9 +5,9 @@ Implementación de captura de video para fuentes locales como cámaras o archivo
 
 import threading
 import time
-import cv2
+from typing import Callable, Optional, Union
+import cv2  # pylint: disable=no-member
 import numpy as np
-from typing import Callable, Optional, Any, Union
 from src.capture.video_capture_interface import VideoCapture
 from utils.logging.logger_configurator import get_logger
 
@@ -15,7 +15,7 @@ class LocalVideoCapture(VideoCapture):
     """
     Implementación concreta para capturar video desde fuentes locales (cámaras, archivos, etc.)
     """
-    
+
     def __init__(self, source: Union[int, str], fps_limit: Optional[float] = None, logger=None):
         """
         Inicializa la captura de video local.
@@ -35,7 +35,7 @@ class LocalVideoCapture(VideoCapture):
         self._lock = threading.Lock()
         self._frame_interval = 0 if fps_limit is None else 1.0 / fps_limit
         self._last_frame_time = 0
-        
+
     def start(self) -> bool:
         """
         Inicia la captura de video desde la fuente local.
@@ -46,43 +46,43 @@ class LocalVideoCapture(VideoCapture):
         if self._running:
             self.logger.warning("La captura ya está en ejecución")
             return True
-            
+
         try:
             with self._lock:
-                self.cap = cv2.VideoCapture(self.source)
+                self.cap = cv2.VideoCapture(self.source)  # pylint: disable=no-member
                 if not self.cap.isOpened():
                     self.logger.error(f"No se pudo abrir la fuente de video: {self.source}")
                     return False
-                    
+
             self._running = True
             self._thread = threading.Thread(target=self._capture_loop, daemon=True)
             self._thread.start()
             self.logger.info(f"Iniciada captura de video desde fuente local: {self.source}")
             return True
-            
-        except cv2.error as e:
+
+        except cv2.error as e:  # pylint: disable=catching-non-exception
             self.logger.error(f"Error de OpenCV al iniciar captura: {e}")
             return False
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.logger.error(f"Error al iniciar captura de video: {e}")
             return False
-            
+
     def stop(self) -> None:
         """
         Detiene la captura de video y libera recursos.
         """
         self._running = False
-        
+
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=1.0)
-            
+
         with self._lock:
             if self.cap:
                 self.cap.release()
                 self.cap = None
-                
+
         self.logger.info("Captura de video local detenida")
-        
+
     def is_running(self) -> bool:
         """
         Verifica si la captura está activa.
@@ -91,7 +91,7 @@ class LocalVideoCapture(VideoCapture):
             bool: True si la captura está activa, False en caso contrario
         """
         return self._running and self._thread and self._thread.is_alive()
-        
+
     def set_frame_callback(self, callback: Callable[[np.ndarray], None]) -> None:
         """
         Establece el callback que será llamado cuando se captura un nuevo frame.
@@ -100,7 +100,7 @@ class LocalVideoCapture(VideoCapture):
             callback: Función que recibe un frame y lo procesa
         """
         self._frame_callback = callback
-        
+
     def _capture_loop(self) -> None:
         """
         Bucle principal de captura que se ejecuta en un hilo separado.
@@ -113,33 +113,33 @@ class LocalVideoCapture(VideoCapture):
                     # Dormir un pequeño intervalo para no saturar el CPU
                     time.sleep(0.001)
                     continue
-                    
+
                 with self._lock:
                     if not self.cap or not self.cap.isOpened():
                         self.logger.warning("La captura se ha cerrado")
                         self._running = False
                         break
-                    
+
                     ret, frame = self.cap.read()
-                    
+
                 if not ret:
                     self.logger.warning("No se pudo leer el frame, reintentando...")
                     time.sleep(0.1)
                     continue
-                    
+
                 self._last_frame_time = current_time
-                
+
                 # Llamar al callback si está configurado
                 if self._frame_callback:
                     self._frame_callback(frame)
-                    
-            except cv2.error as e:
+
+            except cv2.error as e:  # pylint: disable=catching-non-exception
                 self.logger.error(f"Error de OpenCV durante la captura: {e}")
                 time.sleep(0.1)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 self.logger.error(f"Error en el bucle de captura: {e}")
                 time.sleep(0.1)
-                
+
     @property
     def source_info(self) -> dict:
         """
@@ -156,11 +156,11 @@ class LocalVideoCapture(VideoCapture):
             'height': None,
             'fps': None
         }
-        
+
         with self._lock:
             if self.cap and self.cap.isOpened():
-                info['width'] = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                info['height'] = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                info['fps'] = self.cap.get(cv2.CAP_PROP_FPS)
-                
+                info['width'] = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # pylint: disable=no-member
+                info['height'] = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # pylint: disable=no-member
+                info['fps'] = self.cap.get(cv2.CAP_PROP_FPS)  # pylint: disable=no-member
+
         return info

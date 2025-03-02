@@ -7,13 +7,16 @@ Se encarga de la creación y organización de widgets UI.
 import tkinter as tk
 from tkinter import ttk
 import logging
-from typing import Dict, Callable, Tuple, Any, List
+from typing import Dict, Callable, Tuple, List
 
 from .tool_tip import ToolTip
 from .parameter_row_factory import ParameterRowFactory
 
 class ParameterPanelLayout:
-    """Clase responsable de la construcción y organización de los widgets del panel de parámetros."""
+    """
+    Clase responsable de la construcción y organización 
+    de los widgets del panel de parámetros.
+    """
 
     def __init__(self, parent_frame: tk.Frame, logger: logging.Logger):
         """
@@ -26,10 +29,10 @@ class ParameterPanelLayout:
         self.parent_frame = parent_frame
         self.logger = logger
         self.logger.debug("Inicializando ParameterPanelLayout")
-        
+
         # Lista para almacenar referencias a tooltips
         self.tooltips: List[ToolTip] = []
-        
+
         # Rangos para los sliders (configuración por defecto)
         self.slider_ranges = {
             'grados_rotacion': (-180, 180),
@@ -37,12 +40,12 @@ class ParameterPanelLayout:
             'altura': (-500, 500),
             'horizontal': (-500, 500)
         }
-        
+
         # Inicializar el factory para la creación de filas de parámetros
         self.row_factory = ParameterRowFactory(logger)
-        
+
         self.logger.debug(f"Configuración por defecto - Rangos: {self.slider_ranges}")
-        
+
     def set_slider_ranges(self, ranges: Dict[str, Tuple[float, float]]) -> None:
         """
         Establece los rangos para los sliders.
@@ -52,7 +55,7 @@ class ParameterPanelLayout:
         """
         self.logger.debug(f"Actualizando rangos de sliders: {ranges}")
         self.slider_ranges.update(ranges)
-            
+
     def set_parameter_help(self, help_texts: Dict[str, str]) -> None:
         """
         Establece los textos de ayuda para los parámetros.
@@ -60,12 +63,14 @@ class ParameterPanelLayout:
         Args:
             help_texts: Diccionario con los textos de ayuda para cada parámetro
         """
-        self.logger.debug(f"Actualizando textos de ayuda para parámetros: {list(help_texts.keys())}")
+        self.logger.debug(
+            f"Actualizando textos de ayuda para parámetros: {list(help_texts.keys())}"
+        )
         # Delegar al row_factory
         self.row_factory.set_parameter_help(help_texts)
 
-    def create_parameter_inputs(self, 
-                              var_dict: Dict[str, tk.StringVar], 
+    def create_parameter_inputs(self,
+                              var_dict: Dict[str, tk.StringVar],
                               on_slider_change: Callable[[str, float], None],
                               on_update_parameters: Callable[[], None],
                               on_reset_parameters: Callable[[], None],
@@ -87,20 +92,23 @@ class ParameterPanelLayout:
         """
         self.logger.debug("Creando controles de parámetros en la interfaz")
         self.logger.debug(f"Valores iniciales: {[(k, v.get()) for k, v in var_dict.items()]}")
-        
+
         # Frame para instrucciones
         help_frame = tk.Frame(self.parent_frame)
         help_frame.pack(fill="x", padx=10, pady=5)
 
-        help_text = "Ajuste los parámetros usando los controles deslizantes o ingresando valores directamente. " + \
-                    "Pase el cursor sobre cada elemento para ver más información."
+        help_text = (
+            "Ajuste los parámetros usando los controles deslizantes o "
+            "ingresando valores directamente. Pase el cursor sobre cada "
+            "elemento para ver más información."
+        )
         help_label = tk.Label(help_frame, text=help_text, justify=tk.LEFT, wraplength=400,
                               font=('Helvetica', 9, 'italic'))
         help_label.pack(pady=5, anchor=tk.W)
 
         # Diccionario para almacenar referencias a los sliders
         sliders = {}
-        
+
         # Utilizar el factory para crear cada fila de parámetros
         # Sección para Grados de rotación
         _, rotation_slider = self.row_factory.create_parameter_row(
@@ -156,13 +164,18 @@ class ParameterPanelLayout:
 
         # Botón para actualizar todos los parámetros
         update_button = ttk.Button(
-            buttons_frame, 
-            text="Aplicar cambios", 
+            buttons_frame,
+            text="Aplicar cambios",
             command=on_update_parameters,
             style="Accent.TButton"
         )
         update_button.pack(side=tk.LEFT, padx=5, pady=5, fill="x", expand=True)
-        self.tooltips.append(ToolTip(update_button, "Aplica todos los cambios de parámetros al procesamiento de video"))
+        self.tooltips.append(
+            ToolTip(
+                update_button,
+                "Aplica todos los cambios de parámetros al procesamiento de video"
+            )
+        )
 
         # Botón para restaurar valores predeterminados
         reset_button = ttk.Button(
@@ -172,7 +185,12 @@ class ParameterPanelLayout:
             style="Default.TButton"
         )
         reset_button.pack(side=tk.LEFT, padx=5, pady=5, fill="x", expand=True)
-        self.tooltips.append(ToolTip(reset_button, "Restaura los valores originales de los parámetros"))
+        self.tooltips.append(
+            ToolTip(
+                reset_button,
+                "Restaura los valores originales de los parámetros"
+            )
+        )
 
         # Segundo frame para botones adicionales
         buttons_frame2 = tk.Frame(self.parent_frame)
@@ -186,11 +204,14 @@ class ParameterPanelLayout:
             style="Save.TButton"
         )
         save_default_button.pack(padx=5, pady=5, fill="x")
-        self.tooltips.append(ToolTip(save_default_button, 
-                              "Guarda los valores actuales como nuevos valores predeterminados para futuras sesiones"))
-        
+        self.tooltips.append(ToolTip(
+            save_default_button,
+            "Guarda los valores actuales como nuevos valores "
+            "predeterminados para futuras sesiones"
+        ))
+
         # Agregar los tooltips creados por el factory
         self.tooltips.extend(self.row_factory.get_tooltips())
-        
+
         self.logger.debug(f"Creados {len(sliders)} controles de parámetros")
         return sliders

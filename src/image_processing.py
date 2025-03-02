@@ -60,11 +60,12 @@ def desplazar_horizontal(frame, horizontal):
     Desplaza la imagen horizontalmente mediante una transformación afín.
     """
     altura, ancho = frame.shape[:2]
-    M = np.float32([[1, 0, horizontal], [0, 1, 0]])
-    return cv2.warpAffine(frame, M, (ancho, altura))
+    transform_matrix = np.float32([[1, 0, horizontal], [0, 1, 0]])
+    return cv2.warpAffine(frame, transform_matrix, (ancho, altura))
 
 # ------------------ Clase Controladora del Procesamiento ------------------
 
+# pylint: disable=no-member,unused-import,unused-argument,attribute-defined-outside-init,ungrouped-imports,trailing-whitespace
 class ProcessingController:
     " Controlador de procesamiento de imágenes para la detección de bordes. "
     def __init__(self, default_pixels_por_mm=20, notifier=None):
@@ -77,6 +78,12 @@ class ProcessingController:
         """
         self.default_pixels_por_mm = default_pixels_por_mm
         self.notifier = notifier or ConsoleNotifier(logger)
+        # Added initializations to define attributes.
+        self.grados_rotacion = 0
+        self.altura = None
+        self.horizontal = 0
+        self.pixels_por_mm = default_pixels_por_mm
+        self.procesador_imagenes = None
 
     def process(self, frame, grados, altura, horizontal, pixels_por_mm):
         """

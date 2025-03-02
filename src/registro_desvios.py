@@ -68,7 +68,7 @@ def inicializar_bd():
         logger.info("Base de datos y tabla inicializadas correctamente.")
 
     except mysql.connector.Error as err:
-        logger.error(f"Error al inicializar la base de datos: {err}")
+        logger.error("Error al inicializar la base de datos: %s", err)
         # Clasificar y registrar errores específicos de MySQL
         error_msg = str(err).lower()
         if "can't connect" in error_msg:
@@ -77,7 +77,7 @@ def inicializar_bd():
             logger.error("Acceso denegado. Verificar credenciales de la base de datos.")
 
     except Exception as e:
-        logger.error(f"Error inesperado durante la inicialización de la BD: {e}")
+        logger.error("Error inesperado durante la inicialización de la BD: %s", e)
 
     finally:
         # Cerrar el cursor de manera segura
@@ -85,7 +85,7 @@ def inicializar_bd():
             try:
                 cursor.close()
             except Exception as e:
-                logger.error(f"Error al cerrar el cursor de la BD: {e}")
+                logger.error("Error al cerrar el cursor de la BD: %s", e)
 
         # Cerrar la conexión de manera segura
         if conn:

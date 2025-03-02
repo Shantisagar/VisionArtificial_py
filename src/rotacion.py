@@ -33,5 +33,5 @@ def rotar_imagen(frame, grados):
         matriz_rotacion = cv2.getRotationMatrix2D(punto_central, grados, 1.0)
         return cv2.warpAffine(frame, matriz_rotacion, (ancho, altura))
     except Exception as e:
-        logger.error(f"Error al rotar la imagen: {e}")
+        logger.error("Error al rotar la imagen: %s", e)
         raise

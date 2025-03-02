@@ -5,7 +5,6 @@ Configura la aplicación e inicia la interfaz gráfica
 """
 
 import sys
-import os
 from src.views.gui_view import GUIView
 from src.controllers.app_controller import AppController
 from utils.logging.dependency_injection import get_logger
@@ -37,8 +36,7 @@ def main():
         try:
             logger = get_logger()
             logger.exception(f"Error al iniciar la aplicación: {e}")
-        except:
-            # Fallback a print si no se pudo obtener el logger
+        except Exception:  # pylint: disable=broad-exception-caught
             print(f"Error crítico: {e}")
         return 1
 

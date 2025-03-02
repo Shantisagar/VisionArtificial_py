@@ -5,7 +5,6 @@ Se encarga exclusivamente de la creación y gestión de componentes visuales.
 """
 
 import tkinter as tk
-from tkinter import ttk
 import logging
 from typing import Dict, Callable, Tuple, List, Optional, Any
 
@@ -18,7 +17,6 @@ class GUIParameterPanelView:
     def __init__(self, parent_frame: tk.Frame, logger: logging.Logger):
         """
         Inicializa la vista del panel de parámetros.
-        
         Args:
             parent_frame: Frame padre donde se crearán los controles
             logger: Logger configurado para registrar eventos
@@ -35,6 +33,7 @@ class GUIParameterPanelView:
         self.paper_color_var = tk.StringVar(value="Blanco")
 
         # Referencias a los controles de la UI
+        self.zoom_scale = None
         self.rotation_slider = None
         self.pixels_slider = None
         self.altura_slider = None
@@ -48,25 +47,38 @@ class GUIParameterPanelView:
             'horizontal': (-500, 500)
         }
 
+        # Selector de color de papel
+        self.paper_color_menu = tk.OptionMenu(
+            self.parent_frame,
+            self.paper_color_var,
+            "Blanco", 
+            "Marrón"
+        )
+
         # Objeto de layout para la construcción de la UI
         self.layout_manager = ParameterPanelLayout(parent_frame, logger)
-        
+
         # Lista para almacenar referencias a tooltips
         self.tooltips: List[ToolTip] = []
-        
+        self.apply_button = None  # Added to fix attribute-defined-outside-init warning
+
         # Callbacks para cuando los controles cambien
         self.on_slider_change_callback: Optional[Callable[[str, float], None]] = None
         self.on_update_parameters_callback: Optional[Callable[[], None]] = None
         self.on_reset_parameters_callback: Optional[Callable[[], None]] = None
         self.on_save_as_default_callback: Optional[Callable[[], None]] = None
-        self.on_entry_validate_callback: Optional[Callable[[str, str], Tuple[bool, Optional[str]]]] = None
+        self.on_entry_validate_callback: Optional[
+            Callable[[str, str], Tuple[bool, Optional[str]]]
+        ] = None
 
-    def set_callbacks(self, 
+    def set_callbacks(self,
                       on_slider_change: Optional[Callable[[str, float], None]] = None,
                       on_update_parameters: Optional[Callable[[], None]] = None,
                       on_reset_parameters: Optional[Callable[[], None]] = None,
                       on_save_as_default: Optional[Callable[[], None]] = None,
-                      on_entry_validate: Optional[Callable[[str, str], Tuple[bool, Optional[str]]]] = None) -> None:
+                      on_entry_validate: Optional[
+                          Callable[[str, str], Tuple[bool, Optional[str]]]
+                      ] = None) -> None:
         """
         Establece los callbacks que serán llamados por eventos de la UI.
         
@@ -83,7 +95,11 @@ class GUIParameterPanelView:
         self.on_save_as_default_callback = on_save_as_default
         self.on_entry_validate_callback = on_entry_validate
 
-    def initialize(self, grados_rotacion: float, pixels_por_mm: float, altura: float, horizontal: float) -> None:
+    def initialize(self,
+                   grados_rotacion: float,
+                   pixels_por_mm: float,
+                   altura: float,
+                   horizontal: float) -> None:
         """
         Inicializa los controles de parámetros con los valores proporcionados.
         
@@ -105,19 +121,39 @@ class GUIParameterPanelView:
         # Crear los controles en la interfaz
         self._create_parameter_inputs()
         self.logger.info("Panel de parámetros inicializado correctamente")
-
-        # Barra de zoom
-        tk.Label(self.parent_frame, text="Zoom").pack()
-        self.zoom_scale = tk.Scale(self.parent_frame, from_=0.1, to=3.0, resolution=0.1, orient=tk.HORIZONTAL, variable=self.zoom_var)
+        tk.Label(self.parent_frame, text="Color de Papel").pack()
+        self.paper_color_menu = tk.OptionMenu(
+            self.parent_frame,
+            self.paper_color_var,
+            "Blanco", 
+            "Marrón"
+        )
+        self.paper_color_menu.pack()
+        self.zoom_scale = tk.Scale(
+            self.parent_frame,
+            from_=0.1,
+            to=3.0,
+            resolution=0.1,
+            orient=tk.HORIZONTAL,
+            variable=self.zoom_var
+        )
+        self.zoom_scale.pack()
         self.zoom_scale.pack()
 
         # Selector de color de papel
         tk.Label(self.parent_frame, text="Color de Papel").pack()
-        self.paper_color_menu = tk.OptionMenu(self.parent_frame, self.paper_color_var, "Blanco", "Marrón")
+        self.paper_color_menu = tk.OptionMenu(
+            self.parent_frame,
+            self.paper_color_var,
+            "Blanco", 
+            "Marrón"
+        )
         self.paper_color_menu.pack()
 
         # Botón para aplicar cambios
-        self.apply_button = tk.Button(self.parent_frame, text="Aplicar Cambios", command=self.apply_changes)
+        self.apply_button = tk.Button(
+            self.parent_frame, text="Aplicar Cambios", command=self.apply_changes
+        )
         self.apply_button.pack()
 
     def update_parameters_display(self, parameters: Dict[str, float]) -> None:
@@ -132,17 +168,17 @@ class GUIParameterPanelView:
             self.grados_rotacion_var.set(str(parameters['grados_rotacion']))
             if hasattr(self, 'rotation_slider') and self.rotation_slider:
                 self.rotation_slider.set(parameters['grados_rotacion'])
-                
+
         if 'pixels_por_mm' in parameters:
             self.pixels_por_mm_var.set(str(parameters['pixels_por_mm']))
             if hasattr(self, 'pixels_slider') and self.pixels_slider:
                 self.pixels_slider.set(parameters['pixels_por_mm'])
-                
+
         if 'altura' in parameters:
             self.altura_var.set(str(parameters['altura']))
             if hasattr(self, 'altura_slider') and self.altura_slider:
                 self.altura_slider.set(parameters['altura'])
-                
+
         if 'horizontal' in parameters:
             self.horizontal_var.set(str(parameters['horizontal']))
             if hasattr(self, 'horizontal_slider') and self.horizontal_slider:
@@ -161,7 +197,7 @@ class GUIParameterPanelView:
             'altura': self.altura_var.get(),
             'horizontal': self.horizontal_var.get()
         }
-    
+
     def update_parameter_text(self, param_name: str, value: str) -> None:
         """
         Actualiza solo el texto de un parámetro específico.
@@ -173,7 +209,7 @@ class GUIParameterPanelView:
         var = getattr(self, f"{param_name}_var", None)
         if var:
             var.set(value)
-    
+
     def update_slider_value(self, param_name: str, value: float) -> None:
         """
         Actualiza el valor de un slider específico.
@@ -191,7 +227,7 @@ class GUIParameterPanelView:
             slider = self.altura_slider
         elif param_name == 'horizontal' and self.horizontal_slider:
             slider = self.horizontal_slider
-            
+
         if slider:
             slider.set(value)
 
@@ -204,7 +240,7 @@ class GUIParameterPanelView:
             'altura': self.altura_var,
             'horizontal': self.horizontal_var
         }
-        
+
         # Delegar la creación de la UI al layout manager
         sliders = self.layout_manager.create_parameter_inputs(
             var_dict,
@@ -214,13 +250,13 @@ class GUIParameterPanelView:
             self._on_save_as_default,
             self._validate_entry
         )
-        
+
         # Almacenar referencias a los sliders
         self.rotation_slider = sliders['grados_rotacion']
         self.pixels_slider = sliders['pixels_por_mm']
         self.altura_slider = sliders['altura']
         self.horizontal_slider = sliders['horizontal']
-        
+
         # Copiar los tooltips creados en el layout manager
         self.tooltips.extend(self.layout_manager.tooltips)
 
@@ -250,7 +286,7 @@ class GUIParameterPanelView:
         """
         if self.on_entry_validate_callback:
             is_valid, error_message = self.on_entry_validate_callback(param_name, value)
-            
+
             # Si hay un mensaje de error, mostrar retroalimentación al usuario
             if not is_valid and error_message:
                 self.logger.warning(f"Valor inválido en {param_name}: {error_message}")

@@ -14,9 +14,9 @@ class VideoCaptureFactory:
     Factory para crear la implementación adecuada de VideoCapture
     según el tipo de fuente especificada.
     """
-    
+
     @staticmethod
-    def create_capture(source: Union[str, int], 
+    def create_capture(source: Union[str, int],
                       fps_limit: Optional[float] = None,
                       logger=None) -> VideoCapture:
         """
@@ -34,7 +34,7 @@ class VideoCaptureFactory:
             ValueError: Si no se puede determinar el tipo de fuente
         """
         logger = logger or get_logger()
-        
+
         # Determinar el tipo de fuente
         if isinstance(source, str) and source.lower().startswith('http'):
             logger.info(f"Creando captura HTTP para: {source}")

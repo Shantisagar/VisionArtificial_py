@@ -1,3 +1,8 @@
+"""
+Path: src/deteccion_bordes.py
+Este módulo implementa una función para encontrar y marcar el borde más significativo en una imagen.
+"""
+
 import numpy as np
 from utils.logging.logger_configurator import LoggerConfigurator
 
@@ -6,9 +11,11 @@ logger = LoggerConfigurator().configure()
 
 def encontrar_borde(frame):
     """
-    Identifica y marca el borde más significativo en el 60% central de la imagen con una línea amarilla.
+    Identifica y marca el borde más significativo en el 60% central de la imagen 
+    con una línea amarilla.
     
-    Calcula el promedio de gris para cada columna en el 60% central y luego identifica la posición del borde
+    Calcula el promedio de gris para cada columna en el 60% central 
+    y luego identifica la posición del borde
     basándose en el cambio máximo en el valor promedio de gris a lo largo de estas columnas.
 
     Parámetros:
@@ -30,17 +37,17 @@ def encontrar_borde(frame):
         # Aplicar el cálculo del promedio de gris solo al 60% central
         grey_avg = calcular_promedio_gris(frame[:, start_col:end_col])
         mean = np.mean(grey_avg, axis=0).reshape(end_col - start_col)
-        
+
         # Calcular las derivadas y encontrar la posición máxima del cambio en el segmento central
         max_x_central = calcular_derivadas(mean).argmax()
-        
+
         # Ajustar la posición del borde al marco completo de la imagen
         max_x = max_x_central + start_col
-        
+
         frame[:, max_x, :] = (255, 255, 0)  # Marca amarilla en la posición del borde
-        return frame,max_x  
+        return frame,max_x
     except Exception as e:
-        logger.error(f"Error al encontrar el borde: {e}")
+        logger.error("Error al encontrar el borde: %s", e)
         raise
 
 def calcular_promedio_gris(image):
@@ -56,12 +63,13 @@ def calcular_promedio_gris(image):
     try:
         return np.mean(image, axis=2).reshape((*image.shape[:2], 1))
     except Exception as e:
-        logger.error(f"Error al calcular el promedio de gris: {e}")
+        logger.error("Error al calcular el promedio de gris: %s", e)
         raise
 
 def calcular_derivadas(array):
     """
-    Calcula la derivada discreta de un array, útil para identificar cambios significativos en los valores.
+    Calcula la derivada discreta de un array, útil para identificar cambios 
+    significativos en los valores.
 
     Parámetros:
     - array (np.ndarray): Array unidimensional de valores numéricos.
@@ -73,5 +81,5 @@ def calcular_derivadas(array):
         left, mid, right = array[:-2], array[1:-1], array[2:]
         return 2 * mid - left - right
     except Exception as e:
-        logger.error(f"Error al calcular derivadas: {e}")
+        logger.error("Error al calcular derivadas: %s", e)
         raise

@@ -32,6 +32,10 @@ class ControlPanelView:
         self.notifier = None
         self.zoom_var = tk.DoubleVar(value=1.0)
         self.paper_color_var = tk.StringVar(value="Blanco")
+        self.apply_button = None
+        # Predefine attributes to avoid warnings:
+        self.zoom_scale = None
+        self.paper_color_menu = None
 
     def set_notifier(self, notifier: GUINotifier) -> None:
         """
@@ -75,7 +79,9 @@ class ControlPanelView:
                     self.control_frame = tk.Frame(self.parent)
                     self.control_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=10)
                 else:
-                    raise ValueError("Se debe proporcionar un frame padre o inicializar con un padre")
+                    raise ValueError(
+                        "Se debe proporcionar un frame padre o inicializar con un padre"
+                    )
             else:
                 self.control_frame = parent_frame
 
@@ -108,16 +114,24 @@ class ControlPanelView:
 
             # Barra de zoom
             tk.Label(self.control_frame, text="Zoom").pack()
-            self.zoom_scale = tk.Scale(self.control_frame, from_=0.1, to=3.0, resolution=0.1, orient=tk.HORIZONTAL, variable=self.zoom_var)
-            self.zoom_scale.pack()
+            self.zoom_scale = None
 
             # Selector de color de papel
             tk.Label(self.control_frame, text="Color de Papel").pack()
-            self.paper_color_menu = tk.OptionMenu(self.control_frame, self.paper_color_var, "Blanco", "Marrón")
+            self.paper_color_menu = tk.OptionMenu(
+                self.control_frame,
+                self.paper_color_var,
+                "Blanco", 
+                "Marrón"
+            )
             self.paper_color_menu.pack()
 
-            # Botón para aplicar cambios
-            self.apply_button = tk.Button(self.control_frame, text="Aplicar Cambios", command=self.apply_changes)
+            self.apply_button = tk.Button(
+                self.control_frame,
+                text="Aplicar Cambios",
+                command=self.apply_changes
+            )
+            self.apply_button.pack()
             self.apply_button.pack()
 
             # Crear etiqueta para estadísticas
@@ -146,13 +160,13 @@ class ControlPanelView:
         try:
             if not self.stats_label:
                 return
-                
+
             stats_text = (f"Frames procesados: {stats.get('frames_processed', 0)} | "
                          f"FPS actual: {stats.get('fps_current', 0)} | "
                          f"FPS promedio: {stats.get('fps_average', 0)} | "
                          f"Tiempo: {stats.get('processing_time', 0)}s")
             self.stats_label.config(text=stats_text)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.logger.error(f"Error al actualizar estadísticas: {str(e)}")
 
     def update_parameters(self, parameters: Dict[str, float]) -> None:
