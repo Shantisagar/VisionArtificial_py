@@ -6,9 +6,8 @@ Implementa la lógica de negocio y coordina la vista y el modelo.
 
 import logging
 from typing import Dict, Any, Optional
-import json
-import os
 from src.views.gui_view import GUIView
+from src.models.config_model import ConfigModel
 
 class AppController:
     """Controlador principal de la aplicación."""
@@ -22,50 +21,10 @@ class AppController:
         """
         self.logger = logger
         self.view: Optional[GUIView] = None
-        self.config_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                                      'config', 'parameters.json')
-        self.config = self._load_config()
-
-    def _load_config(self) -> Dict[str, Any]:
-        """
-        Carga la configuración desde el archivo JSON.
         
-        Returns:
-            Diccionario con la configuración
-        """
-        try:
-            with open(self.config_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            self.logger.error(f"Error al cargar configuración: {e}")
-            # Valores predeterminados
-            return {
-                "video_source": 0,
-                "parameters": {
-                    "grados_rotacion": 0,
-                    "pixels_por_mm": 10,
-                    "altura": 0,
-                    "horizontal": 0
-                }
-            }
-
-    def _save_config(self, config: Dict[str, Any]) -> None:
-        """
-        Guarda la configuración en el archivo JSON.
-        
-        Args:
-            config: Diccionario con la configuración a guardar
-        """
-        try:
-            # Asegurar que existe el directorio
-            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
-
-            with open(self.config_file, 'w', encoding='utf-8') as f:
-                json.dump(config, f, indent=4)
-
-            self.logger.info(f"Configuración guardada en {self.config_file}")
-        except (IOError, OSError) as e:
-            self.logger.error(f"Error al guardar configuración: {e}")
+        # Usar el nuevo modelo de configuración en lugar de manipular directamente los archivos
+        self.config_model = ConfigModel(logger)
+        self.config = self.config_model.load_config()
 
     def setup_view(self, view: GUIView) -> None:
         """
@@ -124,9 +83,9 @@ class AppController:
             # Eliminar la flag especial antes de guardar
             parameters.pop('save_as_default', None)
 
-            # Actualizar la configuración
+            # Actualizar la configuración utilizando el modelo
             self.config["parameters"] = parameters
-            self._save_config(self.config)
+            self.config_model.save_config(self.config)
             return
 
         # Actualizar la vista y el procesamiento con los nuevos valores

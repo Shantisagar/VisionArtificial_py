@@ -11,7 +11,7 @@ import logging
 from typing import Dict, Callable
 from src.views.gui_parameter_panel import GUIParameterPanel
 from src.views.gui_notifier import GUINotifier
-from src.views.interface_view_helpers import create_color_selector  # nuevo import
+from src.views.interface_view_helpers import create_color_selector
 
 class ControlPanelView:
     """Clase responsable de la gestión del panel de control de la aplicación."""

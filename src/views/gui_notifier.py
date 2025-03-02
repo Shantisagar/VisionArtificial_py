@@ -7,7 +7,7 @@ import logging
 import tkinter as tk
 import time
 from enum import Enum, auto
-from typing import Optional  # Removed unused Dict and Any
+from typing import Optional
 
 class NotificationType(Enum):
     """Tipos de notificaciones para la interfaz gráfica."""

@@ -11,7 +11,7 @@ import logging
 from src.video_stream import VideoStreamApp
 from src.views.gui_notifier import GUINotifier
 from src.views.common_gui import create_main_window
-from src.views.interface_view_helpers import get_centered_geometry  # nuevo import
+from src.views.interface_view_helpers import get_centered_geometry
 
 class MainDisplayView:
     """Clase responsable de la gestión de la ventana principal y visualización de video."""
