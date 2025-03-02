@@ -1,25 +1,26 @@
 """
 Path: utils/logging/info_error_filter.py
-Filtro para permitir registros INFO y ERROR, filtrando otros niveles.
+Filtro para limitar los mensajes de log a INFO y ERROR.
+Permite controlar la salida de logging según el nivel de los mensajes.
 """
 
 import logging
 
 class InfoErrorFilter(logging.Filter):
     """
-    Filtro que permite solo registros con nivel INFO y ERROR.
-    Útil para separar logs informativos y errores críticos.
+    Filtro que solo permite mensajes de nivel INFO y ERROR.
+    Útil para separar flujos de log según su importancia.
     """
     
     def filter(self, record):
         """
-        Filtra registros basados en su nivel.
+        Implementación del método filter.
         
         Args:
-            record: Registro de log a evaluar
+            record: El registro de log a evaluar
             
         Returns:
-            True si el registro debe ser incluido, False en caso contrario
+            bool: True si el registro debe ser incluido, False en caso contrario
         """
-        # Permitir INFO (20) y ERROR (40)
-        return record.levelno == logging.INFO or record.levelno == logging.ERROR
+        # Permitir mensajes de nivel INFO y ERROR
+        return record.levelno in (logging.INFO, logging.ERROR)

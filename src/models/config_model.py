@@ -21,15 +21,17 @@ class ConfigModel:
             config_path: Ruta al archivo de configuración (opcional)
         """
         self.logger = logger
-        
+
         # Si no se especifica una ruta, usar la ruta predeterminada en el directorio config
         if config_path is None:
             base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
             self.config_file = os.path.join(base_path, 'config', 'parameters.json')
         else:
             self.config_file = config_path
-            
-        self.logger.debug(f"Modelo de configuración inicializado con archivo: {self.config_file}")
+
+        self.logger.debug(f"ConfigModel inicializado con archivo de configuración: {self.config_file}")
+        self.logger.debug(f"Ruta base del proyecto: {os.path.dirname(os.path.dirname(os.path.dirname(__file__)))}")
+        self.logger.debug(f"Directorio actual de trabajo: {os.getcwd()}")
 
     def load_config(self) -> Dict[str, Any]:
         """
@@ -38,22 +40,24 @@ class ConfigModel:
         Returns:
             Diccionario con la configuración
         """
+        self.logger.debug(f"Intentando cargar configuración desde: {self.config_file}")
         try:
             with open(self.config_file, 'r', encoding='utf-8') as f:
+                self.logger.debug("Archivo de configuración abierto correctamente")
                 config = json.load(f)
+                self.logger.debug(f"Configuración cargada: {config}")
                 self.logger.info(f"Configuración cargada desde {self.config_file}")
                 return config
         except FileNotFoundError:
+            self.logger.debug(f"Archivo no encontrado: {self.config_file}")
             self.logger.warning(
                 f"Archivo de configuración no encontrado: {self.config_file}. "
                 "Se usarán valores predeterminados."
             )
             return self._get_default_config()
         except json.JSONDecodeError as e:
+            self.logger.debug(f"Error de formato JSON: {e}, línea: {e.lineno}, columna: {e.colno}")
             self.logger.error(f"Error al decodificar el archivo de configuración: {e}")
-            return self._get_default_config()
-        except Exception as e:
-            self.logger.error(f"Error inesperado al cargar configuración: {e}")
             return self._get_default_config()
 
     def save_config(self, config: Dict[str, Any]) -> bool:
@@ -66,16 +70,23 @@ class ConfigModel:
         Returns:
             bool: True si se guardó correctamente, False en caso contrario
         """
+        self.logger.debug(f"Intentando guardar configuración: {config}")
         try:
             # Asegurar que existe el directorio
+            config_dir = os.path.dirname(self.config_file)
+            self.logger.debug(f"Verificando directorio de configuración: {config_dir}")
             os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+            self.logger.debug("Directorio confirmado")
 
             with open(self.config_file, 'w', encoding='utf-8') as f:
+                self.logger.debug("Archivo abierto para escritura")
                 json.dump(config, f, indent=4)
+                self.logger.debug("Configuración escrita correctamente")
 
             self.logger.info(f"Configuración guardada en {self.config_file}")
             return True
         except (IOError, OSError) as e:
+            self.logger.debug(f"Excepción al guardar: {type(e).__name__}, {str(e)}")
             self.logger.error(f"Error al guardar configuración: {e}")
             return False
 
@@ -95,6 +106,7 @@ class ConfigModel:
                 "horizontal": 0
             }
         }
+        self.logger.debug(f"Generando configuración predeterminada: {default_config}")
         self.logger.info("Usando configuración predeterminada")
         return default_config
 
@@ -105,8 +117,11 @@ class ConfigModel:
         Returns:
             Diccionario con los parámetros
         """
+        self.logger.debug("Solicitando parámetros de configuración")
         config = self.load_config()
-        return config.get("parameters", self._get_default_config()["parameters"])
+        parameters = config.get("parameters", self._get_default_config()["parameters"])
+        self.logger.debug(f"Parámetros obtenidos: {parameters}")
+        return parameters
 
     def get_video_source(self) -> Any:
         """
@@ -115,5 +130,8 @@ class ConfigModel:
         Returns:
             Índice o URL de la fuente de video
         """
+        self.logger.debug("Solicitando fuente de video")
         config = self.load_config()
-        return config.get("video_source", self._get_default_config()["video_source"])
+        video_source = config.get("video_source", self._get_default_config()["video_source"])
+        self.logger.debug(f"Fuente de video: {video_source}")
+        return video_source

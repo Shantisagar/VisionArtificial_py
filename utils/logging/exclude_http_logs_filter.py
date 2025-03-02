@@ -1,6 +1,7 @@
 """
 Path: utils/logging/exclude_http_logs_filter.py
-Filtro para excluir logs relacionados con peticiones HTTP.
+Filtro para excluir mensajes de log relacionados con HTTP.
+Evita llenar los logs con peticiones HTTP que pueden ser muy numerosas.
 """
 
 import logging
@@ -8,22 +9,24 @@ import logging
 class ExcludeHTTPLogsFilter(logging.Filter):
     """
     Filtro que excluye mensajes de log relacionados con peticiones HTTP.
-    Útil para reducir el ruido en los logs cuando se utilizan clientes HTTP.
+    Útil para reducir ruido en los logs cuando hay muchas peticiones web.
     """
     
     def filter(self, record):
         """
-        Filtra registros basados en su contenido.
+        Implementación del método filter.
         
         Args:
-            record: Registro de log a evaluar
+            record: El registro de log a evaluar
             
         Returns:
-            True si el registro debe ser incluido, False en caso contrario
+            bool: True si el registro debe ser incluido, False en caso contrario
         """
-        # Excluir mensajes que contengan palabras clave relacionadas con HTTP
-        keywords = ['http://', 'https://', 'GET ', 'POST ', 'urllib3', 'requests', 'HTTP']
-        for keyword in keywords:
-            if keyword in record.getMessage():
-                return False
+        # Excluir mensajes que contienen palabras clave de HTTP
+        http_keywords = ['http', 'HTTP', 'GET', 'POST', 'PUT', 'DELETE']
+        
+        # Si el mensaje contiene alguna de las palabras clave, no lo incluimos
+        if any(keyword in record.getMessage() for keyword in http_keywords):
+            return False
+            
         return True

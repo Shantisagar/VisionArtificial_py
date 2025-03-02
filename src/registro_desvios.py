@@ -117,7 +117,7 @@ def registrar_desvio(desvio_mm, tolerancia, notifier: Optional[Notifier] = None)
     notifier = notifier or default_notifier
 
     # Registrar en el logger que se está procesando un desvío
-    logger.debug("Procesando desvío de %s mm (tolerancia: %s mm)", desvio_mm, tolerancia)
+    #logger.debug("Procesando desvío de %s mm (tolerancia: %s mm)", desvio_mm, tolerancia)
 
     # Generar la notificación del desvío
     mensaje = notifier.notify_desvio(desvio_mm, tolerancia)
@@ -143,7 +143,7 @@ def enviar_datos(desvio_mm):
         # Convertir float64 de NumPy a float nativo de Python
         desvio_mm_float = float(desvio_mm)
 
-        logger.debug("Intentando guardar desvío de %s mm en la BD...", desvio_mm_float)
+        #logger.debug("Intentando guardar desvío de %s mm en la BD...", desvio_mm_float)
 
         # Conectar a la base de datos
         conn = mysql.connector.connect(
@@ -199,7 +199,7 @@ def enviar_datos(desvio_mm):
         if cursor:
             try:
                 cursor.close()
-                logger.debug("Cursor de la base de datos cerrado correctamente.")
+                #logger.debug("Cursor de la base de datos cerrado correctamente.")
             except Exception as e:
                 logger.error("Error al cerrar el cursor de la BD: %s", e)
 
@@ -208,7 +208,7 @@ def enviar_datos(desvio_mm):
             try:
                 if hasattr(conn, 'is_connected') and conn.is_connected():
                     conn.close()
-                    logger.debug("Conexión a la base de datos cerrada correctamente.")
+                    #logger.debug("Conexión a la base de datos cerrada correctamente.")
             except Exception as e:
                 logger.error("Error al cerrar la conexión de BD: %s", e)
 
