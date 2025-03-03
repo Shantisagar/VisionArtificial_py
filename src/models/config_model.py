@@ -8,6 +8,7 @@ import json
 import os
 import logging
 from typing import Dict, Any, Optional
+from utils.logging.error_manager import handle_exception
 
 class ConfigModel:
     """Clase responsable de gestionar la configuración de la aplicación."""
@@ -29,8 +30,11 @@ class ConfigModel:
         else:
             self.config_file = config_path
 
-        self.logger.debug(f"ConfigModel inicializado con archivo de configuración: {self.config_file}")
-        self.logger.debug(f"Ruta base del proyecto: {os.path.dirname(os.path.dirname(os.path.dirname(__file__)))}")
+        self.logger.debug(
+            f"ConfigModel inicializado con archivo de configuración: {self.config_file}"
+        )
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        self.logger.debug(f"Ruta base del proyecto: {base_path}")
         self.logger.debug(f"Directorio actual de trabajo: {os.getcwd()}")
 
     def load_config(self) -> Dict[str, Any]:
@@ -48,8 +52,13 @@ class ConfigModel:
                 self.logger.debug(f"Configuración cargada: {config}")
                 self.logger.info(f"Configuración cargada desde {self.config_file}")
                 return config
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             self.logger.debug(f"Archivo no encontrado: {self.config_file}")
+            handle_exception(e, {
+                "component": "ConfigModel", 
+                "method": "load_config",
+                "filepath": self.config_file
+            })
             self.logger.warning(
                 f"Archivo de configuración no encontrado: {self.config_file}. "
                 "Se usarán valores predeterminados."
@@ -57,6 +66,13 @@ class ConfigModel:
             return self._get_default_config()
         except json.JSONDecodeError as e:
             self.logger.debug(f"Error de formato JSON: {e}, línea: {e.lineno}, columna: {e.colno}")
+            handle_exception(e, {
+                "component": "ConfigModel", 
+                "method": "load_config",
+                "filepath": self.config_file,
+                "line": e.lineno,
+                "column": e.colno
+            })
             self.logger.error(f"Error al decodificar el archivo de configuración: {e}")
             return self._get_default_config()
 
@@ -87,6 +103,12 @@ class ConfigModel:
             return True
         except (IOError, OSError) as e:
             self.logger.debug(f"Excepción al guardar: {type(e).__name__}, {str(e)}")
+            handle_exception(e, {
+                "component": "ConfigModel", 
+                "method": "save_config",
+                "filepath": self.config_file,
+                "config": str(config)
+            })
             self.logger.error(f"Error al guardar configuración: {e}")
             return False
 

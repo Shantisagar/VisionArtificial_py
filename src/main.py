@@ -7,6 +7,7 @@ Configura la aplicación e inicia la interfaz gráfica
 from src.views.gui_view import GUIView
 from src.controllers.app_controller import AppController
 from utils.logging.dependency_injection import get_logger
+from utils.logging.error_manager import init_error_manager, handle_exception, critical_error
 
 def main():
     """Función principal que inicia la aplicación"""
@@ -14,6 +15,10 @@ def main():
         # Obtener logger centralizado
         logger = get_logger()
         logger.info("Iniciando aplicación de Visión Artificial...")
+        
+        # Inicializar el gestor de errores con el logger
+        init_error_manager(logger)
+        logger.info("Gestor de errores inicializado")
 
         # Crear controlador
         controller = AppController(logger)
@@ -31,10 +36,10 @@ def main():
         return 0
 
     except (OSError, RuntimeError) as e:
-        # Intentar usar el logger si está disponible
-        try:
-            logger = get_logger()
-            logger.exception(f"Error al iniciar la aplicación: {e}")
-        except Exception:  # pylint: disable=broad-exception-caught
-            print(f"Error crítico: {e}")
+        # Usar el gestor de errores para manejar la excepción
+        critical_error(e, {"context": "main", "fase": "inicialización"})
+        return 1
+    except Exception as e:  # Capturar cualquier otra excepción inesperada
+        # Usar el gestor de errores para manejar excepciones desconocidas
+        critical_error(e, {"context": "main", "tipo": "excepción no controlada"})
         return 1

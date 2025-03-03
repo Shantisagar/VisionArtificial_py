@@ -15,7 +15,12 @@ from utils.logging.logger_factory import LoggerFactory
 class LoggerConfigurator:
     """Configurador de logging para la aplicación."""
 
-    def __init__(self, log_path: str = "logs", log_level: int = logging.INFO, logger_name: str = "vision_artificial"):
+    def __init__(
+        self,
+        log_path: str = "logs",
+        log_level: int = logging.INFO,
+        logger_name: str = "vision_artificial"
+    ):
         """
         Inicializa el configurador de logging.
         
@@ -31,9 +36,12 @@ class LoggerConfigurator:
 
         # Crear el directorio de logs si no existe
         os.makedirs(log_path, exist_ok=True)
-        
+
         # No podemos usar self.logger aquí porque aún no existe
-        print(f"LoggerConfigurator inicializado: path={log_path}, level={log_level}, name={logger_name}")
+        print(
+            f"LoggerConfigurator inicializado: path={log_path}, "
+            f"level={log_level}, name={logger_name}"
+        )
 
     def register_filter(self, filter_class: Any) -> None:
         """
@@ -99,11 +107,13 @@ class LoggerConfigurator:
 
             return logger
 
-        except Exception as e:
+        except (FileNotFoundError, json.JSONDecodeError, PermissionError) as e:
             print(f"Error al cargar configuración desde JSON: {e}")
             print("Fallback a configuración manual.")
             fallback_logger = self.configure()
-            fallback_logger.error(f"Error al cargar configuración desde JSON: {e}, usando configuración manual")
+            fallback_logger.error(
+                "Error al cargar configuración desde JSON: %s, usando configuración manual", e
+            )
             return fallback_logger
 
     def configure(self, filters: Optional[List[Any]] = None) -> logging.Logger:
@@ -187,7 +197,7 @@ class LoggerConfigurator:
 
         # Ahora que tenemos un logger configurado, podemos usarlo
         logger.debug("Logger configurado manualmente")
-        
+
         return logger
 
 

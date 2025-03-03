@@ -8,6 +8,7 @@ import logging
 from typing import Dict, Optional
 from src.views.gui_view import GUIView
 from src.models.config_model import ConfigModel
+from utils.logging.error_manager import handle_exception, critical_error
 
 class AppController:
     """Controlador principal de la aplicación."""
@@ -41,37 +42,46 @@ class AppController:
         self.logger.debug(f"Configurando vista: {view.__class__.__name__}")
         self.view = view
 
-        # Este es el paso clave - conectar el callback para actualizar parámetros
-        self.logger.debug("Conectando callback para actualización de parámetros")
-        self.view.set_parameters_update_callback(self.on_parameters_update)
-        self.logger.debug("Callback conectado correctamente")
+        try:
+            # Este es el paso clave - conectar el callback para actualizar parámetros
+            self.logger.debug("Conectando callback para actualización de parámetros")
+            self.view.set_parameters_update_callback(self.on_parameters_update)
+            self.logger.debug("Callback conectado correctamente")
 
-        # Inicializar la interfaz con los valores de configuración
-        video_source = self.config.get("video_source", 0)
-        params = self.config.get("parameters", {})
+            # Inicializar la interfaz con los valores de configuración
+            video_source = self.config.get("video_source", 0)
+            params = self.config.get("parameters", {})
 
-        grados_rotacion = params.get("grados_rotacion", 0)
-        pixels_por_mm = params.get("pixels_por_mm", 10)
-        altura = params.get("altura", 0)
-        horizontal = params.get("horizontal", 0)
+            grados_rotacion = params.get("grados_rotacion", 0)
+            pixels_por_mm = params.get("pixels_por_mm", 10)
+            altura = params.get("altura", 0)
+            horizontal = params.get("horizontal", 0)
 
-        self.logger.debug(
-            f"Inicializando UI con: video={video_source}, rotación={grados_rotacion}, "
-            f"píxeles/mm={pixels_por_mm}, altura={altura}, horizontal={horizontal}"
-        )
+            self.logger.debug(
+                f"Inicializando UI con: video={video_source}, rotación={grados_rotacion}, "
+                f"píxeles/mm={pixels_por_mm}, altura={altura}, horizontal={horizontal}"
+            )
 
-        self.logger.debug("Llamando a inicializar_ui en la vista")
-        self.view.inicializar_ui(
-            video_source,
-            grados_rotacion,
-            altura,
-            horizontal,
-            pixels_por_mm
-        )
-        self.logger.debug("Vista inicializada correctamente")
+            self.logger.debug("Llamando a inicializar_ui en la vista")
+            self.view.inicializar_ui(
+                video_source,
+                grados_rotacion,
+                altura,
+                horizontal,
+                pixels_por_mm
+            )
+            self.logger.debug("Vista inicializada correctamente")
 
-        self.logger.info("Vista configurada correctamente")
-        self.logger.debug("Proceso de setup_view completado")
+            self.logger.info("Vista configurada correctamente")
+            self.logger.debug("Proceso de setup_view completado")
+        except Exception as e:
+            context = {
+                "component": "AppController",
+                "method": "setup_view",
+                "view_type": view.__class__.__name__
+            }
+            handle_exception(e, context)
+            raise  # Re-lanzamos para mantener el flujo de control original
 
     def on_parameters_update(self, parameters: Dict[str, float]) -> None:
         """
@@ -138,10 +148,20 @@ class AppController:
     def run(self) -> None:
         """Inicia la ejecución de la aplicación."""
         self.logger.debug("Iniciando ejecución de la aplicación")
-        if self.view:
-            self.logger.debug("Llamando a ejecutar() en la vista")
-            self.view.ejecutar()
-            self.logger.debug("La vista ha terminado de ejecutarse")
-        else:
-            self.logger.error("No se puede ejecutar la aplicación sin una vista configurada")
-            self.logger.debug("Error crítico: intento de ejecutar sin vista configurada")
+        try:
+            if self.view:
+                self.logger.debug("Llamando a ejecutar() en la vista")
+                self.view.ejecutar()
+                self.logger.debug("La vista ha terminado de ejecutarse")
+            else:
+                error_msg = "No se puede ejecutar la aplicación sin una vista configurada"
+                self.logger.error(error_msg)
+                raise RuntimeError(error_msg)
+        except Exception as e:
+            context = {
+                "component": "AppController",
+                "method": "run",
+                "has_view": self.view is not None
+            }
+            critical_error(e, context)
+            raise  # Re-lanzamos para permitir que el main pueda manejarlo
