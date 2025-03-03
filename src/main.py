@@ -7,7 +7,7 @@ Configura la aplicación e inicia la interfaz gráfica
 from src.views.gui_view import GUIView
 from src.controllers.app_controller import AppController
 from utils.logging.dependency_injection import get_logger
-from utils.logging.error_manager import init_error_manager, handle_exception, critical_error
+from utils.logging.error_manager import init_error_manager, critical_error
 
 def main():
     """Función principal que inicia la aplicación"""
@@ -15,7 +15,7 @@ def main():
         # Obtener logger centralizado
         logger = get_logger()
         logger.info("Iniciando aplicación de Visión Artificial...")
-        
+
         # Inicializar el gestor de errores con el logger
         init_error_manager(logger)
         logger.info("Gestor de errores inicializado")
@@ -39,7 +39,7 @@ def main():
         # Usar el gestor de errores para manejar la excepción
         critical_error(e, {"context": "main", "fase": "inicialización"})
         return 1
-    except Exception as e:  # Capturar cualquier otra excepción inesperada
+    except (ValueError, TypeError) as e:  # Capturar excepciones específicas
         # Usar el gestor de errores para manejar excepciones desconocidas
-        critical_error(e, {"context": "main", "tipo": "excepción no controlada"})
+        critical_error(e, {"context": "main", "tipo": "excepción específica", "detalle": str(e)})
         return 1

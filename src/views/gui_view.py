@@ -48,6 +48,7 @@ class GUIView:
 
         # Lista para almacenar referencias a tooltips
         self.tooltips = []
+        self.initial_params = {}
         self.logger.debug("GUIView inicializado")
 
     def set_parameters_update_callback(self, callback: Callable[[Dict[str, float]], None]) -> None:
@@ -57,8 +58,13 @@ class GUIView:
         Args:
             callback: Función a llamar con los nuevos parámetros
         """
+        # Validación más robusta para el callback
         if not callback:
             self.logger.warning("Se intentó establecer un callback nulo")
+            return
+
+        if not callable(callback):
+            self.logger.error(f"El callback proporcionado no es callable: {type(callback)}")
             return
 
         callback_name = callback.__name__ if hasattr(callback, '__name__') else 'anónimo'
@@ -66,9 +72,22 @@ class GUIView:
         self.on_parameters_update = callback
 
         # Propagar el callback al panel de control si ya está inicializado
+        self._propagate_callback_to_control_panel(callback)
+
+    def _propagate_callback_to_control_panel(self, callback: Callable) -> None:
+        """
+        Propaga el callback al panel de control si está inicializado.
+        
+        Args:
+            callback: Callback a propagar
+        """
         if self.control_panel:
             self.logger.debug("Propagando callback al panel de control")
-            self.control_panel.set_parameters_update_callback(callback)
+            try:
+                self.control_panel.set_parameters_update_callback(callback)
+                self.logger.debug("Callback propagado correctamente")
+            except (AttributeError, TypeError) as e:
+                self.logger.error(f"Error al propagar callback al panel de control: {e}")
         else:
             self.logger.debug(
                 "Control panel no inicializado aún, el callback se propagará "
@@ -89,21 +108,10 @@ class GUIView:
         self.logger.debug(f"Inicializando UI: video={video_url}, rotación={grados_rotacion}, "
                          f"altura={altura}, horizontal={horizontal}, píxeles/mm={pixels_por_mm}")
         try:
-            # Configurar la ventana principal
-            self._setup_main_window()
+            # Iniciar el proceso de configuración de la UI
+            self._init_ui_with_params(video_url, grados_rotacion, altura, horizontal, pixels_por_mm)
 
-            # Crear estructura de layout básica
-            main_frame, video_column, control_column = self._create_layout()
-
-            # Inicializar componentes
-            self._initialize_components(
-                video_column, control_column, video_url,
-                grados_rotacion, altura, horizontal, pixels_por_mm
-            )
-
-            # Configurar actualizaciones periódicas
-            self._schedule_updates()
-
+            # Registrar éxito en la inicialización
             self.logger.info("Interfaz gráfica inicializada correctamente.")
             self.notifier.notify_info("Interfaz gráfica iniciada")
         except (tk.TclError, AttributeError) as e:
@@ -111,10 +119,63 @@ class GUIView:
             self.logger.error(f"Error al inicializar la interfaz gráfica: {e}")
             raise
 
+    def _init_ui_with_params(self, video_url, grados_rotacion, altura, horizontal, pixels_por_mm):
+        """
+        Configura todos los componentes de la interfaz con los parámetros proporcionados.
+        
+        Args:
+            video_url: URL o índice de la fuente de video
+            grados_rotacion: Grados de rotación para la imagen
+            altura: Ajuste vertical para la imagen
+            horizontal: Ajuste horizontal para la imagen
+            pixels_por_mm: Relación de píxeles por milímetro
+        """
+        # Configurar la ventana principal
+        self._setup_main_window()
+
+        # Crear estructura de layout básica
+        _, video_column, control_column = self._create_layout()
+
+        # Guardar los parámetros iniciales para posible uso futuro
+        self._save_initial_parameters(
+            video_url, grados_rotacion, altura, horizontal, pixels_por_mm
+        )
+
+        # Inicializar componentes
+        self._initialize_components(
+            video_column, control_column, video_url,
+            grados_rotacion, altura, horizontal, pixels_por_mm
+        )
+
+        # Configurar actualizaciones periódicas
+        self._schedule_updates()
+
+    def _save_initial_parameters(
+        self, video_url, grados_rotacion, altura, horizontal, pixels_por_mm
+    ):
+        """
+        Guarda los parámetros iniciales para posible uso futuro.
+        
+        Args:
+            video_url: URL o índice de la fuente de video
+            grados_rotacion: Grados de rotación para la imagen
+            altura: Ajuste vertical para la imagen
+            horizontal: Ajuste horizontal para la imagen
+            pixels_por_mm: Relación de píxeles por milímetro
+        """
+        self.initial_params = {
+            "video_url": video_url,
+            "grados_rotacion": grados_rotacion,
+            "altura": altura,
+            "horizontal": horizontal,
+            "pixels_por_mm": pixels_por_mm
+        }
+        self.logger.debug(f"Parámetros iniciales guardados: {self.initial_params}")
+
     def _setup_main_window(self):
         """Configura la ventana principal de la aplicación."""
         self.logger.debug("Configurando ventana principal")
-        
+
         # Crear y configurar ventana root
         self.logger.debug("Creando instancia de Tk")
         self.root = tk.Tk()
@@ -140,16 +201,16 @@ class GUIView:
         Crea la estructura básica de layouts para la interfaz.
         """
         self.logger.debug("Creando estructura básica de layouts")
-        
+
         # Crear el frame principal
         main_frame = self._create_main_frame()
-        
+
         # Configurar las columnas para el layout
         self._configure_column_weights(main_frame)
-        
+
         # Crear las columnas para controles y video
         control_column, video_column = self._create_content_columns(main_frame)
-        
+
         return main_frame, video_column, control_column
 
     def _create_main_frame(self):
@@ -159,14 +220,14 @@ class GUIView:
         self.logger.debug("Creando frame principal")
         main_frame = tk.Frame(self.root)
         main_frame.grid(row=0, column=0, sticky='nsew')
-        
+
         # Configurar el root y el frame principal para que se expandan
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
         main_frame.grid_rowconfigure(0, weight=1)
-        
+
         return main_frame
-        
+
     def _configure_column_weights(self, main_frame):
         """
         Configura los pesos de las columnas en el frame principal.
@@ -178,7 +239,7 @@ class GUIView:
         # Dar un peso menor a la columna de controles y mayor al video
         main_frame.grid_columnconfigure(0, weight=2, minsize=250)  # Columna de controles
         main_frame.grid_columnconfigure(1, weight=8)  # Columna de video
-        
+
     def _create_content_columns(self, main_frame):
         """
         Crea las columnas para controles y video en el frame principal.
@@ -190,7 +251,7 @@ class GUIView:
             Tupla con (control_column, video_column)
         """
         self.logger.debug("Creando columnas de contenido")
-        
+
         # Columna izquierda para controles con ancho mínimo
         control_column = tk.Frame(main_frame)
         control_column.grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
@@ -198,7 +259,7 @@ class GUIView:
         # Columna derecha para el video (expansible)
         video_column = tk.Frame(main_frame)
         video_column.grid(row=0, column=1, sticky='nsew', padx=5, pady=5)
-        
+
         return control_column, video_column
 
     def _initialize_components(self, video_column, control_column, video_url,
@@ -216,18 +277,18 @@ class GUIView:
             pixels_por_mm: Relación de píxeles por milímetro
         """
         self.logger.debug("Iniciando inicialización de componentes")
-        
+
         # Inicializar el notificador de la GUI
         self._initialize_notifier()
-        
+
         # Inicializar el panel de control
-        self._initialize_control_panel(control_column, grados_rotacion, 
+        self._initialize_control_panel(control_column, grados_rotacion,
                                       pixels_por_mm, altura, horizontal)
-        
+
         # Inicializar la vista de visualización principal
-        self._initialize_main_display(video_column, video_url, grados_rotacion, 
+        self._initialize_main_display(video_column, video_url, grados_rotacion,
                                      altura, horizontal, pixels_por_mm)
-        
+
         # Configurar callbacks entre componentes
         self._configure_component_callbacks()
 
@@ -237,7 +298,7 @@ class GUIView:
         self.notifier = GUINotifier(self.logger)
         self.logger.debug("GUINotifier inicializado")
 
-    def _initialize_control_panel(self, control_column, grados_rotacion, 
+    def _initialize_control_panel(self, control_column, grados_rotacion,
                                  pixels_por_mm, altura, horizontal):
         """
         Inicializa el panel de control.
@@ -255,7 +316,7 @@ class GUIView:
         self.control_panel.initialize(None, grados_rotacion, pixels_por_mm, altura, horizontal)
         self.logger.debug("ControlPanelView inicializado")
 
-    def _initialize_main_display(self, video_column, video_url, grados_rotacion, 
+    def _initialize_main_display(self, video_column, video_url, grados_rotacion,
                                 altura, horizontal, pixels_por_mm):
         """
         Inicializa la vista de visualización principal.
