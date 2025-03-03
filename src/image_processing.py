@@ -4,8 +4,6 @@ Módulo de procesamiento de imágenes que incluye funciones de transformación,
 detección de bordes y anotación gráfica.
 """
 
-# pylint: disable=too-many-positional-arguments, wrong-import-order
-
 # Standard library imports
 import datetime
 

@@ -64,7 +64,7 @@ class GUIView:
         callback_name = callback.__name__ if hasattr(callback, '__name__') else 'anónimo'
         self.logger.debug(f"Estableciendo callback de actualización de parámetros: {callback_name}")
         self.on_parameters_update = callback
-        
+
         # Propagar el callback al panel de control si ya está inicializado
         if self.control_panel:
             self.logger.debug("Propagando callback al panel de control")
@@ -139,20 +139,26 @@ class GUIView:
         Returns:
             tuple: (main_frame, video_column, control_column)
         """
-        # Crear frame principal con dos columnas
+        # Crear frame principal con grid
         self.logger.debug("Creando frames para UI")
         main_frame = tk.Frame(self.root)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        main_frame.grid(row=0, column=0, sticky='nsew')
+        
+        # Configurar el grid para que se expanda
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(1, weight=1)  # La columna del video tiene peso 1
 
-        # Columna izquierda para el video
-        self.logger.debug("Creando columna para video")
-        video_column = tk.Frame(main_frame)
-        video_column.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # Columna derecha para controles
+        # Columna izquierda para controles
         self.logger.debug("Creando columna para controles")
         control_column = tk.Frame(main_frame)
-        control_column.pack(side=tk.RIGHT, fill=tk.Y, padx=10)
+        control_column.grid(row=0, column=0, sticky='ns', padx=5, pady=5)
+
+        # Columna derecha para el video (expansible)
+        self.logger.debug("Creando columna para video")
+        video_column = tk.Frame(main_frame)
+        video_column.grid(row=0, column=1, sticky='nsew', padx=5, pady=5)
 
         return main_frame, video_column, control_column
 

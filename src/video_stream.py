@@ -1,275 +1,135 @@
-# pylint: disable=broad-exception-caught, wrong-import-order, too-many-instance-attributes, too-many-arguments, too-many-positional-arguments
 """
 Path: src/video_stream.py
-Módulo de transmisión de video que separa la captura y el procesamiento
-de imágenes del hilo de la interfaz. Se implementa la sincronización y control
-de calidad de frames mediante una cola, y se agrega una gestión robusta de
-errores y backoff en la captura HTTP.
+Módulo de transmisión de video que utiliza VideoStreamModel.
 """
 
-# Standard library imports
 import tkinter as tk
-import threading
-import queue
-
-# Third-party imports
 from PIL import Image, ImageTk
+import time
 
-# Local application imports
-from src.controllers.video_processor import VideoProcessor
-from src.capture.video_capture_factory import VideoCaptureFactory
-from src.views.notifier import ConsoleNotifier
-from utils.logging.logger_configurator import get_logger
+from src.model.video_stream_model import VideoStreamModel
 
 class VideoStreamApp:
-    "Esta clase se encarga de la transmisión de video y la actualización de la interfaz gráfica."
+    "Aplicación de transmisión de video."
     def __init__(self, root, default_video_url, grados_rotacion, altura,
                  horizontal, pixels_por_mm, logger=None, notifier=None):
-        """
-        Inicializa la aplicación de transmisión de video.
-        Se inyectan las dependencias y se separan la captura y actualización de UI.
-        
-        Args:
-            root: Raíz de la interfaz Tkinter
-            default_video_url: URL o índice de la fuente de video
-            grados_rotacion: Grados de rotación para la imagen
-            altura: Ajuste vertical para la imagen
-            horizontal: Ajuste horizontal para la imagen
-            pixels_por_mm: Relación de píxeles por milímetro
-            logger: Logger configurado (opcional, se usa el global si es None)
-            notifier: Notificador para comunicar mensajes al usuario (opcional)
-        """
+        """Inicializa la aplicación de transmisión de video."""
         self.root = root
-        self.default_video_url = default_video_url
-        self.grados_rotacion = -1 * grados_rotacion
-        self.altura = altura
-        self.horizontal = horizontal
-        self.pixels_por_mm = pixels_por_mm
-        self.logger = logger or get_logger()
-        self.notifier = notifier or ConsoleNotifier(self.logger)
+        self.logger = logger
+        self.running = False
+        self.last_resize_time = 0
+        self.resize_throttle = 0.5  # segundos entre actualizaciones de tamaño
+        self.last_width = 0
+        self.last_height = 0
+        self.resize_cooldown = 500  # milisegundos
+        self.resize_timer = None
 
-        # Inicializar el procesador de video (separación de responsabilidades)
-        self.video_processor = VideoProcessor(
-            grados_rotacion=self.grados_rotacion,
-            altura=self.altura,
-            horizontal=self.horizontal,
-            pixels_por_mm=self.pixels_por_mm,
-            notifier=self.notifier,
-            logger=self.logger
-        )
+        # Crear modelo de video
+        self.model = VideoStreamModel(logger=logger, notifier=notifier)
 
-        self.frame_queue = queue.Queue(maxsize=10)
-        self.running = True
-        self.video_capture = None  # Instancia de VideoCapture
-        self.capture_lock = threading.Lock()  # Lock para proteger operaciones de captura
+        # Inicializar modelo y empezar la captura
+        if not self.model.initialize(
+            default_video_url,
+            grados_rotacion,
+            altura,
+            horizontal,
+            pixels_por_mm
+        ):
+            raise RuntimeError("No se pudo inicializar el modelo de video")
 
         self.setup_ui()
-        self.start_video_capture()
+
+        # Iniciar captura de video automáticamente
+        if not self.model.start():
+            raise RuntimeError("No se pudo iniciar la captura de video")
+
+        self.running = True
 
     def setup_ui(self):
-        """
-        Configura la UI; se crea el componente gráfico que mostrará los frames.
-        """
-        self.panel = tk.Label(self.root)
-        self.panel.pack(padx=10, pady=10)
+        """Configura la UI."""
+        # Crear frame contenedor principal usando grid
+        self.container = tk.Frame(self.root)
+        self.container.grid(row=0, column=0, sticky='nsew')
+        
+        # Configurar grid
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
+
+        # El panel de video usa grid en lugar de pack
+        self.panel = tk.Label(self.container, bg='black')
+        self.panel.grid(row=0, column=0, sticky='nsew')
+        
+        # Configurar eventos de redimensionamiento
+        self.root.bind('<Configure>', self.on_resize)
         self.root.after(50, self.update_frame_from_queue)
 
-    def start_video_capture(self):
-        """
-        Inicializa y arranca la captura de video usando la fábrica.
-        """
-        try:
-            # Crear la instancia adecuada de captura usando la fábrica
-            with self.capture_lock:
-                self.video_capture = VideoCaptureFactory.create_capture(
-                    source=self.default_video_url,
-                    fps_limit=30,  # Limitar a 30 fps para fuentes locales
-                    logger=self.logger
-                )
+    def on_resize(self, event):
+        """Maneja el evento de redimensionamiento de la ventana."""
+        if event.widget == self.root:
+            # Cancelar el timer anterior si existe
+            if self.resize_timer:
+                self.root.after_cancel(self.resize_timer)
+            # Programar nueva actualización
+            self.resize_timer = self.root.after(self.resize_cooldown, self.update_size)
 
-                # Establecer callback para procesar frames
-                self.video_capture.set_frame_callback(self.process_and_enqueue)
+    def on_container_resize(self, event):
+        """Maneja el evento de redimensionamiento del contenedor."""
+        if event.widget == self.container:
+            # Cancelar el timer anterior si existe
+            if self.resize_timer:
+                self.root.after_cancel(self.resize_timer)
+            # Programar nueva actualización
+            self.resize_timer = self.root.after(self.resize_cooldown, self.update_size)
 
-                # Iniciar la captura
-                if not self.video_capture.start():
-                    self.logger.error("No se pudo iniciar la captura de video.")
-                    self.notifier.notify_error("No se pudo iniciar la captura de video")
-                    return
+    def update_size(self):
+        """Actualiza el tamaño objetivo después del cooldown."""
+        width = self.container.winfo_width()
+        height = self.container.winfo_height()
 
-            self.logger.info("Captura de video iniciada correctamente")
-            self.notifier.notify_info("Captura de video iniciada")
-
-        except Exception as e:
-            self.logger.error(f"Error al iniciar la captura de video: {e}")
-            self.notifier.notify_error("Error al iniciar la captura de video", e)
-
-    def process_and_enqueue(self, frame):
-        """
-        Procesa el frame y lo coloca en la cola sincronizada.
-        Este método es llamado desde el hilo de captura.
-        
-        Args:
-            frame: Frame capturado a procesar
-        """
-        try:
-            if not self.running:
-                return
-
-            monitor_width = self.root.winfo_screenwidth()
-            monitor_height = self.root.winfo_screenheight()
-
-            # Escalar el frame usando el procesador de video
-            frame_scaled = self.video_processor.scale_frame_to_size(
-                frame, monitor_width, monitor_height
-            )
-
-            if frame_scaled is not None:
-                # Usar el procesador de video para procesar el frame
-                processed_frame = self.video_processor.process_frame(frame_scaled)
-
-                if processed_frame is not None:
-                    # Vaciar la cola para descartar frames viejos
-                    with self.frame_queue.mutex:
-                        self.frame_queue.queue.clear()
-                    self.frame_queue.put(processed_frame)
-                else:
-                    self.logger.error("Error al procesar el frame.")
-            else:
-                self.logger.error("No se pudo escalar el frame.")
-        except Exception as e:
-            self.logger.error(f"Error de procesamiento de imagen: {e}")
+        # Solo actualizar si hay un cambio significativo
+        if (abs(width - self.last_width) > 10 or 
+            abs(height - self.last_height) > 10):
+            
+            if width > 100 and height > 100:
+                self.model.set_target_size(width, height)
+                self.last_width = width
+                self.last_height = height
 
     def update_frame_from_queue(self):
-        """
-        Extrae el último frame procesado y actualiza la UI.
-        La actualización se agenda en el hilo principal utilizando root.after().
-        """
+        """Actualiza el frame en la UI desde la cola del modelo."""
         try:
-            if not self.frame_queue.empty():
-                latest_frame = None
-                while not self.frame_queue.empty():
-                    latest_frame = self.frame_queue.get_nowait()
-                if latest_frame is not None:
-                    img = Image.fromarray(latest_frame)
-                    imgtk = ImageTk.PhotoImage(image=img)
-                    self.panel.imgtk = imgtk  # Previene recolección de basura
-                    self.panel.config(image=imgtk)
-        except tk.TclError as e:
-            self.logger.error(f"Error de interfaz Tkinter: {e}")
-        except (ValueError, TypeError) as e:
-            self.logger.error(f"Error en conversión de datos de imagen: {e}")
-        except queue.Empty:
-            pass  # Cola vacía, no es un error crítico
-        except Exception as e:
+            frame = self.model.get_latest_frame()
+            if frame is not None:
+                # Ya no necesitamos convertir el frame aquí porque ya viene en RGB
+                img = Image.fromarray(frame)
+                imgtk = ImageTk.PhotoImage(image=img)
+                self.panel.imgtk = imgtk
+                self.panel.config(image=imgtk)
+        except RuntimeError as e:
             self.logger.error(f"Error al actualizar frame: {e}")
         finally:
-            if self.running:
+            if self.model.running:
                 self.root.after(50, self.update_frame_from_queue)
 
-    def stop(self):
-        """
-        Finaliza la ejecución y libera recursos.
-        """
-        self.logger.info("Deteniendo streaming de video...")
-        self.running = False
-
-        # Detener la captura de video
-        with self.capture_lock:
-            if self.video_capture:
-                self.video_capture.stop()
-
-        self.logger.info("Streaming de video detenido correctamente")
-
-    def run(self):
-        """
-        Ejecuta el loop principal de la UI.
-        """
-        try:
-            self.root.mainloop()
-        except tk.TclError as e:
-            self.logger.error(f"Error de Tkinter en el bucle principal: {e}")
-        except RuntimeError as e:
-            self.logger.error(f"Error de runtime en el bucle principal: {e}")
-        finally:
-            self.stop()
-
     def start(self):
-        """Nuevo método start para iniciar el run()."""
-        self.run()
+        """Inicia el bucle principal de la aplicación."""
+        if not self.running:
+            if not self.model.start():
+                raise RuntimeError("No se pudo iniciar la captura de video")
+            self.running = True
+        self.root.mainloop()
+
+    def stop(self):
+        """Detiene la captura y visualización de video."""
+        self.running = False
+        self.model.stop()
 
     def get_processing_stats(self):
-        """
-        Obtiene estadísticas del procesamiento de video.
-        
-        Returns:
-            dict: Diccionario con estadísticas (frames procesados, FPS actual, FPS promedio)
-        """
-        # Delegar la obtención de estadísticas al procesador de video
-        stats = self.video_processor.get_processing_stats()
+        """Obtiene estadísticas del procesamiento de video."""
+        return self.model.get_processing_stats()
 
-        # Añadir información de la fuente de video si está disponible
-        if self.video_capture and self.video_capture.is_running():
-            source_info = self.video_capture.source_info
-            stats['source_type'] = source_info.get('type', 'unknown')
-
-            if 'width' in source_info and 'height' in source_info:
-                if source_info['width'] and source_info['height']:
-                    stats['resolution'] = f"{source_info['width']}x{source_info['height']}"
-
-        return stats
-
-    def update_parameters(self, parameters: dict) -> None:
-        """
-        Actualiza los parámetros de procesamiento en tiempo real.
-        
-        Args:
-            parameters: Diccionario con los nuevos valores de los parámetros
-        """
-        try:
-            # Actualizar los parámetros internos
-            if 'grados_rotacion' in parameters:
-                self.grados_rotacion = -1 * parameters['grados_rotacion']
-
-            if 'altura' in parameters:
-                self.altura = parameters['altura']
-
-            if 'horizontal' in parameters:
-                self.horizontal = parameters['horizontal']
-
-            if 'pixels_por_mm' in parameters:
-                self.pixels_por_mm = parameters['pixels_por_mm']
-
-            # Delegar la actualización de parámetros al procesador de video
-            self.video_processor.update_parameters(parameters)
-
-            self.logger.info(f"Parámetros de procesamiento actualizados: {parameters}")
-        except Exception as e:
-            self.logger.error(f"Error al actualizar parámetros: {str(e)}")
-            # Notificar al usuario a través del notifier si está disponible
-            if self.notifier:
-                self.notifier.notify_error("Error al actualizar parámetros", e)
-
-    def _process_frame(self, frame):
-        """
-        Procesa un frame de video.
-        
-        Args:
-            frame: Frame a procesar
-            
-        Returns:
-            Frame procesado
-        """
-        try:
-            # Delegamos el procesamiento al procesador de video
-            if frame is not None and self.video_processor is not None:
-                return self.video_processor.process_frame(frame)
-            return frame
-        except Exception as e:
-            self.logger.error(f"Error al procesar frame: {str(e)}")
-
-            # Verificar si el notificador está disponible y usar el método modificado
-            if self.notifier:
-                # Usar correctamente el método con dos argumentos
-                self.notifier.notify_error(f"Error al procesar frame: {str(e)}")
-
-            return frame
+    def update_parameters(self, parameters):
+        """Actualiza los parámetros de procesamiento."""
+        self.model.update_parameters(parameters)

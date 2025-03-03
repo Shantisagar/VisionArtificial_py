@@ -78,13 +78,21 @@ class MainDisplayView:
             else:
                 # Si tenemos un widget padre, usamos ese en lugar de crear una nueva ventana
                 self.main_frame = tk.Frame(self.parent)
-                self.main_frame.pack(fill=tk.BOTH, expand=True)
+                self.main_frame.grid(row=0, column=0, sticky='nsew')
+                
+                # Configurar el grid para expansión
+                self.parent.grid_rowconfigure(0, weight=1)
+                self.parent.grid_columnconfigure(0, weight=1)
 
-            # Frame para el video
-            self.video_frame = tk.LabelFrame(self.main_frame, text="Vista de cámara")
-            self.video_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+            # Frame para el video (sin título y con fondo negro)
+            self.video_frame = tk.Frame(self.main_frame, bg='black')
+            self.video_frame.grid(row=0, column=0, sticky='nsew')
+            
+            # Configurar el grid del main_frame
+            self.main_frame.grid_rowconfigure(0, weight=1)
+            self.main_frame.grid_columnconfigure(0, weight=1)
 
-            # Inicializar la aplicación de streaming de video
+            # Inicializar la aplicación de video con el nuevo modelo
             self.app = VideoStreamApp(
                 self.video_frame,
                 video_url,
@@ -96,11 +104,11 @@ class MainDisplayView:
                 self.notifier
             )
 
-            self.logger.info("Interfaz de visualización inicializada correctamente.")
+            self.logger.info("Vista de visualización inicializada correctamente.")
             if self.notifier:
                 self.notifier.notify_info("Visualización de cámara iniciada")
-        except Exception as e:
-            self.logger.error(f"Error al inicializar la interfaz de visualización: {str(e)}")
+        except (ValueError, TypeError, RuntimeError) as e:
+            self.logger.error(f"Error al inicializar vista: {str(e)}")
             raise
 
     def on_closing(self):

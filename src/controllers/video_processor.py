@@ -37,6 +37,10 @@ class VideoProcessor:
             notifier: Notificador para mensajes (opcional)
             logger: Logger configurado (opcional)
         """
+        # Añadir dimensiones por defecto
+        self.default_width = 640
+        self.default_height = 480
+
         self.logger = logger or get_logger()
         self.notifier = notifier or ConsoleNotifier(self.logger)
         self.controller = ProcessingController(notifier=self.notifier)
@@ -161,35 +165,50 @@ class VideoProcessor:
                             target_height: int) -> Optional[np.ndarray]:
         """
         Escala un frame para ajustarlo a un tamaño objetivo manteniendo la relación de aspecto.
-        
-        Args:
-            frame: Frame a escalar
-            target_width: Ancho máximo objetivo
-            target_height: Alto máximo objetivo
-            
-        Returns:
-            Frame escalado o None si hubo un error
         """
         try:
             if frame is None:
                 return None
 
-            image_height, image_width = frame.shape[:2]
-            scale_width = target_width / image_width
-            scale_height = target_height / image_height
-            scale = min(scale_width, scale_height)
+            # Verificar dimensiones válidas
+            if target_width <= 0 or target_height <= 0:
+                return frame
 
-            new_width = int(image_width * scale)
+            # Convertir a RGB primero
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            # Calcular dimensiones para llenar el ancho completamente
+            image_height, image_width = frame_rgb.shape[:2]
+            scale = target_width / image_width
+            
+            new_width = target_width
             new_height = int(image_height * scale)
 
-            resized_frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)  # pylint: disable=no-member
-            return cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)  # pylint: disable=no-member
+            # Si la altura escalada es mayor que el objetivo, escalar por altura
+            if new_height > target_height:
+                scale = target_height / image_height
+                new_height = target_height
+                new_width = int(image_width * scale)
 
-        except cv2.error as e:  # pylint: disable=catching-non-exception
-            self.logger.error(f"Error de OpenCV al escalar la imagen: {e}")
-            return None
-        except (ValueError, TypeError) as e:
-            self.logger.error(f"Error al escalar la imagen: {e}")
+            # Realizar el escalado
+            resized_frame = cv2.resize(
+                frame_rgb, 
+                (new_width, new_height),
+                interpolation=cv2.INTER_AREA
+            )
+
+            # Centrar verticalmente si es necesario
+            if new_height < target_height:
+                y_offset = (target_height - new_height) // 2
+                final_frame = np.zeros((target_height, target_width, 3), dtype=np.uint8)
+                final_frame[y_offset:y_offset+new_height, :new_width] = resized_frame
+            else:
+                final_frame = resized_frame
+
+            return final_frame
+
+        except Exception as e:
+            self.logger.error(f"Error al escalar frame: {str(e)}")
             return None
 
     def get_processing_stats(self) -> Dict[str, Any]:
