@@ -10,7 +10,8 @@ from src.views.video_stream_view import VideoStreamView
 from src.views.notifier import Notifier
 
 class VideoStreamController:
-    "Controlador que coordina la interacción entre el modelo de video y su vista."
+    """Controlador que coordina la interacción entre el modelo de video y su vista."""
+
     def __init__(self, logger: logging.Logger, notifier: Optional[Notifier] = None):
         self.logger = logger
         self.notifier = notifier
@@ -19,8 +20,21 @@ class VideoStreamController:
         self.running = False
 
     def initialize(self, root, video_url: str, grados_rotacion: float,
-                  altura: float, horizontal: float, pixels_por_mm: float) -> bool:
-        """Inicializa el controlador con modelo y vista."""
+                   altura: float, horizontal: float, pixels_por_mm: float) -> bool:
+        """
+        Inicializa el controlador creando e inicializando el modelo y la vista.
+        
+        Args:
+            root: Contenedor principal de la UI.
+            video_url: URL o índice de la fuente de video.
+            grados_rotacion: Grados de rotación para la imagen.
+            altura: Ajuste vertical.
+            horizontal: Ajuste horizontal.
+            pixels_por_mm: Relación de píxeles por milímetro.
+            
+        Returns:
+            bool: True si la inicialización fue exitosa, False en caso contrario.
+        """
         try:
             # Crear e inicializar modelo
             self.model = VideoStreamModel(logger=self.logger, notifier=self.notifier)
@@ -42,18 +56,20 @@ class VideoStreamController:
             return False
 
     def start(self) -> bool:
-        """Inicia la captura y visualización."""
+        """
+        Inicia la captura y visualización.
+        
+        Returns:
+            bool: True si se inicia correctamente, False en caso de error.
+        """
         try:
             if not self.model or not self.view:
                 raise RuntimeError("Controlador no inicializado")
-
             if not self.model.start():
                 raise RuntimeError("Fallo al iniciar la captura")
-
             self.running = True
             self.view.start_updates()
             return True
-
         except (RuntimeError, ValueError) as e:
             self.logger.error(f"Error al iniciar controlador: {e}")
             if self.notifier:
@@ -69,7 +85,10 @@ class VideoStreamController:
             self.view.stop()
 
     def _update_frame(self) -> None:
-        """Callback para actualizar frames desde el modelo a la vista."""
+        """
+        Callback para actualizar frames desde el modelo a la vista.
+        Se llama periódicamente para refrescar la imagen.
+        """
         if self.running and self.model and self.view:
             try:
                 frame = self.model.get_latest_frame()
@@ -79,10 +98,21 @@ class VideoStreamController:
                 self.logger.error(f"Error al actualizar frame: {e}")
 
     def update_parameters(self, parameters: dict) -> None:
-        """Actualiza los parámetros del modelo."""
+        """
+        Actualiza los parámetros del modelo.
+        
+        Args:
+            parameters: Diccionario con los nuevos valores de parámetros.
+        """
         if self.model:
             self.model.update_parameters(parameters)
 
     def get_processing_stats(self) -> dict:
-        """Obtiene estadísticas del procesamiento."""
+        """
+        Obtiene estadísticas del procesamiento.
+        
+        Returns:
+            dict: Estadísticas actuales del modelo, 
+            o un diccionario vacío si el modelo no está inicializado.
+        """
         return self.model.get_processing_stats() if self.model else {}
