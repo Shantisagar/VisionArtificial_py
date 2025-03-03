@@ -57,9 +57,15 @@ class GUIView:
         Args:
             callback: Función a llamar con los nuevos parámetros
         """
+        if not callback:
+            self.logger.warning("Se intentó establecer un callback nulo")
+            return
+
         callback_name = callback.__name__ if hasattr(callback, '__name__') else 'anónimo'
         self.logger.debug(f"Estableciendo callback de actualización de parámetros: {callback_name}")
         self.on_parameters_update = callback
+        
+        # Propagar el callback al panel de control si ya está inicializado
         if self.control_panel:
             self.logger.debug("Propagando callback al panel de control")
             self.control_panel.set_parameters_update_callback(callback)

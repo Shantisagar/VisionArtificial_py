@@ -20,6 +20,7 @@ El análisis se centrará en:
    - Reorganizar archivos en subcarpetas dentro de `src/views/`.
    - Mejorar la depuración con `logger.debug()`.
    - Mover fragmentos de código a `src/models/`  o hacia `src/controllers/`.
+   - Desacoplar la Vista de la Presentación
    - O bien, si todo está en orden y es mejor enfocarse en otros aspectos.
 
 ---

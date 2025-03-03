@@ -26,7 +26,7 @@ class AppController:
         # Usar el nuevo modelo de configuración en lugar de manipular directamente los archivos
         self.logger.debug("Creando instancia de ConfigModel")
         self.config_model = ConfigModel(logger)
-        
+
         self.logger.debug("Cargando configuración inicial")
         self.config = self.config_model.load_config()
         self.logger.debug(f"Configuración inicial cargada: {self.config}")
@@ -59,7 +59,7 @@ class AppController:
             f"Inicializando UI con: video={video_source}, rotación={grados_rotacion}, "
             f"píxeles/mm={pixels_por_mm}, altura={altura}, horizontal={horizontal}"
         )
-        
+
         self.logger.debug("Llamando a inicializar_ui en la vista")
         self.view.inicializar_ui(
             video_source,
@@ -81,7 +81,10 @@ class AppController:
             parameters: Diccionario con los nuevos valores de parámetros
         """
         self.logger.info(f"Actualización de parámetros recibida: {parameters}")
-        self.logger.debug(f"Estado actual de parámetros antes de actualizar: {self.config.get('parameters', {})}")
+        current_params = self.config.get('parameters', {})
+        self.logger.debug(
+            f"Estado actual de parámetros antes de actualizar: {current_params}"
+        )
 
         # Comprobar si es una solicitud de reset
         if parameters.get('reset', False):
@@ -111,9 +114,11 @@ class AppController:
             old_params = self.config.get("parameters", {})
             self.config["parameters"] = clean_params
             self.logger.debug(f"Configuración actualizada: {old_params} -> {clean_params}")
-            
+
             save_success = self.config_model.save_config(self.config)
-            self.logger.debug(f"Resultado de guardar configuración: {'éxito' if save_success else 'fallo'}")
+            self.logger.debug(
+                f"Resultado de guardar configuración: {'éxito' if save_success else 'fallo'}"
+            )
             if save_success:
                 self.logger.info("Configuración guardada correctamente como predeterminada")
             else:
