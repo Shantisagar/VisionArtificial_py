@@ -52,6 +52,10 @@ class VideoStreamModel:
             'average_fps': 0.0
         }
 
+        # Dimensiones objetivo para el escalado de frames
+        self.target_width = None
+        self.target_height = None
+
     def initialize(self, video_url: str,
                   grados_rotacion: float,
                   altura: float,
@@ -95,7 +99,7 @@ class VideoStreamModel:
             self.logger.info("Modelo de video inicializado correctamente")
             return True
 
-        except Exception as e:
+        except (ValueError, RuntimeError) as e:
             self.logger.error(f"Error al inicializar el modelo de video: {str(e)}")
             self.notifier.notify_error("Error al inicializar la captura de video")
             return False
@@ -122,7 +126,7 @@ class VideoStreamModel:
             self.logger.info("Captura de video iniciada correctamente")
             return True
 
-        except Exception as e:
+        except (ValueError, RuntimeError) as e:
             self.logger.error(f"Error al iniciar la captura de video: {str(e)}")
             self.notifier.notify_error("Error al iniciar la captura de video")
             self.running = False
@@ -181,7 +185,7 @@ class VideoStreamModel:
                     # Actualizar estadísticas
                     self._update_stats()
 
-        except Exception as e:
+        except (ValueError, RuntimeError) as e:
             self.logger.error(f"Error al procesar frame: {str(e)}")
             self.notifier.notify_error("Error al procesar frame")
 
@@ -203,7 +207,7 @@ class VideoStreamModel:
                 self.stats['average_fps'] = self.stats['total_frames'] / total_time
 
             self.stats['last_frame_time'] = current_time
-        except Exception as e:
+        except (ValueError, RuntimeError) as e:
             self.logger.error(f"Error al actualizar estadísticas: {str(e)}")
 
     def get_latest_frame(self) -> Optional[np.ndarray]:
@@ -248,7 +252,7 @@ class VideoStreamModel:
                     "No se pueden actualizar parámetros: procesador no inicializado"
                 )
 
-        except Exception as e:
+        except (ValueError, RuntimeError) as e:
             self.logger.error(f"Error al actualizar parámetros: {str(e)}")
             self.notifier.notify_error("Error al actualizar parámetros")
 

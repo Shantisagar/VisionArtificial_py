@@ -4,7 +4,6 @@ Clase para manejar el panel de parámetros ajustables en la interfaz.
 """
 
 import tkinter as tk
-import logging
 from typing import Dict, Callable
 from src.config.constants import (
     SLIDER_RANGE_GRADOS_ROTACION,
@@ -67,7 +66,7 @@ class GUIParameterPanel:
         Args:
             callback: Función a llamar con los nuevos parámetros
         """
-        self.logger.debug(f"Establecido callback de actualización en GUIParameterPanel")
+        self.logger.debug("Establecido callback de actualización en GUIParameterPanel")
         self.on_parameters_update = callback
 
     def initialize(self, grados_rotacion, pixels_por_mm, altura, horizontal):

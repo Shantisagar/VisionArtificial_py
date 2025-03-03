@@ -4,40 +4,43 @@ Vista dedicada a la visualización del stream de video.
 """
 
 import tkinter as tk
+from typing import Callable
 from PIL import Image, ImageTk
-from typing import Optional, Callable
 
 class VideoStreamView:
+    "Vista dedicada a la visualización del stream de video."
     def __init__(self, parent: tk.Widget, logger=None):
         self.parent = parent
         self.logger = logger
         self.panel = None
+        self.container = None
         self.frame_update_callback = None
         self.frame_update_interval = 50  # ms entre actualizaciones
         self.resize_cooldown = 500  # ms para throttling de resize
         self.resize_timer = None
         self.last_width = 0
         self.last_height = 0
-        
+        self.on_size_changed = None
+
     def setup_ui(self):
         """Configura los elementos visuales."""
         # Contenedor principal con fondo negro
         self.container = tk.Frame(self.parent, bg='black')
         self.container.grid(row=0, column=0, sticky='nsew')
-        
+
         # Configurar grid weights
         self.parent.grid_rowconfigure(0, weight=1)
         self.parent.grid_columnconfigure(0, weight=1)
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
-        
+
         # Panel de video con fondo negro
         self.panel = tk.Label(self.container, bg='black')
         self.panel.grid(row=0, column=0, sticky='nsew')
-        
+
         # Configurar eventos
         self.container.bind('<Configure>', self.on_resize)
-        
+
     def update_frame(self, frame) -> None:
         """Actualiza el frame mostrado en la UI."""
         try:
@@ -49,7 +52,7 @@ class VideoStreamView:
                 self.panel.config(image=imgtk)
             else:
                 self.logger.debug("Frame recibido es None")
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
             if self.logger:
                 self.logger.error(f"Error al actualizar frame: {e}")
 
@@ -63,21 +66,19 @@ class VideoStreamView:
             if self.resize_timer:
                 self.container.after_cancel(self.resize_timer)
             self.resize_timer = self.container.after(
-                self.resize_cooldown, 
+                self.resize_cooldown,
                 lambda: self._handle_resize(event.width, event.height)
             )
 
     def _handle_resize(self, width, height):
         """Procesa el cambio de tamaño después del cooldown."""
-        if (abs(width - self.last_width) > 10 or 
+        if (abs(width - self.last_width) > 10 or
             abs(height - self.last_height) > 10):
             if width > 100 and height > 100:
                 self.last_width = width
                 self.last_height = height
                 if self.frame_update_callback:
-                    # Ya no pasamos width y height al callback
                     self.frame_update_callback()
-                    # Si necesitamos actualizar el tamaño en el modelo, lo hacemos a través de otro método
                     if hasattr(self, 'on_size_changed'):
                         self.on_size_changed(width, height)
 

@@ -4,14 +4,12 @@ Vista para manejar el panel de control con estadísticas y estado.
 Parte de la separación de responsabilidades del patrón MVC.
 """
 
-# pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments
-
 import tkinter as tk
 import logging
 from typing import Dict, Callable
 from src.views.gui_parameter_panel import GUIParameterPanel
 from src.views.gui_notifier import GUINotifier
-from src.views.interface_view_helpers import create_color_selector, create_zoom_scale
+from src.views.common.interface_view_helpers import create_color_selector, create_zoom_scale
 from src.config.constants import (
     DEFAULT_ZOOM,
     DEFAULT_PAPER_COLOR,
