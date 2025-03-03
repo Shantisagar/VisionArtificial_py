@@ -9,11 +9,19 @@ import logging
 import logging.config
 import logging.handlers
 import os
-from typing import Optional, List, Any
+import sys
+from typing import Optional, List, Any, Dict, Set
+
 from utils.logging.logger_factory import LoggerFactory
 
 class LoggerConfigurator:
     """Configurador de logging para la aplicación."""
+
+    # Almacenamiento para los handlers creados, evitando duplicación
+    _handlers_cache: Dict[str, logging.Handler] = {}
+    
+    # Conjunto para seguir los nombres de loggers ya configurados
+    _configured_loggers: Set[str] = set()
 
     def __init__(
         self,
@@ -33,6 +41,7 @@ class LoggerConfigurator:
         self.log_level = log_level
         self.logger_name = logger_name
         self.filters = []
+        self.formatter = self._create_standard_formatter()
 
         # Crear el directorio de logs si no existe
         os.makedirs(log_path, exist_ok=True)
@@ -50,6 +59,12 @@ class LoggerConfigurator:
         Args:
             filter_class: Clase del filtro a instanciar
         """
+        # Solo añadir filtros nuevos, evitar duplicados
+        for existing_filter in self.filters:
+            if isinstance(existing_filter, filter_class):
+                print(f"Filtro {filter_class.__name__} ya registrado, omitiendo")
+                return
+                
         self.filters.append(filter_class())
         # Como esto se llama antes de configurar el logger, usamos print para debug
         print(f"Filtro registrado: {filter_class.__name__}")
@@ -80,16 +95,7 @@ class LoggerConfigurator:
 
             # Ajustar rutas de archivos si es necesario
             if 'handlers' in config:
-                print(f"Analizando {len(config['handlers'])} handlers para ajustar rutas")
-                for handler_name, handler_config in config['handlers'].items():
-                    if 'filename' in handler_config:
-                        original_path = handler_config['filename']
-                        # Asegurar que el directorio exista
-                        log_dir = os.path.dirname(handler_config['filename'])
-                        if log_dir:
-                            print(f"Creando directorio para handler {handler_name}: {log_dir}")
-                            os.makedirs(log_dir, exist_ok=True)
-                        print(f"Handler {handler_name}: ruta ajustada de {original_path}")
+                self._prepare_log_directories(config)
 
             print("Aplicando configuración mediante dictConfig")
             # Aplicar configuración
@@ -115,6 +121,24 @@ class LoggerConfigurator:
                 "Error al cargar configuración desde JSON: %s, usando configuración manual", e
             )
             return fallback_logger
+            
+    def _prepare_log_directories(self, config: Dict) -> None:
+        """
+        Prepara los directorios para los archivos de log definidos en la configuración.
+        
+        Args:
+            config: Configuración de logging en formato diccionario
+        """
+        print(f"Analizando {len(config['handlers'])} handlers para ajustar rutas")
+        for handler_name, handler_config in config['handlers'].items():
+            if 'filename' in handler_config:
+                original_path = handler_config['filename']
+                # Asegurar que el directorio exista
+                log_dir = os.path.dirname(handler_config['filename'])
+                if log_dir:
+                    print(f"Creando directorio para handler {handler_name}: {log_dir}")
+                    os.makedirs(log_dir, exist_ok=True)
+                print(f"Handler {handler_name}: ruta ajustada de {original_path}")
 
     def configure(self, filters: Optional[List[Any]] = None) -> logging.Logger:
         """
@@ -127,78 +151,199 @@ class LoggerConfigurator:
             Logger configurado
         """
         print(f"Configurando logger manualmente: {self.logger_name}")
-        # Crear logger
+        
+        # Obtener o crear el logger
+        logger = self._get_or_create_logger()
+        
+        # Si este logger ya está configurado, simplemente devolverlo
+        if self.logger_name in self._configured_loggers:
+            print(f"Logger '{self.logger_name}' ya configurado, reutilizando")
+            return logger
+            
+        # Añadir handlers si no existen
+        self._add_handlers_to_logger(logger, filters)
+            
+        # Registrar en LoggerFactory para acceso global
+        LoggerFactory.set_default_logger(logger)
+        
+        # Marcar este logger como configurado
+        self._configured_loggers.add(self.logger_name)
+        
+        # Mensaje inicial con información del sistema
+        logger.debug("Logger configurado manualmente")
+        logger.debug(f"Versión Python: {sys.version}")
+        logger.debug(f"Plataforma: {sys.platform}")
+        
+        return logger
+    
+    def _get_or_create_logger(self) -> logging.Logger:
+        """
+        Obtiene un logger existente o crea uno nuevo configurándolo.
+        
+        Returns:
+            Logger configurado con el nivel adecuado
+        """
         logger = logging.getLogger(self.logger_name)
         logger.setLevel(self.log_level)
-
-        # Evitar duplicación de handlers
+        
+        # Si el logger ya tiene handlers, verificamos si necesitamos propagar
+        if logger.hasHandlers():
+            # Solo desactivamos la propagación para el logger principal
+            # para evitar duplicación de logs
+            if not logger.name or logger.name == 'root':
+                logger.propagate = False
+            
+        return logger
+    
+    def _add_handlers_to_logger(self, logger: logging.Logger, filters: Optional[List[Any]]) -> None:
+        """
+        Añade los handlers necesarios al logger si no existen ya.
+        
+        Args:
+            logger: Logger al que añadir los handlers
+            filters: Filtros adicionales a aplicar
+        """
+        # Si ya tiene handlers, no añadir más
         if logger.handlers:
             print(f"Logger ya tiene handlers ({len(logger.handlers)}), evitando duplicación")
-            # Registrar en LoggerFactory para acceso global
-            LoggerFactory.set_default_logger(logger)
-            return logger
-
-        print("Configurando handlers")
-        # Configurar handler para consola
+            return
+            
+        # Crear los handlers necesarios o recuperar del caché
+        console_handler = self._get_or_create_console_handler()
+        file_handler = self._get_or_create_file_handler('app.log')
+        error_handler = self._get_or_create_error_handler('error.log')
+        
+        # Aplicar filtros a los handlers
+        self._apply_filters_to_handlers([console_handler, file_handler], filters)
+        
+        # Añadir los handlers al logger
+        logger.addHandler(console_handler)
+        logger.addHandler(file_handler)
+        logger.addHandler(error_handler)
+        
+        print(f"Handlers agregados al logger: {len(logger.handlers)} handlers")
+    
+    def _get_or_create_console_handler(self) -> logging.Handler:
+        """
+        Obtiene o crea un handler para consola.
+        
+        Returns:
+            Handler configurado para consola
+        """
+        handler_key = 'console'
+        if handler_key in self._handlers_cache:
+            return self._handlers_cache[handler_key]
+            
         console = logging.StreamHandler()
         console.setLevel(self.log_level)
-        print(f"Handler de consola configurado con nivel: {self.log_level}")
-
-        # Configurar handler para archivo
-        log_file_path = os.path.join(self.log_path, 'app.log')
+        console.setFormatter(self.formatter)
+        
+        self._handlers_cache[handler_key] = console
+        print(f"Handler de consola creado con nivel: {self.log_level}")
+        
+        return console
+    
+    def _get_or_create_file_handler(self, filename: str) -> logging.Handler:
+        """
+        Obtiene o crea un handler para archivo de log.
+        
+        Args:
+            filename: Nombre del archivo de log
+            
+        Returns:
+            Handler configurado para archivo
+        """
+        handler_key = f'file_{filename}'
+        if handler_key in self._handlers_cache:
+            return self._handlers_cache[handler_key]
+            
+        log_file_path = os.path.join(self.log_path, filename)
         print(f"Configurando handler para archivo: {log_file_path}")
+        
         file_handler = logging.handlers.RotatingFileHandler(
             log_file_path,
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5
         )
         file_handler.setLevel(self.log_level)
-
-        # Configurar un handler específico para errores
-        error_file_path = os.path.join(self.log_path, 'error.log')
+        file_handler.setFormatter(self.formatter)
+        
+        self._handlers_cache[handler_key] = file_handler
+        
+        return file_handler
+    
+    def _get_or_create_error_handler(self, filename: str) -> logging.Handler:
+        """
+        Obtiene o crea un handler específico para errores.
+        
+        Args:
+            filename: Nombre del archivo de log para errores
+            
+        Returns:
+            Handler configurado para errores
+        """
+        handler_key = f'error_{filename}'
+        if handler_key in self._handlers_cache:
+            return self._handlers_cache[handler_key]
+            
+        error_file_path = os.path.join(self.log_path, filename)
         print(f"Configurando handler para errores: {error_file_path}")
+        
         error_file = logging.handlers.RotatingFileHandler(
             error_file_path,
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5
         )
-        error_file.setLevel(logging.ERROR)
-
-        # Aplicar filtros si se proporcionan
+        error_file.setLevel(logging.ERROR)  # Solo para errores y críticos
+        error_file.setFormatter(self.formatter)
+        
+        self._handlers_cache[handler_key] = error_file
+        
+        return error_file
+    
+    def _apply_filters_to_handlers(self, handlers: List[logging.Handler], 
+                                   additional_filters: Optional[List[Any]]) -> None:
+        """
+        Aplica los filtros registrados a los handlers especificados.
+        
+        Args:
+            handlers: Lista de handlers a los que aplicar filtros
+            additional_filters: Filtros adicionales a aplicar
+        """
+        # Combinar filtros registrados con los adicionales
         all_filters = list(self.filters)  # Crear una copia
-        if filters:
-            print(f"Añadiendo {len(filters)} filtros adicionales")
-            all_filters.extend(filters)
+        if additional_filters:
+            print(f"Añadiendo {len(additional_filters)} filtros adicionales")
+            all_filters.extend(additional_filters)
 
-        print(f"Aplicando {len(all_filters)} filtros a los handlers")
-        for f in all_filters:
-            print(f"Aplicando filtro: {f.__class__.__name__}")
-            console.addFilter(f)
-            file_handler.addFilter(f)
-
-        # Configurar formato mejorado con información de archivo y línea
-        formatter = logging.Formatter(
+        # Si no hay filtros, no hacer nada
+        if not all_filters:
+            return
+            
+        print(f"Aplicando {len(all_filters)} filtros a {len(handlers)} handlers")
+        for handler in handlers:
+            for filter_obj in all_filters:
+                # Evitar añadir el mismo filtro varias veces
+                should_add = True
+                for existing_filter in handler.filters:
+                    if type(existing_filter) == type(filter_obj):
+                        should_add = False
+                        break
+                
+                if should_add:
+                    print(f"Aplicando filtro: {filter_obj.__class__.__name__} a {handler.__class__.__name__}")
+                    handler.addFilter(filter_obj)
+    
+    def _create_standard_formatter(self) -> logging.Formatter:
+        """
+        Crea un formateador estándar para los logs.
+        
+        Returns:
+            Formateador configurado
+        """
+        return logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
         )
-        console.setFormatter(formatter)
-        file_handler.setFormatter(formatter)
-        error_file.setFormatter(formatter)
-        print("Formato configurado para todos los handlers")
-
-        # Agregar handlers
-        logger.addHandler(console)
-        logger.addHandler(file_handler)
-        logger.addHandler(error_file)
-        print(f"Handlers agregados al logger: {len(logger.handlers)} handlers")
-
-        # Registrar en LoggerFactory para acceso global
-        LoggerFactory.set_default_logger(logger)
-        print("Logger registrado en LoggerFactory")
-
-        # Ahora que tenemos un logger configurado, podemos usarlo
-        logger.debug("Logger configurado manualmente")
-
-        return logger
 
 
 def get_logger(name: str = "vision_artificial") -> logging.Logger:
