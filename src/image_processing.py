@@ -120,19 +120,32 @@ class ProcessingController:
             texto3 = "Formato bolsa: 260x120x360"
             texto4 = "solapa: 30mm"
 
-            # Posicionamiento y dibujo de la información en la imagen
-            posiciones = [
-                (frame.shape[1] - 700, 100),
-                (frame.shape[1] - 700, 150),
-                (frame.shape[1] - 700, 200),
-                (frame.shape[1] - 700, 250),
-                (frame.shape[1] - 700, 300)
-            ]
-            textos = [texto0, texto1, texto2, texto3, texto4]
+            # Calcular el ancho del texto para centrarlo
             fuente = cv2.FONT_HERSHEY_SIMPLEX
             escala_fuente = 0.7
-            color = (0, 255, 255)
             grosor = 2
+            color = (255, 128, 0)  # Color naranja brillante (BGR)
+
+            # Calcular la posición X para centrar los textos
+            textos = [texto0, texto1, texto2, texto3, texto4]
+            max_text_width = 0
+            for texto in textos:
+                (text_width, _) = cv2.getTextSize(texto, fuente, escala_fuente, grosor)[0]
+                max_text_width = max(max_text_width, text_width)
+
+            # Calcular la posición X centrada
+            x_pos = (frame.shape[1] - max_text_width) // 2
+
+            # Posiciones verticales ajustadas más arriba
+            posiciones = [
+                (x_pos, 50),   # Fecha y hora
+                (x_pos, 80),   # Desvío
+                (x_pos, 110),  # Ancho de bobina
+                (x_pos, 140),  # Formato bolsa
+                (x_pos, 170)   # Solapa
+            ]
+
+            # Dibujar los textos centrados
             for pos, texto in zip(posiciones, textos):
                 cv2.putText(frame, texto, pos, fuente, escala_fuente, color, grosor)
 

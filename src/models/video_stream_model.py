@@ -1,5 +1,5 @@
 """
-Path: src/model/video_stream_model.py
+Path: src/models/video_stream_model.py
 Modelo para manejar la captura y procesamiento de video.
 Encapsula la lógica de negocio relacionada con el streaming de video.
 """
@@ -8,14 +8,11 @@ import queue
 import threading
 import time
 from typing import Optional, Dict, Any
-import cv2
 import numpy as np
 from src.capture.video_capture_factory import VideoCaptureFactory
 from src.controllers.video_processor import VideoProcessor
 from src.views.notifier import Notifier, ConsoleNotifier
 from utils.logging.logger_configurator import get_logger
-
-# pylint: disable=no-member
 
 class VideoStreamModel:
     """

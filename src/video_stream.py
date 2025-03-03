@@ -5,9 +5,7 @@ Módulo de transmisión de video que utiliza VideoStreamModel.
 
 import tkinter as tk
 from PIL import Image, ImageTk
-import time
-
-from src.model.video_stream_model import VideoStreamModel
+from src.models.video_stream_model import VideoStreamModel
 
 class VideoStreamApp:
     "Aplicación de transmisión de video."
