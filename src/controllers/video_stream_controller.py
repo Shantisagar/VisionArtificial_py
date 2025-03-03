@@ -1,4 +1,5 @@
 """
+Path: src/controllers/video_stream_controller.py
 Controlador que coordina la interacción entre el modelo de video y su vista.
 """
 
@@ -9,6 +10,7 @@ from src.views.video_stream_view import VideoStreamView
 from src.views.notifier import Notifier
 
 class VideoStreamController:
+    "Controlador que coordina la interacción entre el modelo de video y su vista."
     def __init__(self, logger: logging.Logger, notifier: Optional[Notifier] = None):
         self.logger = logger
         self.notifier = notifier
@@ -33,7 +35,7 @@ class VideoStreamController:
             self.view.set_frame_update_callback(self._update_frame)
 
             return True
-        except Exception as e:
+        except RuntimeError as e:
             self.logger.error(f"Error al inicializar controlador: {e}")
             if self.notifier:
                 self.notifier.notify_error(f"Error de inicialización: {e}")
@@ -52,7 +54,7 @@ class VideoStreamController:
             self.view.start_updates()
             return True
 
-        except Exception as e:
+        except (RuntimeError, ValueError) as e:
             self.logger.error(f"Error al iniciar controlador: {e}")
             if self.notifier:
                 self.notifier.notify_error(f"Error al iniciar: {e}")
@@ -73,7 +75,7 @@ class VideoStreamController:
                 frame = self.model.get_latest_frame()
                 if frame is not None:
                     self.view.update_frame(frame)
-            except Exception as e:
+            except (RuntimeError, ValueError) as e:
                 self.logger.error(f"Error al actualizar frame: {e}")
 
     def update_parameters(self, parameters: dict) -> None:

@@ -7,7 +7,7 @@ El código actual debe ser analizado y reorganizado en módulos adecuados para m
 ---
 
 ## 🎯 **Objetivo del Refactorizado**  
-1. **Analizar el código actual en `src/video_stream.py`** y determinar qué partes corresponden a:
+1. **Analizar el código actual en `src/image_processing.py`** y determinar qué partes corresponden a:
    - **Modelo (Model):** Gestión de datos y lógica relacionada con el procesamiento de video.
    - **Vista (View):** Cualquier representación visual o interfaz con el usuario.
    - **Controlador (Controller):** Manejo de la lógica de control, recepción de entradas y coordinación entre modelo y vista.

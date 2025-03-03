@@ -4,8 +4,6 @@ Vista para manejar la pantalla principal y visualización de video.
 Parte de la separación de responsabilidades del patrón MVC.
 """
 
-# pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments
-
 import tkinter as tk
 import logging
 from src.controllers.video_stream_controller import VideoStreamController
@@ -79,7 +77,7 @@ class MainDisplayView:
                 # Si tenemos un widget padre, usamos ese en lugar de crear una nueva ventana
                 self.main_frame = tk.Frame(self.parent)
                 self.main_frame.grid(row=0, column=0, sticky='nsew')
-                
+
                 # Configurar el grid para expansión
                 self.parent.grid_rowconfigure(0, weight=1)
                 self.parent.grid_columnconfigure(0, weight=1)
@@ -87,14 +85,14 @@ class MainDisplayView:
             # Frame para el video (sin título y con fondo negro)
             self.video_frame = tk.Frame(self.main_frame, bg='black')
             self.video_frame.grid(row=0, column=0, sticky='nsew')
-            
+
             # Configurar el grid del main_frame
             self.main_frame.grid_rowconfigure(0, weight=1)
             self.main_frame.grid_columnconfigure(0, weight=1)
 
             # Inicializar el controlador
             self.controller = VideoStreamController(self.logger, self.notifier)
-            
+
             # Inicializar y arrancar el controlador
             if not self.controller.initialize(
                 self.video_frame,
@@ -114,7 +112,7 @@ class MainDisplayView:
             if self.notifier:
                 self.notifier.notify_info("Visualización de cámara iniciada")
 
-        except Exception as e:
+        except (RuntimeError, ValueError) as e:
             self.logger.error(f"Error al inicializar vista: {str(e)}")
             raise
 
@@ -175,7 +173,7 @@ class MainDisplayView:
 
             if self.notifier:
                 self.notifier.notify_info("Parámetros aplicados al procesamiento")
-        except Exception as e:
+        except (KeyError, TypeError, ValueError) as e:
             self.logger.error(f"Error al actualizar parámetros: {str(e)}")
 
     def get_processing_stats(self):

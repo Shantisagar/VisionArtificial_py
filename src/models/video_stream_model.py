@@ -262,9 +262,9 @@ class VideoStreamModel:
         if hasattr(self, 'target_width') and hasattr(self, 'target_height'):
             width_change = abs(self.target_width - width)
             height_change = abs(self.target_height - height)
-            
+
             # Ignorar cambios menores al 2%
-            if (width_change / self.target_width < 0.02 and 
+            if (width_change / self.target_width < 0.02 and
                 height_change / self.target_height < 0.02):
                 return
 
