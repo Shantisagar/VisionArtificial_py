@@ -164,7 +164,7 @@ class VideoProcessor:
                             target_width: int,
                             target_height: int) -> Optional[np.ndarray]:
         """
-        Escala un frame para ajustarlo a un tamaño objetivo manteniendo la relación de aspecto.
+        Escala un frame manteniendo la relación de aspecto y añadiendo franjas negras.
         """
         try:
             if frame is None:
@@ -176,19 +176,20 @@ class VideoProcessor:
 
             # Convertir a RGB primero
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # Calcular dimensiones para llenar el ancho completamente
-            image_height, image_width = frame_rgb.shape[:2]
-            scale = target_width / image_width
             
-            new_width = target_width
-            new_height = int(image_height * scale)
+            # Calcular dimensiones manteniendo el aspect ratio
+            image_height, image_width = frame_rgb.shape[:2]
+            aspect = image_width / image_height
+            target_aspect = target_width / target_height
 
-            # Si la altura escalada es mayor que el objetivo, escalar por altura
-            if new_height > target_height:
-                scale = target_height / image_height
+            if aspect > target_aspect:
+                # Imagen más ancha que el área objetivo - ajustar por ancho
+                new_width = target_width
+                new_height = int(target_width / aspect)
+            else:
+                # Imagen más alta que el área objetivo - ajustar por altura
                 new_height = target_height
-                new_width = int(image_width * scale)
+                new_width = int(target_height * aspect)
 
             # Realizar el escalado
             resized_frame = cv2.resize(
@@ -197,13 +198,16 @@ class VideoProcessor:
                 interpolation=cv2.INTER_AREA
             )
 
-            # Centrar verticalmente si es necesario
-            if new_height < target_height:
-                y_offset = (target_height - new_height) // 2
-                final_frame = np.zeros((target_height, target_width, 3), dtype=np.uint8)
-                final_frame[y_offset:y_offset+new_height, :new_width] = resized_frame
-            else:
-                final_frame = resized_frame
+            # Crear imagen negra del tamaño objetivo
+            final_frame = np.zeros((target_height, target_width, 3), dtype=np.uint8)
+
+            # Calcular posición para centrar
+            y_offset = (target_height - new_height) // 2
+            x_offset = (target_width - new_width) // 2
+
+            # Insertar imagen escalada en el centro
+            final_frame[y_offset:y_offset+new_height, 
+                       x_offset:x_offset+new_width] = resized_frame
 
             return final_frame
 

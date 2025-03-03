@@ -135,12 +135,8 @@ class GUIView:
     def _create_layout(self):
         """
         Crea la estructura básica de layouts para la interfaz.
-        
-        Returns:
-            tuple: (main_frame, video_column, control_column)
         """
         # Crear frame principal con grid
-        self.logger.debug("Creando frames para UI")
         main_frame = tk.Frame(self.root)
         main_frame.grid(row=0, column=0, sticky='nsew')
         
@@ -148,15 +144,16 @@ class GUIView:
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
         main_frame.grid_rowconfigure(0, weight=1)
-        main_frame.grid_columnconfigure(1, weight=1)  # La columna del video tiene peso 1
+        
+        # Dar un peso menor a la columna de controles (0.2) y mayor al video (0.8)
+        main_frame.grid_columnconfigure(0, weight=2, minsize=250)  # Columna de controles
+        main_frame.grid_columnconfigure(1, weight=8)  # Columna de video
 
-        # Columna izquierda para controles
-        self.logger.debug("Creando columna para controles")
+        # Columna izquierda para controles con ancho mínimo
         control_column = tk.Frame(main_frame)
-        control_column.grid(row=0, column=0, sticky='ns', padx=5, pady=5)
+        control_column.grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
 
         # Columna derecha para el video (expansible)
-        self.logger.debug("Creando columna para video")
         video_column = tk.Frame(main_frame)
         video_column.grid(row=0, column=1, sticky='nsew', padx=5, pady=5)
 
