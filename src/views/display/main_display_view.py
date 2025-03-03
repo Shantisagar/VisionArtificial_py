@@ -8,7 +8,7 @@ Parte de la separación de responsabilidades del patrón MVC.
 
 import tkinter as tk
 import logging
-from src.video_stream import VideoStreamApp
+from src.controllers.video_stream_controller import VideoStreamController
 from src.views.common.gui_notifier import GUINotifier
 from src.views.common.interface_view_helpers import get_centered_geometry
 from src.views.common.gui import create_main_window
@@ -29,7 +29,7 @@ class MainDisplayView:
         self.root = None
         self.main_frame = None
         self.video_frame = None
-        self.app = None
+        self.controller = None  # Ahora usamos el controlador
         self.is_running = False
         self.on_closing_callback = None
 
@@ -92,22 +92,29 @@ class MainDisplayView:
             self.main_frame.grid_rowconfigure(0, weight=1)
             self.main_frame.grid_columnconfigure(0, weight=1)
 
-            # Inicializar la aplicación de video con el nuevo modelo
-            self.app = VideoStreamApp(
+            # Inicializar el controlador
+            self.controller = VideoStreamController(self.logger, self.notifier)
+            
+            # Inicializar y arrancar el controlador
+            if not self.controller.initialize(
                 self.video_frame,
                 video_url,
                 grados_rotacion,
                 altura,
                 horizontal,
-                pixels_por_mm,
-                self.logger,
-                self.notifier
-            )
+                pixels_por_mm
+            ):
+                raise RuntimeError("No se pudo inicializar el controlador de video")
 
-            self.logger.info("Vista de visualización inicializada correctamente.")
+            if not self.controller.start():
+                raise RuntimeError("No se pudo iniciar el controlador de video")
+
+            self.is_running = True
+            self.logger.info("Vista de visualización inicializada correctamente")
             if self.notifier:
                 self.notifier.notify_info("Visualización de cámara iniciada")
-        except (ValueError, TypeError, RuntimeError) as e:
+
+        except Exception as e:
             self.logger.error(f"Error al inicializar vista: {str(e)}")
             raise
 
@@ -116,11 +123,9 @@ class MainDisplayView:
         self.logger.info("Cerrando la vista de visualización...")
         self.is_running = False
 
-        # Detenemos el streaming de video
-        if self.app:
-            self.app.stop()
+        if self.controller:
+            self.controller.stop()
 
-        # Si tenemos un callback de cierre, lo llamamos
         if self.on_closing_callback:
             self.on_closing_callback()
 
@@ -130,8 +135,8 @@ class MainDisplayView:
 
     def start(self):
         """Inicia la visualización de video."""
-        if self.app:
-            self.app.start()
+        if self.controller:
+            self.controller.start()
             self.is_running = True
             self.logger.info("Visualización de video iniciada.")
         else:
@@ -140,8 +145,8 @@ class MainDisplayView:
 
     def stop(self):
         """Detiene la visualización de video."""
-        if self.app:
-            self.app.stop()
+        if self.controller:
+            self.controller.stop()
             self.is_running = False
             self.logger.info("Visualización de video detenida.")
 
@@ -152,26 +157,26 @@ class MainDisplayView:
         Args:
             parameters: Diccionario con los nuevos valores de parámetros
         """
-        if not self.app:
+        if not self.controller:
             self.logger.warning(
-                "No se pueden actualizar parámetros: aplicación de video no inicializada"
+                "No se pueden actualizar parámetros: controlador no inicializado"
             )
             return
 
         self.logger.debug(f"Actualizando parámetros en MainDisplayView: {parameters}")
 
         try:
-            # Delegamos la actualización de parámetros a la aplicación de video
-            self.app.update_parameters(parameters)
+            # Delegamos la actualización de parámetros al controlador
+            self.controller.update_parameters(parameters)
 
             # Registrar los parámetros actualizados
             param_names = ', '.join(parameters.keys())
-            self.logger.info(f"Parámetros actualizados en visualización: {param_names}")
+            self.logger.info(f"Parámetros actualizados en el controlador: {param_names}")
 
             if self.notifier:
-                self.notifier.notify_info(f"Visualización actualizada con nuevos parámetros")
+                self.notifier.notify_info("Parámetros aplicados al procesamiento")
         except Exception as e:
-            self.logger.error(f"Error al actualizar parámetros en visualización: {str(e)}")
+            self.logger.error(f"Error al actualizar parámetros: {str(e)}")
 
     def get_processing_stats(self):
         """
@@ -180,9 +185,7 @@ class MainDisplayView:
         Returns:
             Dict con estadísticas de procesamiento
         """
-        if self.app:
-            return self.app.get_processing_stats()
-        return {}
+        return self.controller.get_processing_stats() if self.controller else {}
 
     def run_main_loop(self):
         """Ejecuta el bucle principal de la interfaz gráfica si es una ventana independiente."""

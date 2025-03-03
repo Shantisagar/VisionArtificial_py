@@ -164,7 +164,7 @@ class VideoProcessor:
                             target_width: int,
                             target_height: int) -> Optional[np.ndarray]:
         """
-        Escala un frame manteniendo la relación de aspecto y añadiendo franjas negras.
+        Escala un frame para llenar el máximo espacio disponible manteniendo el aspecto.
         """
         try:
             if frame is None:
@@ -177,25 +177,25 @@ class VideoProcessor:
             # Convertir a RGB primero
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             
-            # Calcular dimensiones manteniendo el aspect ratio
+            # Calcular dimensiones
             image_height, image_width = frame_rgb.shape[:2]
-            aspect = image_width / image_height
-            target_aspect = target_width / target_height
-
-            if aspect > target_aspect:
-                # Imagen más ancha que el área objetivo - ajustar por ancho
-                new_width = target_width
-                new_height = int(target_width / aspect)
-            else:
-                # Imagen más alta que el área objetivo - ajustar por altura
-                new_height = target_height
-                new_width = int(target_height * aspect)
+            
+            # Calcular ratios de escalado para ambas dimensiones
+            width_ratio = target_width / image_width
+            height_ratio = target_height / image_height
+            
+            # Usar el ratio menor para mantener la imagen visible completa
+            scale = min(width_ratio, height_ratio)
+            
+            # Calcular nuevas dimensiones
+            new_width = int(image_width * scale)
+            new_height = int(image_height * scale)
 
             # Realizar el escalado
             resized_frame = cv2.resize(
                 frame_rgb, 
                 (new_width, new_height),
-                interpolation=cv2.INTER_AREA
+                interpolation=cv2.INTER_LINEAR
             )
 
             # Crear imagen negra del tamaño objetivo
