@@ -1,5 +1,5 @@
 """
-Path: src/views/main_display_view.py
+Path: src/views/display/main_display_view.py
 Vista para manejar la pantalla principal y visualización de video.
 Parte de la separación de responsabilidades del patrón MVC.
 """
@@ -9,9 +9,9 @@ Parte de la separación de responsabilidades del patrón MVC.
 import tkinter as tk
 import logging
 from src.video_stream import VideoStreamApp
-from src.views.gui_notifier import GUINotifier
-from src.views.common_gui import create_main_window
-from src.views.interface_view_helpers import get_centered_geometry
+from src.views.common.gui_notifier import GUINotifier
+from src.views.common.interface_view_helpers import get_centered_geometry
+from src.views.common.gui import create_main_window
 
 class MainDisplayView:
     """Clase responsable de la gestión de la ventana principal y visualización de video."""

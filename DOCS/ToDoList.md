@@ -1,110 +1,191 @@
-A continuación se presenta un análisis de las mejoras identificadas, su evaluación y una propuesta de plan de implementación gradual:
+### 1. Refactorización de Métodos con Múltiples Responsabilidades
+
+**Objetivo:**  
+Simplificar y modularizar los métodos que combinan la creación, configuración y manejo de eventos en la interfaz, para mejorar su legibilidad y facilitar el mantenimiento y las pruebas.
+
+**Tareas y Subtareas:**
+
+- **1.1. Auditar Métodos Actuales**
+  - **Descripción:** Revisar detenidamente los métodos en archivos como control_panel_view.py y gui_view.py para identificar bloques de código que combinen múltiples responsabilidades (por ejemplo, creación de widgets, configuración de callbacks y actualización de la UI).
+  - **Archivos a modificar o revisar:**  
+    - control_panel_view.py  
+    - gui_view.py  
+  - **Archivos de referencia:**  
+    - interface_view_helpers.py  
+  - **Dependencias:** Ninguna externa, se apoya en la documentación interna.
+  - **Beneficio esperado:** Identificación clara de secciones que requieren descomposición, lo que facilitará el desarrollo incremental.
+
+- **1.2. Extracción de Funciones Auxiliares**
+  - **Descripción:** Dividir los métodos complejos en funciones o métodos privados que encapsulen tareas específicas, como la creación de widgets o la configuración de callbacks.
+  - **Archivos a modificar:**  
+    - control_panel_view.py  
+    - gui_view.py  
+  - **Archivos de referencia:** Patrón utilizado en interface_view_helpers.py.
+  - **Dependencias:** Asegurar que las funciones extraídas sean reutilizables en toda la aplicación.
+  - **Beneficio esperado:** Mejora en la separación de responsabilidades y mayor facilidad para realizar pruebas unitarias sobre cada función individual.
+
+- **1.3. Actualización y Validación de Pruebas**
+  - **Descripción:** Una vez refactorizados los métodos, actualizar (o crear nuevas) pruebas unitarias que garanticen el correcto funcionamiento de cada parte refactorizada.
+  - **Archivos a modificar:**  
+    - Archivo(s) de tests relacionados a la UI y a la lógica de control, si existen.
+  - **Archivos de referencia:** Tests existentes en la suite del proyecto.
+  - **Dependencias:** Dependencia directa de los cambios realizados en 1.2.
+  - **Beneficio esperado:** Reducción de riesgos de errores en producción al garantizar que cada unidad de lógica refactorizada se prueba de manera independiente.
 
 ---
 
-### 1. Identificación y Evaluación de Mejoras
+### 2. Consolidación de “Magic Numbers” y Constantes
 
-**Mejora A: Refactorización de métodos con múltiples responsabilidades**  
-- **Descripción:** Dividir métodos monolíticos (por ejemplo, en ControlPanelView y GUIView) en subtareas (crear widgets, configurar callbacks, actualizar estado).  
-- **Costo:** Bajo a medio (código distribuido en funciones auxiliares y métodos privados).  
-- **Impacto:** Alto; mejora legibilidad, facilita pruebas unitarias y mantenimiento.
+**Objetivo:**  
+Centralizar todos los valores fijos y “magic numbers” en un módulo de configuración o constantes para simplificar su modificación y reducir errores por duplicación.
 
-**Mejora B: Consolidación de "magic numbers" y constantes**  
-- **Descripción:** Extraer valores fijos (dimensiones de ventana, intervalos de actualización, umbrales de notificación) a un módulo o sección de configuración central.  
-- **Costo:** Bajo; cambios localizados en constantes.  
-- **Impacto:** Alto; facilita futuras modificaciones y reduce errores por valores embebidos.
+**Tareas y Subtareas:**
 
-**Mejora C: Reorganización de la estructura de archivos (especialmente en src/views)**  
-- **Descripción:** Agrupar vistas en subcarpetas según su función (por ejemplo, separar controles de visualización).  
-- **Costo:** Medio; requiere mover archivos y actualizar importaciones.  
-- **Impacto:** Medio; mejora la modularidad y claridad general del proyecto.
+- **2.1. Identificar Valores Fijos en el Código**
+  - **Descripción:** Revisar archivos de la capa de presentación (por ejemplo, en interface_view_helpers.py, control_panel_view.py y gui_view.py) para localizar todos los valores fijos y parámetros (dimensiones, intervalos, umbrales).
+  - **Archivos a modificar o revisar:**  
+    - interface_view_helpers.py  
+    - control_panel_view.py  
+    - gui_view.py
+  - **Archivos de referencia:** Código actual comentado y documentación interna.
+  - **Dependencias:** Ninguna.
+  - **Beneficio esperado:** Mapeo completo para proceder a centralizar los valores y evitar inconsistencias.
 
-**Mejora D: Implementación de un sistema de eventos o bus de eventos**  
-- **Descripción:** Evaluar la incorporación de un patrón de observador o event bus para desacoplar la comunicación entre vistas y controlador.  
-- **Costo:** Medio a alto (requiere rediseño de la comunicación interna).  
-- **Impacto:** Alto a largo plazo; mejora escalabilidad, pero puede introducir complejidad en fases iniciales.
+- **2.2. Crear un Módulo de Constantes**
+  - **Descripción:** Diseñar y crear un archivo (por ejemplo, `constants.py`) en el que se definan todas las variables fijas usadas en la interfaz y posiblemente en otras áreas.
+  - **Archivos a modificar o crear:**  
+    - Se debe crear un nuevo archivo, posiblemente en src o `src/config/`.
+  - **Archivos de referencia:** Métodos de ayuda en interface_view_helpers.py para obtener parámetros.
+  - **Dependencias:** Esta tarea afectará cualquier archivo que use "magic numbers".
+  - **Beneficio esperado:** Mayor claridad y facilidad para ajustar parámetros en el futuro sin necesidad de buscar en varias partes del código.
 
-**Mejora E: Ampliación y consolidación de pruebas unitarias y de integración**  
-- **Descripción:** Aumentar la cobertura de pruebas en áreas críticas (configuración, actualización de parámetros, manejo de UI).  
-- **Costo:** Bajo a medio; inversión de tiempo en escribir tests.  
-- **Impacto:** Alto; reduce el riesgo de regresiones y mejora la confiabilidad.
-
----
-
-### 2. Priorización de Mejoras
-
-- **Alta Prioridad:**  
-  - *Mejora A:* Refactorización de métodos con múltiples responsabilidades.  
-  - *Mejora B:* Consolidación de constantes y eliminación de "magic numbers".  
-
-- **Media Prioridad:**  
-  - *Mejora C:* Reorganización de la estructura de archivos (src/views).  
-  - *Mejora E:* Ampliación de pruebas unitarias e integración.
-
-- **Baja Prioridad:**  
-  - *Mejora D:* Implementación de un sistema de eventos (event bus).  
-    _(Esta mejora es estratégica a largo plazo y su implementación puede depender de la estabilización del proyecto.)_
+- **2.3. Reemplazar Valores Fijos por Constantes**
+  - **Descripción:** Actualizar en todos los módulos afectados para que utilicen las constantes centralizadas en lugar de valores literales.
+  - **Archivos a modificar:**  
+    - interface_view_helpers.py  
+    - control_panel_view.py  
+    - gui_view.py
+  - **Archivos de referencia:** El nuevo archivo `constants.py`.
+  - **Dependencias:** Concluye 2.1 y 2.2.
+  - **Beneficio esperado:** Consistencia en el uso de parámetros, facilitando la configuración y mantenimiento del código.
 
 ---
 
-### 3. Plan de Implementación Segura
+### 3. Reorganización de la Estructura de Archivos (src/views)
 
-#### 📌 Tarea Principal: Refactorización de métodos y consolidación de constantes
-- **Título:** Refactorización de la capa de presentación y centralización de constantes.
-- **Descripción:**  
-  - Dividir métodos que combinan la creación, configuración y actualización de la UI en funciones/métodos auxiliares.
-  - Extraer valores fijos (dimensiones, intervalos, umbrales) a un módulo de constantes o a una sección central del código.
-- **Dependencias:**  
-  - No requiere cambios en la lógica de negocio, pero puede necesitar coordinación con el equipo de pruebas para actualizar tests existentes.
-- **Beneficio Esperado:**  
-  - Mejora en la legibilidad y mantenibilidad del código.
-  - Reducción del riesgo de errores al modificar parámetros fijos y mayor facilidad para realizar ajustes en el futuro.
+**Objetivo:**  
+Mejorar la modularidad del proyecto agrupando los archivos de la interfaz en subcarpetas según su función (por ejemplo, separar vistas de control y vistas de visualización).
 
-##### 🔹 **Subtareas**
+**Tareas y Subtareas:**
 
-1. **Subtarea 1:** Dividir métodos complejos en funciones auxiliares  
-   - **Orden de ejecución:** Iniciar con áreas críticas (por ejemplo, funciones en ControlPanelView y GUIView).  
-   - **Archivos involucrados:**  
-     - control_panel_view.py  
-     - gui_view.py  
-   - **Acción a realizar:** Modificar la estructura interna de métodos para separar la creación de widgets, configuración de callbacks y cualquier lógica de actualización.  
-   - **Justificación:** Mejora la claridad del código y facilita su prueba y mantenimiento.  
-   - **Archivos de referencia:** Se puede revisar la implementación de helper functions en interface_view_helpers.py para patrones inspiradores.
+- **3.1. Propuesta y Definición de la Nueva Estructura**
+  - **Descripción:** Documentar una nueva estructura donde se clasifiquen las vistas en categorías, como “controls”, “display” y “helpers”.
+  - **Archivos a modificar:**  
+    - No se modifica código, se crea documentación interna.
+  - **Archivos de referencia:** La lista actual de archivos en views.
+  - **Dependencias:** Se debe coordinar con el equipo para que todos los cambios de rutas se apliquen de manera conjunta.
+  - **Beneficio esperado:** Mayor claridad y facilidad para mantener el código al separar las responsabilidades en distintas carpetas.
 
-2. **Subtarea 2:** Extraer "magic numbers" a un módulo de constantes  
-   - **Orden de ejecución:** Paralelo o posterior a la separación de responsabilidades.  
-   - **Archivos involucrados:**  
-     - Todos aquellos en los que se usen valores fijos (src/views/gui_view.py, src/views/interface_view_helpers.py, etc.).  
-   - **Acción a realizar:** Crear (por ejemplo) un archivo constants.py o una sección en un módulo de configuración para definir valores por defecto como dimensiones de ventana, intervalos de actualización y umbrales de notificación.  
-   - **Justificación:** Centralizar estos valores simplifica ajustes futuros y hace el código menos propenso a errores por valores inconsistentes.  
-   - **Archivos de referencia:** Revisar la sección de lógica en ConfigModel y GUINotifier donde se usan ciertos umbrales.
+- **3.2. Mover Archivos a las Nuevas Subcarpetas**
+  - **Descripción:** Realizar la reorganización física de los archivos en subcarpetas, realineando los imports correspondientes.
+  - **Archivos a modificar o mover:**  
+    - gui_view.py  
+    - control_panel_view.py  
+    - main_display_view.py  
+    - interface_view_helpers.py  
+    - gui_notifier.py
+  - **Archivos de referencia:** La propuesta de 3.1.
+  - **Dependencias:** Coordinación con otros cambios si hay integración continua.
+  - **Beneficio esperado:** Estructura de proyecto más lógica y modular, facilitando la incorporación de nuevos componentes.
 
----
-
-### 4. Opciones y Alternativas
-
-**Para la Refactorización (Mejora A):**
-- **Alternativa 1:** Refactorizar de forma incremental mientras se mantienen pruebas pasadas para seguridad.  
-  - *Ventajas:* Menor riesgo de romper la producción.  
-  - *Desventajas:* El proceso es más lento y requiere ajustes constantes en los tests.
-- **Alternativa 2:** Realizar un refactor global en una rama separada y luego integrar con pruebas de regresión exhaustivas.  
-  - *Ventajas:* Permite realizar cambios profundos sin afectar la versión en producción.  
-  - *Desventajas:* Mayor esfuerzo inicial y coordinación en la integración.
-
-**Recomendación:**  
-Se aconseja la Alternativa 1, es decir, refactorización incremental apoyada en pruebas existentes y ampliadas, ya que permite validar cada cambio y minimizar el impacto en producción.
-
-**Para la Consolidación de Constantes (Mejora B):**
-- **Alternativa 1:** Crear un módulo específico de constantes en el proyecto.  
-  - *Ventajas:* Centralización y reutilización inmediata en todas las áreas.  
-  - *Desventajas:* Implica actualizar todas las referencias en el código.
-- **Alternativa 2:** Introducir parámetros configurables en el archivo de configuración (parameters.json) y leerlos al inicio.  
-  - *Ventajas:* Permite ajustes sin necesidad de recompilar o modificar código.  
-  - *Desventajas:* Puede sobrecargar el archivo de configuración si se abusa del uso de parámetros.
-
-**Recomendación:**  
-Se sugiere la Alternativa 1, pues permite centralizar valores técnicos independientemente de la configuración del usuario, lo que facilita el mantenimiento interno sin exponer estos detalles a la capa de configuración del usuario.
+- **3.3. Validación y Actualización de Importaciones**
+  - **Descripción:** Ajustar todas las referencias/imports afectados por el cambio en la estructura y validar la correcta ejecución de la aplicación.
+  - **Archivos a modificar:**  
+    - Todos los archivos que hagan referencia a los módulos movidos.
+  - **Archivos de referencia:** Documentación interna sobre la nueva estructura.
+  - **Dependencias:** Completar 3.2.
+  - **Beneficio esperado:** Asegurarse de que la reorganización no rompa la compilación ni la ejecución de la aplicación, garantizando integridad en la comunicación entre módulos.
 
 ---
 
-Este plan se puede abordar de forma gradual, iniciando con las mejoras de alta prioridad (A y B) mientras se mantienen copias de seguridad y pruebas para asegurar que la producción no se vea afectada. Una vez estabilizadas estas mejoras, se pueden abordar las de prioridad media y, finalmente, evaluar la incorporación del sistema de eventos según la evolución del proyecto.
+### 4. Ampliación y Consolidación de Pruebas Unitarias e Integración
+
+**Objetivo:**  
+Aumentar la cobertura de pruebas en áreas críticas para reducir riesgos de regresiones y mejorar la confiabilidad del código.
+
+**Tareas y Subtareas:**
+
+- **4.1. Auditoría de Cobertura Actual**
+  - **Descripción:** Revisar la suite de pruebas existente para identificar áreas críticas (por ejemplo, `ConfigModel`, callbacks en la UI y notificaciones) con poca cobertura.
+  - **Archivos a modificar o revisar:**  
+    - Archivos de tests actuales.
+  - **Archivos de referencia:** Documentación interna de pruebas.
+  - **Dependencias:** Ninguna.
+  - **Beneficio esperado:** Identificar lagunas de cobertura antes de implementar cambios.
+
+- **4.2. Creación de Pruebas para Módulos Críticos**
+  - **Descripción:** Escribir pruebas unitarias nuevas para el modelo de configuración (`ConfigModel`), la gestión de notificaciones (`GUINotifier`) y la comunicación entre el controlador y la vista.
+  - **Archivos a modificar o crear:**  
+    - Crear o ampliar archivos de test para módulos actuales.
+  - **Archivos de referencia:** Código de cada módulo a testear.
+  - **Dependencias:** Basado en los cambios estructurales realizados en tareas anteriores.
+  - **Beneficio esperado:** Mayor robustez y detección temprana de errores en futuras iteraciones.
+
+- **4.3. Integración de Pruebas de Regresión**
+  - **Descripción:** Configurar un sistema de ejecución automática de pruebas (por ejemplo, en un pipeline de CI) para asegurar que los cambios refactorizados no introduzcan regresiones.
+  - **Archivos a modificar o crear:**  
+    - Configuración del CI/CD (por ejemplo, archivos de configuración de pruebas en el repositorio).
+  - **Archivos de referencia:** Documentación de integración y pruebas anteriores.
+  - **Dependencias:** Completar 4.2.
+  - **Beneficio esperado:** Mejora continua en la calidad del código al detectar errores antes de la integración en producción.
+
+- **4.4. Verificación y Validación Final**
+  - **Descripción:** Ejecutar la suite de pruebas completa después de cada cambio significativo y documentar los resultados.
+  - **Archivos a modificar o revisar:**  
+    - Resultados y reportes de pruebas generados en la fase de integración.
+  - **Archivos de referencia:** Herramientas de reportes del sistema CI.
+  - **Dependencias:** Conclusión de 4.3.
+  - **Beneficio esperado:** Asegurar la estabilidad del sistema previo a despliegues en producción.
+
+---
+
+### 5. Evaluación e Implementación del Sistema de Eventos (Opcional, Baja Prioridad)
+
+**Objetivo:**  
+Explorar e implementar, de forma gradual, un mecanismo de bus de eventos para mejorar la comunicación entre componentes y desacoplar aún más las vistas del controlador.
+
+**Tareas y Subtareas:**
+
+- **5.1. Investigación y Discusión Técnica**
+  - **Descripción:** Realizar reuniones o sesiones de análisis con el equipo para evaluar distintos patrones para implementación de un bus de eventos o patrón observador.
+  - **Archivos a modificar o revisar:**  
+    - Documentación interna y propuestas técnicas.
+  - **Archivos de referencia:** Ejemplos de patrones observador en proyectos similares.
+  - **Dependencias:** No afecta el funcionamiento actual, se trata de un estudio previo.
+  - **Beneficio esperado:** Decisión informada sobre la mejor estrategia sin impacto inmediato en la producción.
+
+- **5.2. Prototipado y Prueba de Concepto**
+  - **Descripción:** Implementar un prototipo en una rama separada que demuestre la viabilidad de integrar un bus de eventos sin afectar la lógica actual.
+  - **Archivos a modificar o crear:**  
+    - Nuevos módulos de eventos (por ejemplo, `event_bus.py`).
+  - **Archivos de referencia:** Ejemplo de implementación en otros proyectos o bibliotecas.
+  - **Dependencias:** Revisión de la alternativa seleccionada en 5.1.
+  - **Beneficio esperado:** Validar el concepto y evaluar el esfuerzo antes de una integración completa.
+
+- **5.3. Integración Gradual en la Comunicación Interna**
+  - **Descripción:** Una vez validado el prototipo, empezar a refactorizar la comunicación entre vistas y el controlador para utilizar el bus de eventos en módulos críticos.
+  - **Archivos a modificar:**  
+    - app_controller.py  
+    - gui_view.py  
+    - Otros módulos de comunicación inter-vistas.
+  - **Archivos de referencia:** Prototipo desarrollado en 5.2.
+  - **Dependencias:** Depende de la conclusión exitosa de 5.2.
+  - **Beneficio esperado:** Mayor desacoplamiento y escalabilidad a largo plazo, facilitando la adición de nuevas funcionalidades.
+
+- **5.4. Validación con Pruebas de Integración**
+  - **Descripción:** Desarrollar pruebas específicas que confirmen que la integración del bus de eventos no rompe la funcionalidad existente.
+  - **Archivos a modificar o crear:**  
+    - Nuevos tests enfocados en el bus de eventos.
+  - **Archivos de referencia:** Tests existentes en el proyecto y documentación del prototipo.
+  - **Dependencias:** Finalización de 5.3.
+  - **Beneficio esperado:** Garantizar la estabilidad del sistema tras la integración del nuevo sistema de eventos.

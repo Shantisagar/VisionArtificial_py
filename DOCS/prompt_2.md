@@ -46,3 +46,4 @@ Si existen **varias formas de abordar una mejora**, menciona:
 - **No proporciones código.**
 - **No hagas suposiciones sin fundamento en el análisis previo.**
 - **Si el análisis previo es insuficiente, solicita aclaraciones antes de continuar.**
+- 🚫 **No deberás incluir pruebas ni unitarias ni de integración**

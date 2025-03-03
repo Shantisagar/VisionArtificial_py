@@ -1,5 +1,5 @@
 """
-Path: src/views/control_panel_view.py
+Path: src/views/controls/control_panel_view.py
 Vista para manejar el panel de control con estadísticas y estado.
 Parte de la separación de responsabilidades del patrón MVC.
 """
@@ -9,9 +9,9 @@ Parte de la separación de responsabilidades del patrón MVC.
 import tkinter as tk
 import logging
 from typing import Dict, Callable
-from src.views.gui_parameter_panel import GUIParameterPanel
-from src.views.gui_notifier import GUINotifier
-from src.views.interface_view_helpers import create_color_selector, create_zoom_scale
+from src.views.controls.gui_parameter_panel import GUIParameterPanel
+from src.views.common.gui_notifier import GUINotifier
+from src.views.common.interface_view_helpers import create_color_selector, create_zoom_scale
 from src.config.constants import (
     DEFAULT_ZOOM,
     DEFAULT_PAPER_COLOR,
@@ -168,8 +168,9 @@ class ControlPanelView:
         additional_frame = tk.LabelFrame(self.control_frame, text="Controles Adicionales")
         additional_frame.pack(fill="x", padx=5, pady=5)
 
-        # Barra de zoom utilizando el helper
-        self.zoom_scale = create_zoom_scale(additional_frame, self.zoom_var)
+        # Barra de zoom utilizando el helper, añadiendo comando para actualización automática
+        self.zoom_scale = create_zoom_scale(additional_frame, self.zoom_var,
+                                          command=self.on_zoom_change)
         self.zoom_scale.pack(fill="x", padx=5, pady=5)
 
         # Selector de color de papel
@@ -177,16 +178,37 @@ class ControlPanelView:
         color_frame.pack(fill="x", padx=5, pady=5)
 
         tk.Label(color_frame, text="Color de Papel").pack(side=tk.LEFT)
-        self.paper_color_menu = create_color_selector(color_frame, self.paper_color_var)
+        self.paper_color_menu = create_color_selector(color_frame, self.paper_color_var,
+                                                    command=self.on_color_change)
         self.paper_color_menu.pack(side=tk.RIGHT)
 
-        # Botón para aplicar cambios
+        # Botón para aplicar cambios (opcional ahora, ya que los cambios son automáticos)
         self.apply_button = tk.Button(
             additional_frame,
             text="Aplicar Cambios",
             command=self.apply_changes
         )
         self.apply_button.pack(pady=10)
+
+    def on_zoom_change(self, *args):
+        """Maneja cambios en el slider de zoom."""
+        if not self.on_parameters_update:
+            return
+
+        zoom = self.zoom_var.get()
+        parameters = {'zoom': zoom}
+        self.logger.debug(f"Zoom cambiado automáticamente: {zoom}")
+        self.on_parameters_update(parameters)
+
+    def on_color_change(self, *args):
+        """Maneja cambios en la selección de color."""
+        if not self.on_parameters_update:
+            return
+
+        paper_color = self.paper_color_var.get()
+        parameters = {'paper_color': paper_color}
+        self.logger.debug(f"Color cambiado automáticamente: {paper_color}")
+        self.on_parameters_update(parameters)
 
     def _setup_stats_panel(self):
         """Crea y configura el panel de estadísticas."""

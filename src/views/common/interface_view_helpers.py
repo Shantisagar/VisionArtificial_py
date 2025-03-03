@@ -1,5 +1,5 @@
 """
-Path: src/views/interface_view_helpers.py
+Path: src/views/common/interface_view_helpers.py
 Helper functions for common UI operations.
 """
 
@@ -38,17 +38,18 @@ def get_slider_ranges():
         'zoom': SLIDER_RANGE_ZOOM
     }
 
-def create_color_selector(parent, variable, options=PAPER_COLOR_OPTIONS):
+def create_color_selector(parent, variable, options=PAPER_COLOR_OPTIONS, command=None):
     """Crea y retorna un OptionMenu para la selección del color de papel."""
-    return tk.OptionMenu(parent, variable, *options)
+    menu = tk.OptionMenu(parent, variable, *options)
 
-def create_zoom_scale(
-    parent,
-    variable,
-    from_=SLIDER_RANGE_ZOOM[0],
-    to=SLIDER_RANGE_ZOOM[1],
-    resolution=DEFAULT_ZOOM_RESOLUTION
-):
+    # Configurar callback si se proporciona
+    if command:
+        variable.trace_add("write", command)
+
+    return menu
+
+def create_zoom_scale(parent, variable, from_=SLIDER_RANGE_ZOOM[0], to=SLIDER_RANGE_ZOOM[1],
+                     resolution=DEFAULT_ZOOM_RESOLUTION, command=None):
     """
     Crea y retorna un control de escala para el zoom.
     
@@ -58,6 +59,7 @@ def create_zoom_scale(
         from_: Valor mínimo de la escala
         to: Valor máximo de la escala
         resolution: Incremento de la escala
+        command: Función a llamar cuando cambie el valor (opcional)
         
     Returns:
         tk.Scale: Control de escala configurado
@@ -69,6 +71,7 @@ def create_zoom_scale(
         to=to,
         resolution=resolution,
         orient=tk.HORIZONTAL,
-        label="Factor de Zoom"
+        label="Factor de Zoom",
+        command=command
     )
     return scale
