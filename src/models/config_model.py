@@ -26,7 +26,7 @@ class ConfigModel:
         # Si no se especifica una ruta, usar la ruta predeterminada en el directorio config
         if config_path is None:
             base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            self.config_file = os.path.join(base_path, 'config', 'parameters.json')
+            self.config_file = os.path.join(base_path, 'src/config', 'parameters.json')
         else:
             self.config_file = config_path
 
