@@ -1,3 +1,4 @@
+**2**
 ### 🔍 **Análisis y Priorización de Mejoras en el Proyecto**
 **Objetivo:** Identificar todas las tareas derivadas del análisis previo, evaluarlas según costo de implementación e impacto en el proyecto y proporcionar una estrategia de implementación segura y gradual.
 

@@ -4,7 +4,7 @@ Este script contiene una función para crear una ventana principal en tkinter.
 """
 
 import tkinter as tk
-from src.views.interface_view_helpers import get_centered_geometry  # nuevo import
+from src.views.common.interface_view_helpers import get_centered_geometry  # nuevo import
 
 def create_main_window(on_closing_callback) -> tk.Tk:
     "Crear una ventana principal configurada"

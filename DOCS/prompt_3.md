@@ -1,4 +1,4 @@
-
+**3**
 ### 📌 **Generación de Listado Detallado de Tareas y Subtareas**
 **Objetivo:** Proporcionar un desglose exhaustivo de tareas y subtareas derivadas del análisis previo, asegurando que cada una tenga suficiente detalle y contexto técnico.
 

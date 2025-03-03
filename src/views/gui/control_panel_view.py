@@ -9,7 +9,7 @@ Parte de la separación de responsabilidades del patrón MVC.
 import tkinter as tk
 import logging
 from typing import Dict, Callable
-from src.views.controls.gui_parameter_panel import GUIParameterPanel
+from src.views.gui_parameter_panel import GUIParameterPanel
 from src.views.common.gui_notifier import GUINotifier
 from src.views.common.interface_view_helpers import create_color_selector, create_zoom_scale
 from src.config.constants import (

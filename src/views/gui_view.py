@@ -8,8 +8,8 @@ import tkinter as tk
 import logging
 from typing import Dict, Callable
 from src.views.common.gui_notifier import GUINotifier
-from src.views.display.main_display_view import MainDisplayView
-from src.views.controls.control_panel_view import ControlPanelView
+from src.views.gui.main_display_view import MainDisplayView
+from src.views.gui.control_panel_view import ControlPanelView
 from src.views.common.interface_view_helpers import get_centered_geometry
 from src.config.constants import (
     DEFAULT_WINDOW_WIDTH,

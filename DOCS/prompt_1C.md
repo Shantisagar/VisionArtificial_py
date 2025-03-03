@@ -4,6 +4,8 @@ Tu tarea es **refactorizar el archivo `src/video_stream.py`** para aplicar una a
 
 El código actual debe ser analizado y reorganizado en módulos adecuados para mejorar su mantenibilidad, escalabilidad y claridad.
 
+- El asistente **no debe generar código**.
+
 ---
 
 ## 🎯 **Objetivo del Refactorizado**  
