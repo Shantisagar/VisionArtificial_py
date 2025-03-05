@@ -52,9 +52,9 @@ class VideoStreamModel:
             'average_fps': 0.0
         }
 
-        # Dimensiones objetivo para el escalado de frames
-        self.target_width = None
-        self.target_height = None
+        # Dimensiones objetivo para el escalado de frames - Inicializar con valores predeterminados
+        self.target_width = 640  # Valor predeterminado seguro
+        self.target_height = 480  # Valor predeterminado seguro
 
     def initialize(self, video_url: str,
                   grados_rotacion: float,
@@ -155,7 +155,7 @@ class VideoStreamModel:
                 return
 
             # Inicializar dimensiones objetivo si no existen
-            if not hasattr(self, 'target_width') or not hasattr(self, 'target_height'):
+            if self.target_width is None or self.target_height is None:
                 # Usar dimensiones del frame como valores iniciales
                 height, width = frame.shape[:2]
                 self.target_width = width
@@ -163,9 +163,10 @@ class VideoStreamModel:
                 self.logger.debug(f"Dimensiones iniciales establecidas: {width}x{height}")
 
             # Verificar que tenemos dimensiones válidas
-            if not hasattr(self, 'target_width') or not hasattr(self, 'target_height'):
+            if self.target_width is None or self.target_height is None or self.target_width <= 0 or self.target_height <= 0:
                 self.target_width = self.video_processor.default_width
                 self.target_height = self.video_processor.default_height
+                self.logger.debug(f"Usando dimensiones por defecto: {self.target_width}x{self.target_height}")
 
             # Procesar el frame usando el procesador de video
             processed_frame = self.video_processor.process_frame(frame)
@@ -251,7 +252,6 @@ class VideoStreamModel:
                 self.logger.warning(
                     "No se pueden actualizar parámetros: procesador no inicializado"
                 )
-
         except (ValueError, RuntimeError) as e:
             self.logger.error(f"Error al actualizar parámetros: {str(e)}")
             self.notifier.notify_error("Error al actualizar parámetros")

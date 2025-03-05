@@ -161,8 +161,8 @@ class VideoProcessor:
 
     def scale_frame_to_size(self,
                             frame: np.ndarray,
-                            target_width: int,
-                            target_height: int) -> Optional[np.ndarray]:
+                            target_width: Optional[int] = None,
+                            target_height: Optional[int] = None) -> Optional[np.ndarray]:
         """
         Escala un frame para llenar el máximo espacio disponible manteniendo el aspecto.
         """
@@ -170,9 +170,17 @@ class VideoProcessor:
             if frame is None:
                 return None
 
+            # Use default values if target dimensions are None
+            if target_width is None or target_height is None:
+                target_width = self.default_width if target_width is None else target_width
+                target_height = self.default_height if target_height is None else target_height
+                self.logger.debug(f"Using default dimensions for scaling: {target_width}x{target_height}")
+
             # Verificar dimensiones válidas
             if target_width <= 0 or target_height <= 0:
-                return frame
+                self.logger.warning(f"Invalid target dimensions: {target_width}x{target_height}, using defaults")
+                target_width = max(self.default_width, 1)
+                target_height = max(self.default_height, 1)
 
             # Convertir a RGB primero
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
