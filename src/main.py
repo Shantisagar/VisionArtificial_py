@@ -17,9 +17,6 @@ def main():
         # Obtener logger centralizado
         logger.info("Iniciando aplicación de Visión Artificial...")
 
-        # Inicializar el gestor de errores con el logger
-        logger.info("Gestor de errores inicializado")
-
         # Crear controlador
         controller = AppController(logger)
 

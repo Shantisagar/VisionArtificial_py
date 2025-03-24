@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "socket.io-client": "^4.5.4",
+    "socket.io-reconnect": "^1.0.0" 
+  }
+}

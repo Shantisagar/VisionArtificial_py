@@ -8,16 +8,19 @@ import logging
 from typing import Dict, Optional
 from src.views.gui_view import GUIView
 from src.models.config_model import ConfigModel
+from src.services.websocket_handler import WebSocketHandler
+from flask_socketio import SocketIO
 
 class AppController:
     """Controlador principal de la aplicación."""
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger, socketio: SocketIO):
         """
         Inicializa el controlador.
         
         Args:
             logger: Logger configurado para registrar eventos
+            socketio: Instancia de SocketIO para manejar eventos WebSocket
         """
         self.logger = logger
         self.logger.debug("Inicializando AppController")
@@ -30,6 +33,10 @@ class AppController:
         self.logger.debug("Cargando configuración inicial")
         self.config = self.config_model.load_config()
         self.logger.debug(f"Configuración inicial cargada: {self.config}")
+
+        self.logger.debug("Inicializando WebSocketHandler")
+        self.websocket_handler = WebSocketHandler(socketio)
+        self.logger.debug("WebSocketHandler inicializado correctamente")
 
     def setup_view(self, view: GUIView) -> None:
         """
@@ -142,6 +149,28 @@ class AppController:
         else:
             self.logger.error("No se puede actualizar la vista - no está inicializada")
             self.logger.debug("Error: intento de actualizar parámetros en vista no inicializada")
+
+    def emit_websocket_event(self, event: str, data: dict) -> None:
+        """
+        Emite un evento WebSocket al cliente.
+
+        Args:
+            event: Nombre del evento a emitir.
+            data: Datos a enviar al cliente.
+        """
+        self.logger.debug(f"Emitiendo evento WebSocket: {event} con datos: {data}")
+        self.websocket_handler.socketio.emit(event, data)  # Usar self.websocket_handler.socketio
+
+    def emit_custom_event(self, event_name: str, data: dict) -> None:
+        """
+        Emite un evento personalizado al cliente WebSocket.
+
+        Args:
+            event_name: Nombre del evento.
+            data: Datos a enviar.
+        """
+        self.logger.debug(f"Emitiendo evento '{event_name}' con datos: {data}")
+        self.websocket_handler.socketio.emit(event_name, data)  # Usar self.websocket_handler.socketio
 
     def run(self) -> None:
         """Inicia la ejecución de la aplicación."""
