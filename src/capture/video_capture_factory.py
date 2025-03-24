@@ -7,7 +7,9 @@ from typing import Union, Optional
 from src.capture.video_capture_interface import VideoCapture
 from src.capture.local_video_capture import LocalVideoCapture
 from src.capture.http_video_capture import HttpVideoCapture
-from utils.logging.logger_configurator import get_logger
+from src.utils.simple_logger import LoggerService
+
+get_logger = LoggerService()
 
 class VideoCaptureFactory:
     """

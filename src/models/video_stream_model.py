@@ -12,7 +12,9 @@ import numpy as np
 from src.capture.video_capture_factory import VideoCaptureFactory
 from src.controllers.video_processor import VideoProcessor
 from src.views.notifier import Notifier, ConsoleNotifier
-from utils.logging.logger_configurator import get_logger
+from src.utils.simple_logger import LoggerService
+
+get_logger = LoggerService()
 
 class VideoStreamModel:
     """

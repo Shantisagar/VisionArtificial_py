@@ -8,7 +8,6 @@ import logging
 from typing import Dict, Optional
 from src.views.gui_view import GUIView
 from src.models.config_model import ConfigModel
-from utils.logging.error_manager import handle_exception, critical_error
 
 class AppController:
     """Controlador principal de la aplicación."""
@@ -80,7 +79,6 @@ class AppController:
                 "method": "setup_view",
                 "view_type": view.__class__.__name__
             }
-            handle_exception(e, context)
             raise  # Re-lanzamos para mantener el flujo de control original
 
     def on_parameters_update(self, parameters: Dict[str, float]) -> None:
@@ -163,5 +161,4 @@ class AppController:
                 "method": "run",
                 "has_view": self.view is not None
             }
-            critical_error(e, context)
             raise  # Re-lanzamos para permitir que el main pueda manejarlo

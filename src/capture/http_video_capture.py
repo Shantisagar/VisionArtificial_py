@@ -11,7 +11,9 @@ import requests
 import cv2
 import numpy as np
 from src.capture.video_capture_interface import VideoCapture
-from utils.logging.logger_configurator import get_logger
+from src.utils.simple_logger import LoggerService
+
+get_logger = LoggerService()
 
 class HttpVideoCapture(VideoCapture):
     """

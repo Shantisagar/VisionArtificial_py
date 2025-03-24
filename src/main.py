@@ -6,18 +6,18 @@ Configura la aplicación e inicia la interfaz gráfica
 
 from src.views.gui_view import GUIView
 from src.controllers.app_controller import AppController
-from utils.logging.dependency_injection import get_logger
-from utils.logging.error_manager import init_error_manager, critical_error
+from src.utils.simple_logger import LoggerService
+
+logger = LoggerService()
+
 
 def main():
     """Función principal que inicia la aplicación"""
     try:
         # Obtener logger centralizado
-        logger = get_logger()
         logger.info("Iniciando aplicación de Visión Artificial...")
 
         # Inicializar el gestor de errores con el logger
-        init_error_manager(logger)
         logger.info("Gestor de errores inicializado")
 
         # Crear controlador
@@ -33,13 +33,5 @@ def main():
         controller.run()
 
         logger.info("Aplicación finalizada correctamente")
-        return 0
-
-    except (OSError, RuntimeError) as e:
-        # Usar el gestor de errores para manejar la excepción
-        critical_error(e, {"context": "main", "fase": "inicialización"})
-        return 1
-    except (ValueError, TypeError) as e:  # Capturar excepciones específicas
-        # Usar el gestor de errores para manejar excepciones desconocidas
-        critical_error(e, {"context": "main", "tipo": "excepción específica", "detalle": str(e)})
-        return 1
+    except Exception as e:
+        logger.error(f"Error en la aplicación: {e}")

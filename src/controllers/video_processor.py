@@ -11,7 +11,9 @@ import cv2  # pylint: disable=no-member
 import numpy as np  # pylint: disable=no-member
 from src.image_processing import ProcessingController
 from src.views.notifier import Notifier, ConsoleNotifier
-from utils.logging.logger_configurator import get_logger
+from src.utils.simple_logger import LoggerService
+
+get_logger = LoggerService()
 
 class VideoProcessor:
     """

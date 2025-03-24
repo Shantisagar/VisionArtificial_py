@@ -1,29 +1,15 @@
-# pylint: disable=broad-exception-caught, wrong-import-order
 """
 Path: src/registro_desvios.py
-Este módulo se encarga de registrar los desvíos de papel en la base de datos.
-
-Estrategia de Logging y Notificaciones:
---------------------------------------
-Este módulo implementa el enfoque dual de registro/notificación:
-1. Logging técnico: Todos los eventos relevantes para depuración y monitoreo
-   se registran mediante el sistema centralizado de logging.
-2. Notificaciones: Los eventos significativos para el usuario se canalizan 
-   a través del sistema de notificaciones (Notifier).
-
-La separación de estas responsabilidades permite que la información técnica
-detallada se registre sin abrumar al usuario final, mientras que los mensajes
-importantes se presentan de manera clara y consistente en la interfaz.
 """
 from datetime import datetime
 from typing import Optional
 import mysql.connector
 from pytz import timezone
-from utils.logging.logger_configurator import LoggerConfigurator
+from src.utils.simple_logger import LoggerService
 from src.views.notifier import Notifier, ConsoleNotifier
 
 # Configuración del logger
-logger = LoggerConfigurator().configure()
+logger = LoggerService()
 
 # Instancia predeterminada del notificador
 default_notifier = ConsoleNotifier(logger)
@@ -43,7 +29,7 @@ def inicializar_bd():
         conn = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="12345678"
+            password="password"
         )
         cursor = conn.cursor()
 
@@ -149,7 +135,7 @@ def enviar_datos(desvio_mm):
         conn = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="12345678",
+            password="password",
             database="registro_va"
         )
         cursor = conn.cursor()

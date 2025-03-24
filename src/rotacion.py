@@ -4,10 +4,10 @@ Este script contiene una función para rotar una imagen en sentido antihorario.
 """
 
 import cv2
-from utils.logging.logger_configurator import LoggerConfigurator
+from src.utils.simple_logger import LoggerService
 
-# Asumiendo que ya tienes configurado un logger en tu aplicación
-logger = LoggerConfigurator().configure()
+logger = LoggerService()
+
 
 def rotar_imagen(frame, grados):
     # pylint: disable=no-member

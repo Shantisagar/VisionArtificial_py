@@ -4,10 +4,9 @@ Este módulo implementa una función para encontrar y marcar el borde más signi
 """
 
 import numpy as np
-from utils.logging.logger_configurator import LoggerConfigurator
+from src.utils.simple_logger import LoggerService
 
-# Configuración del logger, asumiendo que ya tienes uno configurado en tu aplicación
-logger = LoggerConfigurator().configure()
+logger = LoggerService()
 
 def encontrar_borde(frame):
     """

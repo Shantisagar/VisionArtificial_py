@@ -8,7 +8,6 @@ import json
 import os
 import logging
 from typing import Dict, Any, Optional
-from utils.logging.error_manager import handle_exception
 
 class ConfigModel:
     """Clase responsable de gestionar la configuración de la aplicación."""
@@ -104,9 +103,6 @@ class ConfigModel:
         if extra_data:
             context.update(extra_data)
 
-        # Registrar el error
-        handle_exception(error, context)
-
         # Registrar mensaje adecuado según tipo de error
         if error_type == "archivo no encontrado":
             self.logger.warning(
@@ -199,12 +195,7 @@ class ConfigModel:
             config: La configuración que se estaba intentando guardar
         """
         self.logger.debug(f"Excepción al guardar: {type(error).__name__}, {str(error)}")
-        handle_exception(error, {
-            "component": "ConfigModel", 
-            "method": "save_config",
-            "filepath": self.config_file,
-            "config_keys": list(config.keys())
-        })
+
         self.logger.error(f"Error al guardar configuración: {error}")
 
     def _validate_config(self, config: Dict[str, Any]) -> bool:
@@ -250,11 +241,6 @@ class ConfigModel:
             return True
         except (IOError, OSError) as e:
             self.logger.error(f"Error al crear directorio de configuración: {e}")
-            handle_exception(e, {
-                "component": "ConfigModel", 
-                "method": "_ensure_config_directory_exists",
-                "directory": config_dir
-            })
             return False
 
     def _get_default_config(self) -> Dict[str, Any]:

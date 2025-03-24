@@ -79,8 +79,11 @@ class VideoStreamView:
                 self.last_height = height
                 if self.frame_update_callback:
                     self.frame_update_callback()
-                    if hasattr(self, 'on_size_changed'):
-                        self.on_size_changed(width, height)
+                if self.on_size_changed:
+                    self.on_size_changed(width, height)
+                else:
+                    if self.logger:
+                        self.logger.warning("Callback 'on_size_changed' no está configurado")
 
     def set_size_changed_callback(self, callback):
         """Establece el callback para cambios de tamaño."""

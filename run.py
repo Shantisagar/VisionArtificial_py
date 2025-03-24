@@ -2,6 +2,7 @@
 Path: run.py
 Archivo de entrada simplificado para iniciar la aplicación.
 """
+
 import os
 from src.main import main
 

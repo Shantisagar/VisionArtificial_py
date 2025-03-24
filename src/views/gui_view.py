@@ -51,13 +51,10 @@ class GUIView:
     def set_parameters_update_callback(self, callback: Callable[[Dict[str, float]], None]) -> None:
         """
         Establece el callback que se llamará cuando se actualicen los parámetros.
-        
+
         Args:
-            callback: Función a llamar con los nuevos parámetros.
+            callback (Callable): Función a llamar con los nuevos parámetros.
         """
-        if not callback:
-            self.logger.warning("Se intentó establecer un callback nulo")
-            return
         if not callable(callback):
             self.logger.error(f"El callback proporcionado no es callable: {type(callback)}")
             return

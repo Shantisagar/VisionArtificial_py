@@ -6,10 +6,12 @@ Implementación de captura de video para fuentes locales como cámaras o archivo
 import threading
 import time
 from typing import Callable, Optional, Union
-import cv2  # pylint: disable=no-member
+import cv2
 import numpy as np
 from src.capture.video_capture_interface import VideoCapture
-from utils.logging.logger_configurator import get_logger
+from src.utils.simple_logger import LoggerService
+
+get_logger = LoggerService()
 
 class LocalVideoCapture(VideoCapture):
     """

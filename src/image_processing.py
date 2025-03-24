@@ -16,10 +16,11 @@ from src.deteccion_bordes import encontrar_borde
 from src.registro_desvios import registrar_desvio
 from src.rotacion import rotar_imagen
 from src.views.notifier import ConsoleNotifier
-from utils.logging.logger_configurator import LoggerConfigurator
+from src.utils.simple_logger import LoggerService
+
+logger = LoggerService()
 
 TOLERANCIA = 2  # Tolerancia en milímetros
-logger = LoggerConfigurator().configure()
 
 # ----------------------- Utilidades de Dibujo y Cálculos -----------------------
 
